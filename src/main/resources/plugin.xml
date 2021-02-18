@@ -1,23 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <plugin>
-   <extension point="com.change_vision.astah.ui.actionSets">
-      <actionSet
-            label="%action_set_label"
-            visible="true"
-            id="com.change_vision.astah.plugins.plantuml-plugin.actionSet">
-         <menu
-               id="plantuml-plugin"
-               label="%menu_group"
-               path="tool/plantuml-plugin">
-         </menu>
-         <action
-			   label="%menu_label"
-               icon="icons/sample.gif"
-               class="com.change_vision.astah.plugins.TemplateAction"
-               tooltip="%menu_tooltip"
-               menubarPath="tool/plantuml-plugin/"
-               id="plantuml-plugin">
-         </action>
-     </actionSet>
+   <extension point="com.change_vision.astah.ui.view">
+      <view
+              id="com.change_vision.astah.plugins.view.PlantUMLView"
+              type="extraTab"
+              class="com.change_vision.astah.plugins.view.PlantUMLView"/>
    </extension>
 </plugin>
