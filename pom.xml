@@ -207,7 +207,7 @@
                         </goals>
                         <configuration>
                             <sourceDirs>
-                                <sourceDir>${project.basedir}/src/main/java</sourceDir>
+                                <sourceDir>src/main/kotlin</sourceDir>
                             </sourceDirs>
                         </configuration>
                     </execution>
@@ -217,11 +217,11 @@
                         <goals>
                             <goal>test-compile</goal>
                         </goals>
-						<configuration>
-							<sourceDirs>
-								<sourceDir>${project.basedir}/test/main/java</sourceDir>
-							</sourceDirs>
-						</configuration>
+                        <configuration>
+                            <sourceDirs>
+                                <sourceDir>${project.basedir}/test/main/kotlin</sourceDir>
+                            </sourceDirs>
+                        </configuration>
                     </execution>
                 </executions>
                 <configuration>
@@ -262,43 +262,43 @@
                     <target>1.8</target>
                 </configuration>
             </plugin>
-			<plugin>
-				<groupId>org.apache.felix</groupId>
-				<artifactId>maven-bundle-plugin</artifactId>
-				<version>3.5.0</version>
-				<extensions>true</extensions>
-				<executions>
-					<execution>
-						<id>build-manifest</id>
-						<phase>compile</phase>
-						<goals>
-							<goal>bundle</goal>
-						</goals>
-					</execution>
-				</executions>
-				<!-- | the following instructions build a simple set of public/private
+            <plugin>
+                <groupId>org.apache.felix</groupId>
+                <artifactId>maven-bundle-plugin</artifactId>
+                <version>3.5.0</version>
+                <extensions>true</extensions>
+                <executions>
+                    <execution>
+                        <id>build-manifest</id>
+                        <phase>compile</phase>
+                        <goals>
+                            <goal>bundle</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <!-- | the following instructions build a simple set of public/private
                     classes into an OSGi bundle -->
-				<configuration>
-					<unpackBundle>true</unpackBundle>
-					<instructions>
-						<Bundle-SymbolicName>${bundle.symbolicName}; singleton:=true</Bundle-SymbolicName>
-						<Bundle-Version>${project.version}</Bundle-Version>
-						<!-- | assume public classes are in the top package, and private classes
+                <configuration>
+                    <unpackBundle>true</unpackBundle>
+                    <instructions>
+                        <Bundle-SymbolicName>${bundle.symbolicName}; singleton:=true</Bundle-SymbolicName>
+                        <Bundle-Version>${project.version}</Bundle-Version>
+                        <!-- | assume public classes are in the top package, and private classes
                             are under ".internal" -->
-						<Export-Package>
-							!${bundle.namespace}.internal.*,${bundle.namespace}.*;version="${project.version}"
-						</Export-Package>
-						<Private-Package>${bundle.namespace}.internal.*</Private-Package>
-						<Bundle-Activator>${bundle.namespace}.Activator</Bundle-Activator>
-						<Astah-Version>${astah.version}</Astah-Version>
-						<Astah-Edition>${astah.edition}</Astah-Edition>
-						<!-- | each module can override these defaults in their osgi.bnd file -->
-						<_include>-osgi.bnd</_include>
-						<Embed-Dependency>*;scope=compile|runtime;type=!pom</Embed-Dependency>
-						<Embed-Transitive>true</Embed-Transitive>
-					</instructions>
-				</configuration>
-			</plugin>
+                        <Export-Package>
+                            !${bundle.namespace}.internal.*,${bundle.namespace}.*;version="${project.version}"
+                        </Export-Package>
+                        <Private-Package>${bundle.namespace}.internal.*</Private-Package>
+                        <Bundle-Activator>${bundle.namespace}.Activator</Bundle-Activator>
+                        <Astah-Version>${astah.version}</Astah-Version>
+                        <Astah-Edition>${astah.edition}</Astah-Edition>
+                        <!-- | each module can override these defaults in their osgi.bnd file -->
+                        <_include>-osgi.bnd</_include>
+                        <Embed-Dependency>*;scope=compile|runtime;type=!pom</Embed-Dependency>
+                        <Embed-Transitive>true</Embed-Transitive>
+                    </instructions>
+                </configuration>
+            </plugin>
         </plugins>
         <pluginManagement>
             <plugins>
@@ -371,6 +371,16 @@
             <artifactId>kotlin-test</artifactId>
             <version>${kotlin.version}</version>
             <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>net.sourceforge.plantuml</groupId>
+            <artifactId>plantuml</artifactId>
+            <version>1.2021.0</version>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.module</groupId>
+            <artifactId>jackson-module-kotlin</artifactId>
+            <version>2.9.5</version>
         </dependency>
     </dependencies>
 </project>
