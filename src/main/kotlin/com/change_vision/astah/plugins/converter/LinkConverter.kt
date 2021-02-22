@@ -39,17 +39,22 @@ object LinkConverter {
     }
 
     private fun createAssociation(link:Link, elementMap: Map<ILeaf, IClass>):IElement{
+        val label = when {
+            link.label.isWhite -> ""
+            else -> link.label.toString()
+        }
         val association = modelEditor.createAssociation(
             elementMap[link.entity1],
             elementMap[link.entity2],
-            link.label.toString(), link.qualifier1, link.qualifier2)
-        setAssociationAttributes(association,0, link.type.decor1)
-        setAssociationAttributes(association,1, link.type.decor2)
+            label, link.qualifier1, link.qualifier2
+        )
+        setAssociationAttributes(association, 0, link.type.decor1)
+        setAssociationAttributes(association, 1, link.type.decor2)
         return association
     }
 
     private fun isAssociation(link:Link) =
-        link.type.style == LinkStyle.NORMAL() && (
+        link.type.style.isNormal && (
                 associationDecors(link.type.decor1) || associationDecors(link.type.decor2))
 
     private fun associationDecors(decor:LinkDecor)=
@@ -84,7 +89,7 @@ object LinkConverter {
         return modelEditor.createGeneralization(
             elementMap[link.entity1],
             elementMap[link.entity2],
-            link.label.toString()
+            link.label?.toString()
         )
     }
 
@@ -96,7 +101,7 @@ object LinkConverter {
         return modelEditor.createDependency(
             elementMap[link.entity1],
             elementMap[link.entity2],
-            link.label.toString()
+            link.label?.toString()
         )
     }
 }
