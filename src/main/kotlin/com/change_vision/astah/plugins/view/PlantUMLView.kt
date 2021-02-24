@@ -7,6 +7,7 @@ import com.change_vision.jude.api.inf.ui.ISelectionListener
 import kotlinx.coroutines.*
 import kotlinx.coroutines.swing.Swing
 import net.sourceforge.plantuml.SourceStringReader
+import org.fife.ui.rtextarea.RTextScrollPane
 import java.awt.BorderLayout
 import javax.swing.JPanel
 import javax.swing.JScrollPane
@@ -30,9 +31,12 @@ class PlantUMLView : JPanel(), IPluginExtraTabView {
     init {
         layout = BorderLayout()
         add(buttonPanel, BorderLayout.NORTH)
+        val textScrollPane = RTextScrollPane(sourceArea).also {
+            it.lineNumbersEnabled = true
+        }
         val splitPane = JSplitPane(
             JSplitPane.HORIZONTAL_SPLIT,
-            JScrollPane(sourceArea),
+            textScrollPane,
             JScrollPane(previewPanel)
         ).also { it.resizeWeight = 0.6 }
         add(splitPane, BorderLayout.CENTER)
@@ -57,7 +61,7 @@ class PlantUMLView : JPanel(), IPluginExtraTabView {
                 is ValidationOK -> "OK"
                 is EmptyError -> "Empty"
                 is SyntaxError -> "syntax error in " + validationResult.errors
-                    .map { it.lineLocation.position.toString() }.joinToString { it }
+                    .map { (it.lineLocation.position + 1).toString() }.joinToString { it }
             }
             buttonPanel.setMessage(statusMessage)
             if (validationResult == ValidationOK) {

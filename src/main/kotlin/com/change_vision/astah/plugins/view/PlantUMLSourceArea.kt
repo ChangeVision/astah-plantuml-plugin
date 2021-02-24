@@ -1,10 +1,10 @@
 package com.change_vision.astah.plugins.view
 
-import javax.swing.JTextArea
+import org.fife.ui.rsyntaxtextarea.RSyntaxTextArea
 import javax.swing.event.DocumentEvent
 import javax.swing.event.DocumentListener
 
-class PlantUMLSourceArea(private val textChangeAction: (String) -> Any) : JTextArea() {
+class PlantUMLSourceArea(private val textChangeAction: (String) -> Any) : RSyntaxTextArea() {
     init {
         text = sampleText
         document.addDocumentListener(object : DocumentListener {
@@ -24,19 +24,34 @@ class PlantUMLSourceArea(private val textChangeAction: (String) -> Any) : JTextA
 }
 
 private val sampleText = """
-    @startuml
-    class Dummy {
-      String data
-      void methods()
-    }
-
-    class Flight {
-       flightNumber : Integer
-       departureTime : Date
-    }
-    interface Hoge
-    interface Foo
-    Dummy -- Flight
-    AAA -- BBB
-    @enduml
+@startuml
+class Activator
+class ConvertAction
+class AstahToPlantConverter
+class ClassConverter
+class ConvertMode
+class ConvertResult
+class LinkConverter
+class PlantToAstahClassDiagramConverter
+class PlantToAstahConverter
+class SVGEntityCollector
+class ValidationResult
+class ButtonPanel
+class PlantDiagramPreviewPanel
+class PlantUMLSourceArea
+class PlantUMLView
+PlantUMLView *-- ConvertMode
+PlantUMLView *-- ButtonPanel
+PlantUMLView *-- PlantUMLSourceArea
+PlantUMLView *-- PlantDiagramPreviewPanel
+ButtonPanel *-- ConvertAction
+ConvertAction ..> AstahToPlantConverter
+ConvertAction ..> PlantToAstahConverter
+PlantToAstahConverter *-- PlantToAstahClassDiagramConverter
+PlantToAstahConverter *-- SVGEntityCollector
+PlantToAstahClassDiagramConverter *-- ClassConverter
+PlantToAstahClassDiagramConverter *-- LinkConverter
+PlantToAstahClassDiagramConverter --> ConvertResult
+PlantToAstahClassDiagramConverter --> ValidationResult
+@enduml
 """.trimIndent()
