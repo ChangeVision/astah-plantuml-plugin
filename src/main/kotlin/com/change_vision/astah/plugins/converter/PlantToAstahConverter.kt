@@ -18,9 +18,9 @@ object PlantToAstahConverter {
 
     fun convert(text: String) {
         val reader = SourceStringReader(text)
-        reader.blocks.map { it.diagram }.forEach { diagram ->
+        reader.blocks.map { it.diagram }.forEachIndexed { index, diagram ->
             when (diagram) {
-                is ClassDiagram -> PlantToAstahClassDiagramConverter.convert(diagram)
+                is ClassDiagram -> PlantToAstahClassDiagramConverter.convert(diagram, reader, index)
                 else -> System.err.println("Unsupported Diagram : " + diagram.javaClass.name)
             }
         }
