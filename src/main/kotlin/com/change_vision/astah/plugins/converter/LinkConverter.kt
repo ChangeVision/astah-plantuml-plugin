@@ -4,7 +4,7 @@ import com.change_vision.jude.api.inf.AstahAPI
 import com.change_vision.jude.api.inf.editor.TransactionManager
 import com.change_vision.jude.api.inf.model.IAssociation
 import com.change_vision.jude.api.inf.model.IClass
-import com.change_vision.jude.api.inf.model.IElement
+import com.change_vision.jude.api.inf.model.INamedElement
 import net.sourceforge.plantuml.cucadiagram.ILeaf
 import net.sourceforge.plantuml.cucadiagram.Link
 import net.sourceforge.plantuml.cucadiagram.LinkDecor
@@ -38,7 +38,7 @@ object LinkConverter {
         }
     }
 
-    private fun createAssociation(link:Link, elementMap: Map<ILeaf, IClass>):IElement{
+    private fun createAssociation(link: Link, elementMap: Map<ILeaf, IClass>): INamedElement {
         val label = when {
             link.label.isWhite -> ""
             else -> link.label.toString()
@@ -85,7 +85,7 @@ object LinkConverter {
             else->false
         }
 
-    private fun createGeneralization(link:Link, elementMap: Map<ILeaf, IClass>):IElement{
+    private fun createGeneralization(link: Link, elementMap: Map<ILeaf, IClass>): INamedElement {
         return modelEditor.createGeneralization(
             elementMap[link.entity1],
             elementMap[link.entity2],
@@ -97,7 +97,7 @@ object LinkConverter {
         link.type.style == LinkStyle.DOTTED()
                 && (link.type.decor1==LinkDecor.ARROW || link.type.decor2==LinkDecor.ARROW)
 
-    private fun createDependency(link:Link, elementMap: Map<ILeaf, IClass>):IElement{
+    private fun createDependency(link: Link, elementMap: Map<ILeaf, IClass>): INamedElement {
         return modelEditor.createDependency(
             elementMap[link.entity1],
             elementMap[link.entity2],
