@@ -3,6 +3,7 @@ package com.change_vision.astah.plugins.converter
 import com.change_vision.jude.api.inf.AstahAPI
 import com.change_vision.jude.api.inf.editor.TransactionManager
 import com.change_vision.jude.api.inf.model.IClass
+import com.change_vision.jude.api.inf.model.INamedElement
 import com.change_vision.jude.api.inf.model.IPackage
 import net.sourceforge.plantuml.cucadiagram.ILeaf
 import net.sourceforge.plantuml.cucadiagram.LeafType
@@ -19,9 +20,10 @@ object ClassConverter {
     fun createAstahModelElements(leaves: Collection<ILeaf>): List<ConvertResult> {
         TransactionManager.beginTransaction()
         return try {
-            leaves.map { leaf ->
-                createElement(leaf)
-            }.also { TransactionManager.endTransaction() }
+            leaves
+                .filter { api.projectAccessor.findElements(INamedElement::class.java, it.codeGetName).isEmpty() }
+                .map { createElement(it) }
+                .also { TransactionManager.endTransaction() }
         } catch (e: Exception) {
             TransactionManager.abortTransaction()
             listOf(Failure("transaction error : " + e.message))
