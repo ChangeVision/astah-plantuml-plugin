@@ -3,29 +3,106 @@ package com.change_vision.astah.plugins.view
 import net.sourceforge.plantuml.FileFormat
 import net.sourceforge.plantuml.FileFormatOption
 import net.sourceforge.plantuml.SourceStringReader
-import java.awt.Graphics
+import java.awt.BorderLayout
+import java.awt.Dimension
+import java.awt.Image
+import java.awt.Point
+import java.awt.event.MouseAdapter
+import java.awt.event.MouseEvent
+import java.awt.event.MouseWheelEvent
 import java.awt.image.BufferedImage
+import java.awt.image.ImageObserver
 import java.nio.file.Files
 import javax.imageio.ImageIO
-import javax.swing.JPanel
+import javax.swing.*
 
 class PlantDiagramPreviewPanel : JPanel() {
-    var image: BufferedImage? = null
-    override fun paint(g: Graphics?) {
-        if (image != null) {
-            g?.clearRect(0, 0, width, height)
-            g?.drawImage(image, 0, 0, this)
+    private val plantImageLabel = JLabel().also {
+        it.autoscrolls = true
+    }
+    private var zoom = 100
+    private val minZoom = 10
+    private val maxZoom = 1000
+
+    private val mouseAdapter = object : MouseAdapter() {
+        var origin: Point? = null
+        override fun mousePressed(e: MouseEvent?) {
+            if (e != null) {
+                origin = Point(e.point)
+            }
+        }
+
+        override fun mouseClicked(e: MouseEvent?) {
+            if (e?.button == MouseEvent.BUTTON2) {
+                zoom = 100
+                updateScaledImage(image!!, 100)
+            }
+        }
+
+
+        override fun mouseDragged(e: MouseEvent?) {
+            if (origin == null || e == null) return
+            val viewPort: JViewport = SwingUtilities
+                .getAncestorOfClass(JViewport::class.java, plantImageLabel) as? JViewport ?: return
+            val view = viewPort.viewRect
+            view.x += origin!!.x - e.x
+            view.y += origin!!.y - e.y
+            plantImageLabel.scrollRectToVisible(view)
+        }
+
+        override fun mouseWheelMoved(e: MouseWheelEvent?) {
+            val rotation = e?.wheelRotation ?: return
+            zoom += rotation * 10
+            zoom = when {
+                zoom < minZoom -> minZoom
+                zoom > maxZoom -> maxZoom
+                else -> zoom
+            }
+            updateScaledImage(image!!, zoom)
+
+            super.mouseWheelMoved(e)
         }
     }
 
+    init {
+        layout = BorderLayout()
+        plantImageLabel.addMouseListener(mouseAdapter)
+        plantImageLabel.addMouseMotionListener(mouseAdapter)
+        plantImageLabel.addMouseWheelListener(mouseAdapter)
+        val scrollPane = JScrollPane(plantImageLabel)
+        add(scrollPane)
+    }
+
+    private val observer = ImageObserver { img, infoflags, x, y, width, height ->
+        plantImageLabel.preferredSize = Dimension(x, y)
+        true
+    }
+
+    private var image: BufferedImage? = null
     fun updateImage(reader: SourceStringReader) {
         val tempPngFile = Files.createTempFile("plantuml_", ".png").toFile()
         tempPngFile.outputStream().use { os ->
             reader.outputImage(os, 0, FileFormatOption(FileFormat.PNG))
         }
-        this.image = ImageIO.read(tempPngFile)
+        image = ImageIO.read(tempPngFile)
+        updateScaledImage(image!!, zoom)
         tempPngFile.delete()
+    }
 
+    private fun updateScaledImage(image: BufferedImage, scale: Int) {
+        val imageIcon = ImageIcon(scaleImage(image, scale))
+        imageIcon.imageObserver = observer
+        plantImageLabel.icon = imageIcon
         repaint()
     }
+
+    private fun scaleImage(image: BufferedImage, scale: Int) =
+        when (zoom) {
+            100 -> image
+            else -> image.getScaledInstance(
+                (image.width * (scale / 100f)).toInt(),
+                (image.height * (scale / 100f)).toInt(),
+                Image.SCALE_DEFAULT
+            )
+        }
 }

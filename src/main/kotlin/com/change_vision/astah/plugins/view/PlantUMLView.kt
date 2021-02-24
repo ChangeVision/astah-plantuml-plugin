@@ -10,7 +10,6 @@ import net.sourceforge.plantuml.SourceStringReader
 import org.fife.ui.rtextarea.RTextScrollPane
 import java.awt.BorderLayout
 import javax.swing.JPanel
-import javax.swing.JScrollPane
 import javax.swing.JSplitPane
 
 class PlantUMLView : JPanel(), IPluginExtraTabView {
@@ -37,7 +36,7 @@ class PlantUMLView : JPanel(), IPluginExtraTabView {
         val splitPane = JSplitPane(
             JSplitPane.HORIZONTAL_SPLIT,
             textScrollPane,
-            JScrollPane(previewPanel)
+            previewPanel
         ).also { it.resizeWeight = 0.6 }
         add(splitPane, BorderLayout.CENTER)
 
