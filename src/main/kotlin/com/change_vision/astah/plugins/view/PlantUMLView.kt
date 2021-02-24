@@ -12,6 +12,8 @@ import kotlinx.coroutines.swing.Swing
 import net.sourceforge.plantuml.SourceStringReader
 import java.awt.BorderLayout
 import javax.swing.JPanel
+import javax.swing.JScrollPane
+import javax.swing.JSplitPane
 
 class PlantUMLView : JPanel(), IPluginExtraTabView {
     override fun getTitle() = "PlantUML View"
@@ -21,11 +23,17 @@ class PlantUMLView : JPanel(), IPluginExtraTabView {
     private val sourceArea = PlantUMLSourceArea { textChangeAction(it) }
     private val convertAction = ConvertPlantToAstahAction(sourceArea)
     private val buttonPanel = ButtonPanel(convertAction)
+    private val previewPanel = PlantDiagramPreviewPanel()
 
     init {
         layout = BorderLayout()
         add(buttonPanel, BorderLayout.NORTH)
-        add(sourceArea, BorderLayout.CENTER)
+        val splitPane = JSplitPane(
+            JSplitPane.HORIZONTAL_SPLIT,
+            JScrollPane(sourceArea),
+            JScrollPane(previewPanel)
+        ).also { it.resizeWeight = 0.6 }
+        add(splitPane, BorderLayout.CENTER)
     }
 
     /**
@@ -48,6 +56,9 @@ class PlantUMLView : JPanel(), IPluginExtraTabView {
                     .map { it.lineLocation.position.toString() }.joinToString { it }
             }
             buttonPanel.setMessage(statusMessage)
+            if (validationResult == ValidationOK) {
+                previewPanel.updateImage(plantReader)
+            }
         }
     }
 
