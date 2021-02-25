@@ -71,3 +71,26 @@ PlantToAstahClassDiagramConverter --> ConvertResult
 PlantToAstahClassDiagramConverter --> ValidationResult
 @enduml
 """.trimIndent()
+
+private val sequenceText = """
+    @startuml
+    Alice -> Bob: Authentication Request
+    Bob --> Alice: Authentication Response
+
+    Alice -> Bob: Another authentication Request
+    Alice <-- Bob: another authentication Response
+
+    actor Foo1
+    boundary Foo2
+    control Foo3
+    entity Foo4
+    database Foo5
+    collections Foo6
+    Foo1 -> Foo2 : To boundary
+    Foo1 -> Foo3 : To control
+    Foo1 -> Foo4 : To entity
+    Foo1 -> Foo5 : To database
+    Foo1 -> Foo6 : To collections
+
+    @enduml
+""".trimIndent()
