@@ -3,6 +3,7 @@ package com.change_vision.astah.plugins.view
 import com.change_vision.astah.plugins.action.ConvertAction
 import com.change_vision.astah.plugins.converter.ConvertMode
 import java.awt.BorderLayout
+import java.awt.Color
 import java.awt.Component
 import javax.swing.*
 
@@ -36,6 +37,11 @@ class ButtonPanel(convertAction: ConvertAction, modeChangeCallback: (ConvertMode
     }
 
     fun setMessage(message: String) {
+        statusLabel.foreground =
+            when (message) {
+                "OK" -> Color(20, 200, 50)
+                else -> Color.RED
+            }
         statusLabel.text = message
     }
 }
