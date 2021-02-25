@@ -18,6 +18,5 @@ class ConvertAction(
             ConvertMode.PlantToAstah -> PlantToAstahConverter.convert(sourceArea.text)
             ConvertMode.AstahToPlant -> sourceArea.text = AstahToPlantConverter.convert()
         }
-        PlantToAstahConverter.convert(sourceArea.text)
     }
 }
