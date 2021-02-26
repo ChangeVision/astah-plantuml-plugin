@@ -1,39 +1,36 @@
 package com.change_vision.astah.plugins.view
 
-import com.change_vision.astah.plugins.action.ConvertAction
-import com.change_vision.astah.plugins.converter.ConvertMode
+import com.change_vision.astah.plugins.converter.AstahToPlantConverter
+import com.change_vision.astah.plugins.converter.PlantToAstahConverter
 import java.awt.BorderLayout
 import java.awt.Color
-import java.awt.Component
+import java.awt.Insets
+import javax.imageio.ImageIO
 import javax.swing.*
 
-class ButtonPanel(convertAction: ConvertAction, modeChangeCallback: (ConvertMode) -> Any) : JPanel() {
-    private val generateButton = JButton(convertAction)
-    private val statusLabel = JLabel("")
-    private val modeComboBox = JComboBox(ConvertMode.values())
-        .also { comboBox ->
-            comboBox.addActionListener {
-                modeChangeCallback(comboBox.selectedItem as ConvertMode)
-            }
-            comboBox.renderer = object : DefaultListCellRenderer() {
-                override fun getListCellRendererComponent(
-                    list: JList<*>?,
-                    value: Any?,
-                    index: Int,
-                    isSelected: Boolean,
-                    cellHasFocus: Boolean
-                ): Component {
-                    val displayString = (value as ConvertMode).comboboxText
-                    return super.getListCellRendererComponent(list, displayString, index, isSelected, cellHasFocus)
-                }
-            }
+class ButtonPanel(sourceArea: PlantUMLSourceArea) : JPanel() {
+    private val plantToAstahButton =
+        JButton("toAstah").also {
+            it.addActionListener { PlantToAstahConverter.convert(sourceArea.text) }
+            it.icon = ImageIcon(ImageIO.read(javaClass.getResource("/toAstah.png")))
+            it.margin = Insets(0, 0, 5, 5)
         }
+    private val astahToPlantButton =
+        JButton("toPlant").also {
+            it.addActionListener { sourceArea.text = AstahToPlantConverter.convert() }
+            it.icon = ImageIcon(ImageIO.read(javaClass.getResource("/toPlant.png")))
+            it.margin = Insets(0, 0, 5, 20)
+        }
+    private val statusLabel = JLabel("")
 
     init {
-        layout = BorderLayout(10, 10)
+        layout = BorderLayout()
         add(statusLabel, BorderLayout.WEST)
-        add(modeComboBox, BorderLayout.CENTER)
-        add(generateButton, BorderLayout.EAST)
+        val buttonPanel = JPanel()
+        buttonPanel.layout = BoxLayout(buttonPanel, BoxLayout.X_AXIS)
+        buttonPanel.add(plantToAstahButton)
+        buttonPanel.add(astahToPlantButton)
+        add(buttonPanel, BorderLayout.EAST)
     }
 
     fun setMessage(message: String) {

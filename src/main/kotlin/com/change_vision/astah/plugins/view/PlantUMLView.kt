@@ -1,7 +1,9 @@
 package com.change_vision.astah.plugins.view
 
-import com.change_vision.astah.plugins.action.ConvertAction
-import com.change_vision.astah.plugins.converter.*
+import com.change_vision.astah.plugins.converter.EmptyError
+import com.change_vision.astah.plugins.converter.PlantToAstahConverter
+import com.change_vision.astah.plugins.converter.SyntaxError
+import com.change_vision.astah.plugins.converter.ValidationOK
 import com.change_vision.jude.api.inf.ui.IPluginExtraTabView
 import com.change_vision.jude.api.inf.ui.ISelectionListener
 import kotlinx.coroutines.*
@@ -18,15 +20,9 @@ class PlantUMLView : JPanel(), IPluginExtraTabView {
     override fun getComponent() = this
 
     private val sourceArea = PlantUMLSourceArea { textChangeAction(it) }
-    private val convertAction = ConvertAction(sourceArea) { currentMode }
-    private val buttonPanel = ButtonPanel(convertAction) { mode -> modeChange(mode) }
+    private val buttonPanel = ButtonPanel(sourceArea)
     private val previewPanel = PlantDiagramPreviewPanel()
-
-    private var currentMode = ConvertMode.PlantToAstah
-    private fun modeChange(mode: ConvertMode) {
-        currentMode = mode
-    }
-
+    
     init {
         layout = BorderLayout()
         add(buttonPanel, BorderLayout.NORTH)
