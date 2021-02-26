@@ -8,7 +8,6 @@ import com.change_vision.jude.api.inf.model.INamedElement
 import net.sourceforge.plantuml.cucadiagram.ILeaf
 import net.sourceforge.plantuml.cucadiagram.Link
 import net.sourceforge.plantuml.cucadiagram.LinkDecor
-import net.sourceforge.plantuml.cucadiagram.LinkStyle
 
 object LinkConverter {
     private val modelEditor = AstahAPI.getAstahAPI().projectAccessor.modelEditorFactory.basicModelEditor
@@ -31,25 +30,25 @@ object LinkConverter {
 
     private fun createLink(link: Link, elementMap: Map<ILeaf, IClass>): ConvertResult {
         return when {
-            isAssociation(link) -> Success(Pair(link, createAssociation(link, elementMap)))
-            isGeneralization(link) -> Success(Pair(link, createGeneralization(link, elementMap)))
             isDependency(link) -> Success(Pair(link, createDependency(link, elementMap)))
+            isGeneralization(link) -> Success(Pair(link, createGeneralization(link, elementMap)))
+            isAssociation(link) -> Success(Pair(link, createAssociation(link, elementMap)))
             else -> Failure("unsupported Type at " + link.codeLine)
         }
     }
 
     private fun createAssociation(link: Link, elementMap: Map<ILeaf, IClass>): INamedElement {
-        val label = when {
-            link.label.isWhite -> ""
-            else -> link.label.toString()
-        }
         val association = modelEditor.createAssociation(
             elementMap[link.entity1],
             elementMap[link.entity2],
-            label, link.qualifier1, link.qualifier2
+            when {
+                link.label.isWhite -> ""
+                else -> link.label.toString()
+            },
+            link.qualifier1, link.qualifier2
         )
-        setAssociationAttributes(association, 0, link.type.decor1)
-        setAssociationAttributes(association, 1, link.type.decor2)
+        setAssociationAttributes(association, 1, link.type.decor1)
+        setAssociationAttributes(association, 0, link.type.decor2)
         return association
     }
 
@@ -89,19 +88,25 @@ object LinkConverter {
         return modelEditor.createGeneralization(
             elementMap[link.entity1],
             elementMap[link.entity2],
-            link.label?.toString()
+            when {
+                link.label.isWhite -> ""
+                else -> link.label.toString()
+            }
         )
     }
 
-    private fun isDependency(link:Link) =
-        link.type.style == LinkStyle.DOTTED()
-                && (link.type.decor1==LinkDecor.ARROW || link.type.decor2==LinkDecor.ARROW)
+    private fun isDependency(link: Link) =
+        link.type.style.toString().contains("DASHED") // cannot match LinkStyle.Dashed()
+                && (link.type.decor1 == LinkDecor.ARROW || link.type.decor2 == LinkDecor.ARROW)
 
     private fun createDependency(link: Link, elementMap: Map<ILeaf, IClass>): INamedElement {
         return modelEditor.createDependency(
-            elementMap[link.entity1],
             elementMap[link.entity2],
-            link.label?.toString()
+            elementMap[link.entity1],
+            when {
+                link.label.isWhite -> ""
+                else -> link.label.toString()
+            }
         )
     }
 }

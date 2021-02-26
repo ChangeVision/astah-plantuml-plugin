@@ -7,7 +7,7 @@ import com.change_vision.jude.api.inf.presentation.INodePresentation
 object AstahToPlantClassDiagramConverter {
     fun convert(diagram: IClassDiagram, sb: StringBuilder) {
         diagram.presentations.forEach {
-            when (diagram) {
+            when (it) {
                 is INodePresentation -> when (val model = it.model) {
                     is IClass -> classConvert(model, sb)
                     else -> null
@@ -89,18 +89,14 @@ object AstahToPlantClassDiagramConverter {
         }
 
     private fun generalization(model: IGeneralization, sb: StringBuilder) {
-        val child = model.subType
-        val parent = model.superType
-        sb.append(child.name)
+        sb.append(model.subType.name)
         sb.append(" --|> ")
-        sb.appendLine(parent.name)
+        sb.appendLine(model.superType.name)
     }
 
     private fun dependency(model: IDependency, sb: StringBuilder) {
-        val client = model.client
-        val supplier = model.supplier
-        sb.append(client.name)
+        sb.append(model.client.name)
         sb.append(" ..> ")
-        sb.appendLine(supplier.name)
+        sb.appendLine(model.supplier.name)
     }
 }
