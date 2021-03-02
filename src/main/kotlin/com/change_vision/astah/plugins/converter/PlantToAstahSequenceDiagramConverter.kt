@@ -33,24 +33,28 @@ object PlantToAstahSequenceDiagramConverter {
             var prevX = 0.0
             val participantMap = diagram.participants().mapIndexedNotNull { i, participant ->
                 val editorFactory = projectAccessor.modelEditorFactory
+                val project = projectAccessor.project
                 val baseClass: IClass? = when (participant.type) {
                     ParticipantType.ACTOR -> editorFactory.useCaseModelEditor.createActor(
-                        projectAccessor.project,
+                        project,
                         participant.code
                     )
                     ParticipantType.BOUNDARY -> editorFactory.basicModelEditor.createClass(
-                        projectAccessor.project,
+                        project,
                         participant.code
                     ).also { it.addStereotype("boundary") }
                     ParticipantType.ENTITY -> editorFactory.basicModelEditor.createClass(
-                        projectAccessor.project,
+                        project,
                         participant.code
                     ).also { it.addStereotype("entity") }
                     ParticipantType.CONTROL -> editorFactory.basicModelEditor.createClass(
-                        projectAccessor.project,
+                        project,
                         participant.code
                     ).also { it.addStereotype("control") }
-                    else -> null
+                    else -> editorFactory.basicModelEditor.createClass(
+                        project,
+                        participant.code
+                    )
                 }
                 if (baseClass == null) {
                     val lifeline = diagramEditor.createLifeline(participant.code, prevX)
@@ -73,7 +77,13 @@ object PlantToAstahSequenceDiagramConverter {
                         event.label.toString().isBlank() -> event.messageNumber + "message()"
                         else -> event.label.toString().replace("[\\[\\]]".toRegex(), "")
                     }
-                    val message =
+
+                    val receiver = (participantMap[event.participant2]?.model as ILifeline).base
+                    if (receiver.operations.all { it.name != label }) {
+                        modelEditor.createOperation(receiver, label, "void")
+                    }
+
+                    val messagePresentation =
                         when {
                             event.arrowConfiguration.isDotted && prevMessage != null ->
                                 diagramEditor.createReturnMessage(label, prevMessage)
@@ -91,9 +101,11 @@ object PlantToAstahSequenceDiagramConverter {
                             )
                         }
                     when {
-                        event.arrowConfiguration.isAsync -> (message.model as IMessage).isAsynchronous = true
+                        event.arrowConfiguration.isAsync -> (messagePresentation.model as IMessage).isAsynchronous =
+                            true
                     }
-                    prevMessage = message
+
+                    prevMessage = messagePresentation
                 }
             }
         } catch (e: Exception) {
