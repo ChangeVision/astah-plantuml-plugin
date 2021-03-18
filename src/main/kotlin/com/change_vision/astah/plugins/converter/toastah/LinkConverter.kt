@@ -1,4 +1,4 @@
-package com.change_vision.astah.plugins.converter
+package com.change_vision.astah.plugins.converter.toastah
 
 import com.change_vision.jude.api.inf.AstahAPI
 import com.change_vision.jude.api.inf.editor.TransactionManager
@@ -75,7 +75,7 @@ object LinkConverter {
     }
 
     private fun isGeneralization(link:Link) =
-        generalizationDecors(link.type.decor1)|| generalizationDecors(link.type.decor2)
+        generalizationDecors(link.type.decor1) || generalizationDecors(link.type.decor2)
 
     private fun generalizationDecors(decor:LinkDecor)=
         when(decor){

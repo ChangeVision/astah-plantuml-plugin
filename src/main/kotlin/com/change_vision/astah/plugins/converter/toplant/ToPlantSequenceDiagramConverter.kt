@@ -1,4 +1,4 @@
-package com.change_vision.astah.plugins.converter
+package com.change_vision.astah.plugins.converter.toplant
 
 import com.change_vision.jude.api.inf.model.ILifeline
 import com.change_vision.jude.api.inf.model.IMessage
@@ -7,7 +7,7 @@ import com.change_vision.jude.api.inf.model.ISequenceDiagram
 import com.change_vision.jude.api.inf.presentation.ILinkPresentation
 import com.change_vision.jude.api.inf.presentation.INodePresentation
 
-object AstahToPlantSequenceDiagramConverter {
+object ToPlantSequenceDiagramConverter {
     fun convert(diagram: ISequenceDiagram, sb: StringBuilder) {
         diagram.presentations.forEach { presentation ->
             when (presentation) {

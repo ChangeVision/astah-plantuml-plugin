@@ -1,4 +1,4 @@
-package com.change_vision.astah.plugins.converter
+package com.change_vision.astah.plugins.converter.toastah
 
 import net.sourceforge.plantuml.FileFormat
 import net.sourceforge.plantuml.FileFormatOption

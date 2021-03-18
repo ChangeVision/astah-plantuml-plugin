@@ -1,5 +1,9 @@
-package com.change_vision.astah.plugins.converter
+package com.change_vision.astah.plugins.converter.toastah
 
+import com.change_vision.astah.plugins.converter.EmptyError
+import com.change_vision.astah.plugins.converter.SyntaxError
+import com.change_vision.astah.plugins.converter.ValidationOK
+import com.change_vision.astah.plugins.converter.ValidationResult
 import net.sourceforge.plantuml.SourceStringReader
 import net.sourceforge.plantuml.activitydiagram.ActivityDiagram
 import net.sourceforge.plantuml.classdiagram.ClassDiagram
@@ -9,7 +13,7 @@ import net.sourceforge.plantuml.mindmap.MindMapDiagram
 import net.sourceforge.plantuml.sequencediagram.SequenceDiagram
 import net.sourceforge.plantuml.statediagram.StateDiagram
 
-object PlantToAstahConverter {
+object ToAstahConverter {
     fun validate(reader: SourceStringReader): ValidationResult {
         val blocks = reader.blocks
         val errors = blocks.map { it.diagram }.filterIsInstance<PSystemError>()
@@ -25,16 +29,16 @@ object PlantToAstahConverter {
         val reader = SourceStringReader(text)
         reader.blocks.map { it.diagram }.forEachIndexed { index, diagram ->
             when (diagram) {
-                is SequenceDiagram -> PlantToAstahSequenceDiagramConverter.convert(diagram, reader, index)
+                is SequenceDiagram -> ToAstahSequenceDiagramConverter.convert(diagram, reader, index)
                 is DescriptionDiagram -> { // UseCase, Component, Deployment
                 }
                 is ClassDiagram -> { // Class, Object
-                    PlantToAstahClassDiagramConverter.convert(diagram, reader, index)
+                    ToAstahClassDiagramConverter.convert(diagram, reader, index)
                 }
                 is ActivityDiagram -> {
                 }
                 is StateDiagram -> {
-                    PlantToAstahStateDiagramConverter.convert(diagram, reader, index)
+                    ToAstahStateDiagramConverter.convert(diagram, reader, index)
                 }
                 is MindMapDiagram -> {
                 }

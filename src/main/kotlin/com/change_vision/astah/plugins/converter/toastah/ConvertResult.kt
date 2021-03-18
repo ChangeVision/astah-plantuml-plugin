@@ -1,4 +1,4 @@
-package com.change_vision.astah.plugins.converter
+package com.change_vision.astah.plugins.converter.toastah
 
 sealed class ConvertResult
 data class Success<T>(val convertPair: T) : ConvertResult()

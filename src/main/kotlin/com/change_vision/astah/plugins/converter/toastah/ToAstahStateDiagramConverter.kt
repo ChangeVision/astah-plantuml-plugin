@@ -1,5 +1,7 @@
-package com.change_vision.astah.plugins.converter
+package com.change_vision.astah.plugins.converter.toastah
 
+import com.change_vision.astah.plugins.converter.toplant.DiagramKind
+import com.change_vision.astah.plugins.converter.toplant.createOrGetDiagram
 import com.change_vision.jude.api.inf.AstahAPI
 import com.change_vision.jude.api.inf.editor.TransactionManager
 import com.change_vision.jude.api.inf.exception.BadTransactionException
@@ -13,7 +15,7 @@ import java.awt.geom.Rectangle2D
 import java.util.regex.Pattern
 
 
-object PlantToAstahStateDiagramConverter {
+object ToAstahStateDiagramConverter {
     private val api = AstahAPI.getAstahAPI()
     private val projectAccessor = api.projectAccessor
     private val diagramEditor = projectAccessor.diagramEditorFactory.stateMachineDiagramEditor

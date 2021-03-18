@@ -1,10 +1,10 @@
-package com.change_vision.astah.plugins.converter
+package com.change_vision.astah.plugins.converter.toplant
 
 import com.change_vision.jude.api.inf.model.*
 import com.change_vision.jude.api.inf.presentation.ILinkPresentation
 import com.change_vision.jude.api.inf.presentation.INodePresentation
 
-object AstahToPlantStateDiagramConverter {
+object ToPlantStateDiagramConverter {
     fun convert(diagram: IStateMachineDiagram, sb: StringBuilder) {
         val rootVertexes =
             diagram.presentations

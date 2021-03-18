@@ -1,10 +1,10 @@
-package com.change_vision.astah.plugins.converter
+package com.change_vision.astah.plugins.converter.toplant
 
 import com.change_vision.jude.api.inf.model.*
 import com.change_vision.jude.api.inf.presentation.ILinkPresentation
 import com.change_vision.jude.api.inf.presentation.INodePresentation
 
-object AstahToPlantClassDiagramConverter {
+object ToPlantClassDiagramConverter {
     fun convert(diagram: IClassDiagram, sb: StringBuilder) {
         diagram.presentations.forEach {
             when (it) {

@@ -1,5 +1,7 @@
-package com.change_vision.astah.plugins.converter
+package com.change_vision.astah.plugins.converter.toastah
 
+import com.change_vision.astah.plugins.converter.toplant.DiagramKind
+import com.change_vision.astah.plugins.converter.toplant.createOrGetDiagram
 import com.change_vision.jude.api.inf.AstahAPI
 import com.change_vision.jude.api.inf.editor.TransactionManager
 import com.change_vision.jude.api.inf.model.IClass
@@ -12,7 +14,7 @@ import net.sourceforge.plantuml.sequencediagram.ParticipantType
 import net.sourceforge.plantuml.sequencediagram.SequenceDiagram
 
 
-object PlantToAstahSequenceDiagramConverter {
+object ToAstahSequenceDiagramConverter {
     private const val xSpan = 20.0
     private const val ySpan = 40.0
     private const val initY = 50.0

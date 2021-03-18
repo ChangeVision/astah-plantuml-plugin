@@ -1,4 +1,4 @@
-package com.change_vision.astah.plugins.converter
+package com.change_vision.astah.plugins.converter.toplant
 
 import com.change_vision.jude.api.inf.AstahAPI
 import com.change_vision.jude.api.inf.editor.TransactionManager

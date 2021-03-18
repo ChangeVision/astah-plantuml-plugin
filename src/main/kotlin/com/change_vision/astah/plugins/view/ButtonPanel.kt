@@ -1,7 +1,7 @@
 package com.change_vision.astah.plugins.view
 
-import com.change_vision.astah.plugins.converter.AstahToPlantConverter
-import com.change_vision.astah.plugins.converter.PlantToAstahConverter
+import com.change_vision.astah.plugins.converter.toastah.ToAstahConverter
+import com.change_vision.astah.plugins.converter.toplant.ToPlantConverter
 import java.awt.BorderLayout
 import java.awt.Color
 import java.awt.Insets
@@ -11,13 +11,13 @@ import javax.swing.*
 class ButtonPanel(sourceArea: PlantUMLSourceArea) : JPanel() {
     private val plantToAstahButton =
         JButton("toAstah").also {
-            it.addActionListener { PlantToAstahConverter.convert(sourceArea.text) }
+            it.addActionListener { ToAstahConverter.convert(sourceArea.text) }
             it.icon = ImageIcon(ImageIO.read(javaClass.getResource("/toAstah.png")))
             it.margin = Insets(0, 0, 5, 5)
         }
     private val astahToPlantButton =
         JButton("toPlant").also {
-            it.addActionListener { sourceArea.text = AstahToPlantConverter.convert() }
+            it.addActionListener { sourceArea.text = ToPlantConverter.convert() }
             it.icon = ImageIcon(ImageIO.read(javaClass.getResource("/toPlant.png")))
             it.margin = Insets(0, 0, 5, 20)
         }

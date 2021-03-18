@@ -1,9 +1,9 @@
 package com.change_vision.astah.plugins.view
 
 import com.change_vision.astah.plugins.converter.EmptyError
-import com.change_vision.astah.plugins.converter.PlantToAstahConverter
 import com.change_vision.astah.plugins.converter.SyntaxError
 import com.change_vision.astah.plugins.converter.ValidationOK
+import com.change_vision.astah.plugins.converter.toastah.ToAstahConverter
 import com.change_vision.jude.api.inf.ui.IPluginExtraTabView
 import com.change_vision.jude.api.inf.ui.ISelectionListener
 import kotlinx.coroutines.*
@@ -52,7 +52,7 @@ class PlantUMLView : JPanel(), IPluginExtraTabView {
         job = GlobalScope.launch(Dispatchers.Swing) {
             delay(200)
             val plantReader = SourceStringReader(text)
-            val validationResult = PlantToAstahConverter.validate(plantReader)
+            val validationResult = ToAstahConverter.validate(plantReader)
             val statusMessage = when (validationResult) {
                 is ValidationOK -> "OK"
                 is EmptyError -> "Empty"
