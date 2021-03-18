@@ -7,7 +7,7 @@ import javax.swing.event.DocumentListener
 
 class PlantUMLSourceArea(private val textChangeAction: (String) -> Any) : RSyntaxTextArea() {
     init {
-        text = sampleText
+        text = stateText
         document.addDocumentListener(object : DocumentListener {
             override fun insertUpdate(e: DocumentEvent?) {
                 textChangeAction(text)
@@ -41,7 +41,12 @@ class PlantUMLSourceArea(private val textChangeAction: (String) -> Any) : RSynta
 
 private val sampleText = """
 @startuml
-class Activator
+class Activator{
+   int attr1
+   attr2: int
+   void activate()
+   deactivate():void
+}
 class ConvertAction
 class AstahToPlantConverter
 class ClassConverter
@@ -92,4 +97,17 @@ Foo1 -> Foo4 : To entity
 Foo1 -> Foo5 : To database
 Foo1 -> Foo6 : To collections
 @enduml
+""".trimIndent()
+
+private val stateText = """
+    @startuml
+    hide empty description
+    [*] --> State1
+    State1 --> [*]
+    State1 : this is a string
+    State1 : this is another string
+
+    State1 -> State2
+    State2 --> [*]
+    @enduml
 """.trimIndent()

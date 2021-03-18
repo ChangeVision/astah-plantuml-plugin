@@ -34,6 +34,7 @@ class PlantUMLView : JPanel(), IPluginExtraTabView {
             textScrollPane,
             previewPanel
         ).also { it.resizeWeight = 0.6 }
+        splitPane.isOneTouchExpandable = true
         add(splitPane, BorderLayout.CENTER)
 
         textChangeAction(sourceArea.text)

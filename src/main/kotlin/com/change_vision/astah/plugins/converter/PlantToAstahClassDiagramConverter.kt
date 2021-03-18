@@ -4,7 +4,6 @@ import com.change_vision.jude.api.inf.AstahAPI
 import com.change_vision.jude.api.inf.editor.TransactionManager
 import com.change_vision.jude.api.inf.exception.BadTransactionException
 import com.change_vision.jude.api.inf.model.IClass
-import com.change_vision.jude.api.inf.model.IDiagram
 import com.change_vision.jude.api.inf.model.INamedElement
 import net.sourceforge.plantuml.SourceStringReader
 import net.sourceforge.plantuml.classdiagram.ClassDiagram
@@ -31,7 +30,7 @@ object PlantToAstahClassDiagramConverter {
             .map { it.convertPair }.toMap()
 
         // create diagram
-        val classDiagram = createOrGetDiagram(index)
+        val classDiagram = createOrGetDiagram(index, DiagramKind.ClassDiagram)
 
         // convert presentations
         val positionMap = SVGEntityCollector.collectSvgPosition(reader, index)
@@ -39,27 +38,6 @@ object PlantToAstahClassDiagramConverter {
 
         if (classDiagram != null) {
             api.viewManager.diagramViewManager.open(classDiagram)
-        }
-    }
-
-    private fun createOrGetDiagram(index: Int): IDiagram? {
-        val diagramName = "ClassDiagram_$index"
-
-        val foundDiagramList = projectAccessor.findElements(IDiagram::class.java, diagramName)
-        return when {
-            foundDiagramList.isNotEmpty() -> {
-                foundDiagramList.first() as IDiagram
-            }
-            else -> {
-                TransactionManager.beginTransaction()
-                try {
-                    diagramEditor.createClassDiagram(projectAccessor.project, diagramName)
-                        .also { TransactionManager.endTransaction() }
-                } catch (e: BadTransactionException) {
-                    TransactionManager.abortTransaction()
-                    null
-                }
-            }
         }
     }
 

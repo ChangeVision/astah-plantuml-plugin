@@ -2,9 +2,7 @@ package com.change_vision.astah.plugins.converter
 
 import com.change_vision.jude.api.inf.AstahAPI
 import com.change_vision.jude.api.inf.editor.TransactionManager
-import com.change_vision.jude.api.inf.exception.BadTransactionException
 import com.change_vision.jude.api.inf.model.IClass
-import com.change_vision.jude.api.inf.model.IDiagram
 import com.change_vision.jude.api.inf.model.ILifeline
 import com.change_vision.jude.api.inf.model.IMessage
 import com.change_vision.jude.api.inf.presentation.ILinkPresentation
@@ -25,7 +23,7 @@ object PlantToAstahSequenceDiagramConverter {
     private val diagramEditor = projectAccessor.diagramEditorFactory.sequenceDiagramEditor
     fun convert(diagram: SequenceDiagram, reader: SourceStringReader, index: Int) {
         // create diagram
-        val sequenceDiagram = createOrGetDiagram(index)
+        val sequenceDiagram = createOrGetDiagram(index, DiagramKind.SequenceDiagram)
 
         // convert lifeline
         TransactionManager.beginTransaction()
@@ -115,27 +113,6 @@ object PlantToAstahSequenceDiagramConverter {
         TransactionManager.endTransaction()
         if (sequenceDiagram != null) {
             api.viewManager.diagramViewManager.open(sequenceDiagram)
-        }
-    }
-
-    private fun createOrGetDiagram(index: Int): IDiagram? {
-        val diagramName = "SequenceDiagram_$index"
-
-        val foundDiagramList = projectAccessor.findElements(IDiagram::class.java, diagramName)
-        return when {
-            foundDiagramList.isNotEmpty() -> {
-                foundDiagramList.first() as IDiagram
-            }
-            else -> {
-                TransactionManager.beginTransaction()
-                try {
-                    diagramEditor.createSequenceDiagram(projectAccessor.project, diagramName)
-                        .also { TransactionManager.endTransaction() }
-                } catch (e: BadTransactionException) {
-                    TransactionManager.abortTransaction()
-                    null
-                }
-            }
         }
     }
 }
