@@ -36,6 +36,7 @@ object ToAstahConverter {
                     ToAstahClassDiagramConverter.convert(diagram, reader, index)
                 }
                 is ActivityDiagram -> {
+                    ToAstahActivityDiagramConverter.convert(diagram, reader, index)
                 }
                 is StateDiagram -> {
                     ToAstahStateDiagramConverter.convert(diagram, reader, index)

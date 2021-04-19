@@ -6,7 +6,7 @@ import com.change_vision.jude.api.inf.exception.BadTransactionException
 import com.change_vision.jude.api.inf.model.IDiagram
 
 enum class DiagramKind {
-    ClassDiagram, SequenceDiagram, StateDiagram
+    ClassDiagram, SequenceDiagram, StateDiagram, ActivityDiagram
 }
 
 fun createOrGetDiagram(index: Int, diagramType: DiagramKind): IDiagram? {
@@ -26,7 +26,14 @@ fun createOrGetDiagram(index: Int, diagramType: DiagramKind): IDiagram? {
                 when (diagramType) {
                     DiagramKind.ClassDiagram -> diagramEditorFactory.classDiagramEditor.createClassDiagram(projectAccessor.project, diagramName)
                     DiagramKind.SequenceDiagram -> diagramEditorFactory.sequenceDiagramEditor.createSequenceDiagram(projectAccessor.project, diagramName)
-                    DiagramKind.StateDiagram -> diagramEditorFactory.stateMachineDiagramEditor.createStatemachineDiagram(projectAccessor.project, diagramName)
+                    DiagramKind.StateDiagram -> diagramEditorFactory.stateMachineDiagramEditor.createStatemachineDiagram(
+                        projectAccessor.project,
+                        diagramName
+                    )
+                    DiagramKind.ActivityDiagram -> diagramEditorFactory.activityDiagramEditor.createActivityDiagram(
+                        projectAccessor.project,
+                        diagramName
+                    )
                 }.also { TransactionManager.endTransaction() }
             } catch (e: BadTransactionException) {
                 TransactionManager.abortTransaction()

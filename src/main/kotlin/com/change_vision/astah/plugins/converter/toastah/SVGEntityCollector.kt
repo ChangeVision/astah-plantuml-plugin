@@ -3,6 +3,7 @@ package com.change_vision.astah.plugins.converter.toastah
 import net.sourceforge.plantuml.FileFormat
 import net.sourceforge.plantuml.FileFormatOption
 import net.sourceforge.plantuml.SourceStringReader
+import net.sourceforge.plantuml.activitydiagram.ActivityDiagram
 import net.sourceforge.plantuml.classdiagram.ClassDiagram
 import net.sourceforge.plantuml.cucadiagram.LeafType
 import net.sourceforge.plantuml.statediagram.StateDiagram
@@ -22,12 +23,16 @@ object SVGEntityCollector {
         tempSvgFile.outputStream().use { os ->
             reader.outputImage(os, index, FileFormatOption(FileFormat.SVG))
         }
-        val diagram = reader.blocks[index].diagram
-        val result = when (diagram) {
-            is ClassDiagram -> collectEntityBoundary(tempSvgFile)
+        val result = when (val diagram = reader.blocks[index].diagram) {
+            is ClassDiagram -> collectClassEntityBoundary(tempSvgFile)
             is StateDiagram -> {
                 val stateNames = diagram.leafsvalues.filter { it.leafType == LeafType.STATE }.map { it.codeGetName }
-                collectStateEntityBoundary(tempSvgFile, stateNames)
+                collectEntityBoundary(tempSvgFile, stateNames)
+            }
+            is ActivityDiagram -> {
+                val activityNames =
+                    diagram.leafsvalues.filter { it.leafType == LeafType.ACTIVITY }.map { it.codeGetName }
+                collectEntityBoundary(tempSvgFile, activityNames)
             }
             else -> emptyMap()
         }
@@ -35,7 +40,7 @@ object SVGEntityCollector {
         return result
     }
 
-    private fun collectEntityBoundary(svgFile: File): Map<String, Rectangle2D.Float> {
+    private fun collectClassEntityBoundary(svgFile: File): Map<String, Rectangle2D.Float> {
         val commentXpath = XPathFactory.newInstance().newXPath().compile("//comment()")
         val commentPattern = Pattern.compile("""MD5=\[(?<md5>\w+)\]\n(?<code>.*)""")
         val builder = DocumentBuilderFactory.newInstance().newDocumentBuilder()
@@ -63,7 +68,7 @@ object SVGEntityCollector {
         return entityBoundaryMap
     }
 
-    fun collectStateEntityBoundary(svgFile: File, stateNames: List<String>): Map<String, Rectangle2D.Float> {
+    private fun collectEntityBoundary(svgFile: File, stateNames: List<String>): Map<String, Rectangle2D.Float> {
         val doc = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(svgFile)
 
         val stateMap = stateNames.mapNotNull { state ->
@@ -74,11 +79,10 @@ object SVGEntityCollector {
             if (stateRect.length == 0) {
                 null
             } else {
-                val rect = extractRectangle(stateRect.item(0))
+                val rect = extractRectangle(stateRect.item(stateRect.length - 1))
                 Pair(state, rect)
             }
         }.toMap()
-
 
         val ellipses = XPathFactory.newInstance().newXPath()
             .compile("//ellipse[not(@fill='none')]")
@@ -94,7 +98,7 @@ object SVGEntityCollector {
                 val prevNode = ellipse.previousSibling
                 val elementName = when {
                     prevNode?.nodeName == "ellipse" -> "final"
-                    ellipse.nextSibling?.nextSibling?.nodeName == "text" -> "history"
+                    ellipse.nextSibling?.nextSibling?.let { it.nodeName == "text" && it.nodeValue == "H" }!! -> "history"
                     else -> "initial"
                 }
                 Pair(elementName, extractRectangle(ellipse))
@@ -122,13 +126,4 @@ object SVGEntityCollector {
             }
         }
     }
-
 }
-
-//fun main() {
-//    val svg = File("C:\\Users\\shint\\git\\cvlab\\plantuml-plugin\\src\\test\\resources\\svg\\state_004.svg")
-//    val states = listOf("State1", "State2", "State3", "Accumulate Enough Data", "ProcessData")
-//    SVGEntityCollector.collectStateEntityBoundary(svg, states).forEach { (name, pos) ->
-//        println("$name : ${pos.x} - ${pos.y}")
-//    }
-//}
