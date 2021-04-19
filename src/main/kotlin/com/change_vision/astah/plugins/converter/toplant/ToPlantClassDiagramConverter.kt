@@ -10,15 +10,18 @@ object ToPlantClassDiagramConverter {
             when (it) {
                 is INodePresentation -> when (val model = it.model) {
                     is IClass -> classConvert(model, sb)
-                    else -> null
+                    else -> {
+                    }
                 }
                 is ILinkPresentation -> when (val model = it.model) {
                     is IAssociation -> association(model, sb)
                     is IGeneralization -> generalization(model, sb)
                     is IDependency -> dependency(model, sb)
-                    else -> null
+                    else -> {
+                    }
                 }
-                else -> null
+                else -> {
+                }
             }
         }
     }
@@ -57,8 +60,7 @@ object ToPlantClassDiagramConverter {
 
     private fun params(params: Array<IParameter>) =
         params.map { it.name + ":" + it.type.name }.joinToString { "," }
-
-
+    
     private enum class Direction { Left, Right }
 
     private fun association(model: IAssociation, sb: StringBuilder) {
