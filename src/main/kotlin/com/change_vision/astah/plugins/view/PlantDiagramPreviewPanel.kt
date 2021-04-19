@@ -38,8 +38,7 @@ class PlantDiagramPreviewPanel : JPanel() {
                 updateScaledImage(image!!, 100)
             }
         }
-
-
+        
         override fun mouseDragged(e: MouseEvent?) {
             if (origin == null || e == null) return
             val viewPort: JViewport = SwingUtilities

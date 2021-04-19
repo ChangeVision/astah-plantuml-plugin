@@ -8,6 +8,7 @@
         <astah.version>6.7</astah.version>
         <astah.edition>all</astah.edition>
         <kotlin.version>1.4.30-RC</kotlin.version>
+        <serialization.version>1.1.0</serialization.version>
         <astahPath>C:/Program Files/astah-professional</astahPath>
     </properties>
     <modelVersion>4.0.0</modelVersion>
@@ -226,7 +227,17 @@
                 </executions>
                 <configuration>
                     <jvmTarget>1.8</jvmTarget>
+                    <compilerPlugins>
+                        <plugin>kotlinx-serialization</plugin>
+                    </compilerPlugins>
                 </configuration>
+                <dependencies>
+                    <dependency>
+                        <groupId>org.jetbrains.kotlin</groupId>
+                        <artifactId>kotlin-maven-serialization</artifactId>
+                        <version>${kotlin.version}</version>
+                    </dependency>
+                </dependencies>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -341,7 +352,7 @@
             <artifactId>astah-api</artifactId>
             <version>${astah.version}</version>
             <scope>system</scope>
-            <systemPath>${astahPath}/astah-api.jar</systemPath>
+            <systemPath>${emb.astahPath}/astah-api.jar</systemPath>
         </dependency>
         <dependency>
             <groupId>org.osgi</groupId>
@@ -401,6 +412,11 @@
             <groupId>com.fifesoft</groupId>
             <artifactId>rsyntaxtextarea</artifactId>
             <version>3.1.2</version>
+        </dependency>
+        <dependency>
+            <groupId>org.jetbrains.kotlinx</groupId>
+            <artifactId>kotlinx-serialization-cbor</artifactId>
+            <version>${serialization.version}</version>
         </dependency>
     </dependencies>
 </project>
