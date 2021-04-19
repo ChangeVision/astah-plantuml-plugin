@@ -352,7 +352,7 @@
             <artifactId>astah-api</artifactId>
             <version>${astah.version}</version>
             <scope>system</scope>
-            <systemPath>${astahPath}/astah-api.jar</systemPath>
+            <systemPath>${emb.astahPath}/astah-api.jar</systemPath>
         </dependency>
         <dependency>
             <groupId>org.osgi</groupId>

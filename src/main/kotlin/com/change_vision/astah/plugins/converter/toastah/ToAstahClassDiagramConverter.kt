@@ -13,7 +13,6 @@ import net.sourceforge.plantuml.cucadiagram.ILeaf
 import net.sourceforge.plantuml.cucadiagram.Link
 import java.awt.geom.Point2D
 import java.awt.geom.Rectangle2D
-import javax.swing.JMenu
 
 
 object ToAstahClassDiagramConverter {
@@ -41,8 +40,6 @@ object ToAstahClassDiagramConverter {
 
         if (classDiagram != null) {
             api.viewManager.diagramViewManager.open(classDiagram)
-            val frame = api.viewManager.mainFrame
-            (api.viewManager.mainFrame.rootPane.menuBar.getMenu(3).getItem(4) as JMenu).getItem(0)
         }
     }
 
