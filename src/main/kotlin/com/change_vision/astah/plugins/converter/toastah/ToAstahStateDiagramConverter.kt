@@ -20,7 +20,6 @@ object ToAstahStateDiagramConverter {
     private val projectAccessor = api.projectAccessor
     private val diagramEditor = projectAccessor.diagramEditorFactory.stateMachineDiagramEditor
     fun convert(diagram: StateDiagram, reader: SourceStringReader, index: Int) {
-        // delete diagram if exists //TODO
         projectAccessor.findElements(IStateMachineDiagram::class.java, "SequenceDiagram_$index").let {
             if (it.isNotEmpty()) {
                 TransactionManager.beginTransaction()
@@ -73,7 +72,7 @@ object ToAstahStateDiagramConverter {
                     else -> presentationMap[link.entity2.codeGetName]
                 }
                 val transitionLabelRegex =
-                    Pattern.compile("""(<?event>\w+)(?:\[(<?guard>\w)\])?(?:/(<?action>\w+))?""")
+                    Pattern.compile("""(<?event>\w+)(?:\[(<?guard>\w)])?(?:/(<?action>\w+))?""")
                 diagramEditor.createTransition(source, target)
                     .also { transition ->
                         val label = link.label.toString()

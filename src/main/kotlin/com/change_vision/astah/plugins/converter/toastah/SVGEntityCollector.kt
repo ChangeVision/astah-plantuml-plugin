@@ -42,7 +42,7 @@ object SVGEntityCollector {
 
     private fun collectClassEntityBoundary(svgFile: File): Map<String, Rectangle2D.Float> {
         val commentXpath = XPathFactory.newInstance().newXPath().compile("//comment()")
-        val commentPattern = Pattern.compile("""MD5=\[(?<md5>\w+)\]\n(?<code>.*)""")
+        val commentPattern = Pattern.compile("""MD5=\[(?<md5>\w+)]\n(?<code>.*)""")
         val builder = DocumentBuilderFactory.newInstance().newDocumentBuilder()
         val doc = builder.parse(svgFile)
         val comments = commentXpath.evaluate(doc, XPathConstants.NODESET) as NodeList

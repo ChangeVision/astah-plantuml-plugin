@@ -8,7 +8,6 @@ import com.change_vision.jude.api.inf.model.IClass
 import com.change_vision.jude.api.inf.model.ILifeline
 import com.change_vision.jude.api.inf.model.IMessage
 import com.change_vision.jude.api.inf.presentation.ILinkPresentation
-import net.sourceforge.plantuml.SourceStringReader
 import net.sourceforge.plantuml.sequencediagram.Message
 import net.sourceforge.plantuml.sequencediagram.ParticipantType
 import net.sourceforge.plantuml.sequencediagram.SequenceDiagram
@@ -23,7 +22,7 @@ object ToAstahSequenceDiagramConverter {
     private val projectAccessor = api.projectAccessor
     private val modelEditor = projectAccessor.modelEditorFactory.basicModelEditor
     private val diagramEditor = projectAccessor.diagramEditorFactory.sequenceDiagramEditor
-    fun convert(diagram: SequenceDiagram, reader: SourceStringReader, index: Int) {
+    fun convert(diagram: SequenceDiagram, index: Int) {
         // create diagram
         val sequenceDiagram = createOrGetDiagram(index, DiagramKind.SequenceDiagram)
 
@@ -31,7 +30,7 @@ object ToAstahSequenceDiagramConverter {
         TransactionManager.beginTransaction()
         try {
             var prevX = 0.0
-            val participantMap = diagram.participants().mapIndexedNotNull { i, participant ->
+            val participantMap = diagram.participants().mapNotNull { participant ->
                 val editorFactory = projectAccessor.modelEditorFactory
                 val project = projectAccessor.project
                 val baseClass: IClass? = when (participant.type) {

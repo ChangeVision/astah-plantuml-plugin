@@ -72,7 +72,7 @@ class PlantDiagramPreviewPanel : JPanel() {
         add(scrollPane)
     }
 
-    private val observer = ImageObserver { img, infoflags, x, y, width, height ->
+    private val observer = ImageObserver { _, _, x, y, _, _ ->
         plantImageLabel.preferredSize = Dimension(x, y)
         true
     }

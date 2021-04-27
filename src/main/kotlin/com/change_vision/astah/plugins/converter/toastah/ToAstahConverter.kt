@@ -27,9 +27,9 @@ object ToAstahConverter {
 
     fun convert(text: String) {
         val reader = SourceStringReader(text)
-        reader.blocks.map { it.diagram }.forEachIndexed { index, diagram ->
+        reader.blocks.map { it.diagram }.forEachIndexed { index: Int, diagram ->
             when (diagram) {
-                is SequenceDiagram -> ToAstahSequenceDiagramConverter.convert(diagram, reader, index)
+                is SequenceDiagram -> ToAstahSequenceDiagramConverter.convert(diagram, index)
                 is DescriptionDiagram -> { // UseCase, Component, Deployment
                 }
                 is ClassDiagram -> { // Class, Object

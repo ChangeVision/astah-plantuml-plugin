@@ -9,7 +9,7 @@ object ToPlantStateDiagramConverter {
         val rootVertexes =
             diagram.presentations
                 .filterIsInstance<INodePresentation>().map { it.model }
-                .filterIsInstance<IVertex>().filter { !(it.container is IVertex) }
+                .filterIsInstance<IVertex>().filter { it.container !is IVertex }
         rootVertexes.forEach { vertexConvert(it, sb, "") }
         val transitions = diagram.presentations
             .filterIsInstance<ILinkPresentation>().map { it.model }
@@ -29,7 +29,7 @@ object ToPlantStateDiagramConverter {
                     vertex.subvertexes.isEmpty() -> sb.appendLine("${indent}state ${vertex.name}")
                     else -> {
                         sb.appendLine("${indent}state ${vertex.name} {")
-                        vertex.subvertexes.forEach { vertexConvert(it, sb, indent + "  ") }
+                        vertex.subvertexes.forEach { vertexConvert(it, sb, "$indent  ") }
                         sb.appendLine("${indent}}")
                     }
                 }

@@ -85,12 +85,12 @@ object ClassConverter {
     private const val abstractOrStatic = """(?<abstract>abstract)?(?<static>static)?"""
     private val fieldPattern1 = Pattern.compile("""$visibility\s*(?<type>\w+)?\s+(?<name>\w+)""")
     private val fieldPattern2 = Pattern.compile("""$visibility\s*(?<name>\w+)\s*(?::\s*(?<type>\w+))?""")
-    private val fieldPattern3 = Pattern.compile("""\{field\} (?:<text>.+)""")
+    private val fieldPattern3 = Pattern.compile("""\{field\}\s*(?<text>.+)""")
     private val operatorPattern1 =
         Pattern.compile("""$abstractOrStatic\s*(?<visibility>[-^#+])?(?<optype>\w+)\s+(?<opname>\w+)\(((?<name>\w+)(?::(?<type>\w+))?)?(,$parameter)*\)""")
     private val operatorPattern2 =
         Pattern.compile("""(?<visibility>[-^#+])?(?<opname>\w+)\(((?<name>\w+)(?::(?<type>\w+))?)?(,$parameter)*\)(?::(?<optype>\w+))?""")
-    private val operatorPattern3 = Pattern.compile("""\{method\} (?<text>.+)""")
+    private val operatorPattern3 = Pattern.compile("""\{method\}\s*(?<text>.+)""")
 
     private fun createClassBody(aClass: IClass, bodyTexts: List<CharSequence>) {
         bodyTexts.forEach { text ->
@@ -143,8 +143,8 @@ object ClassConverter {
                     }
                 }
                 operatorMatcher3.matches() -> {
-                    val text = operatorMatcher3.group("text")
-                    modelEditor.createOperation(aClass, text, "void")
+                    val comment = operatorMatcher3.group("text")
+                    modelEditor.createOperation(aClass, comment, "void")
                 }
                 else -> {
                     modelEditor.createAttribute(aClass, text.toString(), "int")
