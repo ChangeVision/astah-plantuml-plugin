@@ -72,9 +72,10 @@ object ToAstahSequenceDiagramConverter {
             var prevMessage: ILinkPresentation? = null // TODO
             diagram.events().forEachIndexed { i, event ->
                 if (event is Message) {
+                    val number = if (event.messageNumber.isNullOrBlank()) "" else event.messageNumber
                     val label = when {
-                        event.label.isWhite -> event.messageNumber + "message()"
-                        event.label.toString().isBlank() -> event.messageNumber + "message()"
+                        event.label.isWhite -> number + "message"
+                        event.label.toString().isBlank() -> number + "message"
                         else -> event.label.toString().replace("[\\[\\]]".toRegex(), "")
                     }
 
