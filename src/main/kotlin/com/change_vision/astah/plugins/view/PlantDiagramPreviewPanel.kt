@@ -50,14 +50,17 @@ class PlantDiagramPreviewPanel : JPanel() {
         }
 
         override fun mouseWheelMoved(e: MouseWheelEvent?) {
-            val rotation = e?.wheelRotation ?: return
-            zoom += rotation * 10
-            zoom = when {
-                zoom < minZoom -> minZoom
-                zoom > maxZoom -> maxZoom
-                else -> zoom
+            if (e == null) return
+            if (e.isControlDown) {
+                val rotation = e.wheelRotation
+                zoom -= rotation * 10
+                zoom = when {
+                    zoom < minZoom -> minZoom
+                    zoom > maxZoom -> maxZoom
+                    else -> zoom
+                }
+                updateScaledImage(image!!, zoom)
             }
-            updateScaledImage(image!!, zoom)
 
             super.mouseWheelMoved(e)
         }

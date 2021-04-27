@@ -25,7 +25,7 @@ class PlantUMLSourceArea(private val textChangeAction: (String) -> Any) : RSynta
         var fontSize = font.size
         addMouseWheelListener { e ->
             if (e.isControlDown) {
-                fontSize += e.wheelRotation
+                fontSize -= e.wheelRotation
                 fontSize = when {
                     fontSize > 50 -> 50
                     fontSize < 8 -> 8
@@ -39,40 +39,12 @@ class PlantUMLSourceArea(private val textChangeAction: (String) -> Any) : RSynta
     }
 }
 
-val sampleText = """
-@startuml
-class Activator{
-   int attr1
-   attr2: int
-   void activate()
-   deactivate():void
-}
-class ConvertAction
-class AstahToPlantConverter
-class ClassConverter
-class ConvertMode
-class ConvertResult
-class LinkConverter
-class PlantToAstahClassDiagramConverter
-class PlantToAstahConverter
-class SVGEntityCollector
-class ValidationResult
-class ButtonPanel
-class PlantDiagramPreviewPanel
-class PlantUMLSourceArea
-class PlantUMLView
-PlantUMLView *-- ConvertMode
-PlantUMLView *-- ButtonPanel
-PlantUMLView *-- PlantUMLSourceArea
-PlantUMLView *-- PlantDiagramPreviewPanel
-ButtonPanel *-- ConvertAction
-ConvertAction ..> AstahToPlantConverter
-ConvertAction ..> PlantToAstahConverter
-PlantToAstahConverter *-- PlantToAstahClassDiagramConverter
-PlantToAstahConverter *-- SVGEntityCollector
-PlantToAstahClassDiagramConverter *-- ClassConverter
-PlantToAstahClassDiagramConverter *-- LinkConverter
-PlantToAstahClassDiagramConverter --> ConvertResult
-PlantToAstahClassDiagramConverter --> ValidationResult
-@enduml
-""".trimIndent()
+val sampleText =
+    """
+        @startuml
+        class SampleClass {
+          int a
+        }
+        @enduml
+    """.trimIndent()
+
