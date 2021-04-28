@@ -15,13 +15,23 @@ import javax.imageio.ImageIO
 import javax.swing.*
 import javax.swing.event.DocumentEvent
 import javax.swing.event.DocumentListener
+import javax.swing.text.JTextComponent
+
 
 class PlantUMLSourcePanel(private val previewPanel: PlantDiagramPreviewPanel) : JPanel() {
-    private val sourceArea = PlantUMLSourceArea { textChangeAction(it) }
-    private val buttonPanel = ButtonPanel(sourceArea)
     private val statusBar = StatusBar()
 
     init {
+        // 複数のクラスローダでRTextAreaを利用する場合のバグ回避。
+        // https://github.com/bobbylight/RSyntaxTextArea/issues/269
+        JTextComponent.removeKeymap("RTextAreaKeymap")
+        val sourceArea = PlantUMLSourceArea { textChangeAction(it) }
+        UIManager.put("RSyntaxTextAreaUI.actionMap", null)
+        UIManager.put("RSyntaxTextAreaUI.inputMap", null)
+        UIManager.put("RTextAreaUI.actionMap", null)
+        UIManager.put("RTextAreaUI.inputMap", null)
+
+        val buttonPanel = ButtonPanel(sourceArea)
         layout = BorderLayout()
         add(buttonPanel, BorderLayout.NORTH)
         val textScrollPane = RTextScrollPane(sourceArea).also {
