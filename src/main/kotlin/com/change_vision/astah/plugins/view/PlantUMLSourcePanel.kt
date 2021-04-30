@@ -9,12 +9,16 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.swing.Swing
 import net.sourceforge.plantuml.SourceStringReader
 import org.fife.ui.rsyntaxtextarea.RSyntaxTextArea
+import org.fife.ui.rtextarea.RTextAreaEditorKit
 import org.fife.ui.rtextarea.RTextScrollPane
 import java.awt.*
+import java.awt.event.InputEvent
+import java.awt.event.KeyEvent
 import javax.imageio.ImageIO
 import javax.swing.*
 import javax.swing.event.DocumentEvent
 import javax.swing.event.DocumentListener
+import javax.swing.text.DefaultEditorKit
 import javax.swing.text.JTextComponent
 
 
@@ -129,10 +133,82 @@ private class PlantUMLSourceArea(private val textChangeListener: (String) -> Any
                 parent.dispatchEvent(e)
             }
         }
+        if (isMacOSX()) {
+            addMacDefaultKeybindings()
+        }
+    }
+
+    private fun isMacOSX() =
+        System.getProperty("os.name").toLowerCase().startsWith("mac os x")
+
+    private fun addMacDefaultKeybindings() {
+        //move
+        inputMap.put(
+            KeyStroke.getKeyStroke(KeyEvent.VK_F, InputEvent.CTRL_DOWN_MASK),
+            DefaultEditorKit.forwardAction
+        )
+        inputMap.put(
+            KeyStroke.getKeyStroke(KeyEvent.VK_B, InputEvent.CTRL_DOWN_MASK),
+            DefaultEditorKit.backwardAction
+        )
+        inputMap.put(
+            KeyStroke.getKeyStroke(KeyEvent.VK_P, InputEvent.CTRL_DOWN_MASK),
+            DefaultEditorKit.upAction
+        )
+        inputMap.put(
+            KeyStroke.getKeyStroke(KeyEvent.VK_N, InputEvent.CTRL_DOWN_MASK),
+            DefaultEditorKit.downAction
+        )
+        inputMap.put(
+            KeyStroke.getKeyStroke(KeyEvent.VK_A, InputEvent.CTRL_DOWN_MASK),
+            DefaultEditorKit.beginLineAction
+        )
+        inputMap.put(
+            KeyStroke.getKeyStroke(KeyEvent.VK_E, InputEvent.CTRL_DOWN_MASK),
+            DefaultEditorKit.endLineAction
+        )
+        inputMap.put(
+            KeyStroke.getKeyStroke(KeyEvent.VK_Y, InputEvent.CTRL_DOWN_MASK),
+            RTextAreaEditorKit.pasteAction
+        )
+        inputMap.put(
+            KeyStroke.getKeyStroke(KeyEvent.VK_D, InputEvent.CTRL_DOWN_MASK),
+            RTextAreaEditorKit.deleteNextCharAction
+        )
+        inputMap.put(
+            KeyStroke.getKeyStroke(KeyEvent.VK_H, InputEvent.CTRL_DOWN_MASK),
+            RTextAreaEditorKit.deletePrevCharAction
+        )
+
+        //shift + move ---> select
+        inputMap.put(
+            KeyStroke.getKeyStroke(KeyEvent.VK_F, InputEvent.CTRL_DOWN_MASK or InputEvent.SHIFT_DOWN_MASK),
+            DefaultEditorKit.selectionForwardAction
+        )
+        inputMap.put(
+            KeyStroke.getKeyStroke(KeyEvent.VK_B, InputEvent.CTRL_DOWN_MASK or InputEvent.SHIFT_DOWN_MASK),
+            DefaultEditorKit.selectionBackwardAction
+        )
+        inputMap.put(
+            KeyStroke.getKeyStroke(KeyEvent.VK_P, InputEvent.CTRL_DOWN_MASK or InputEvent.SHIFT_DOWN_MASK),
+            DefaultEditorKit.selectionUpAction
+        )
+        inputMap.put(
+            KeyStroke.getKeyStroke(KeyEvent.VK_N, InputEvent.CTRL_DOWN_MASK or InputEvent.SHIFT_DOWN_MASK),
+            DefaultEditorKit.selectionDownAction
+        )
+        inputMap.put(
+            KeyStroke.getKeyStroke(KeyEvent.VK_A, InputEvent.CTRL_DOWN_MASK or InputEvent.SHIFT_DOWN_MASK),
+            DefaultEditorKit.selectionBeginLineAction
+        )
+        inputMap.put(
+            KeyStroke.getKeyStroke(KeyEvent.VK_E, InputEvent.CTRL_DOWN_MASK or InputEvent.SHIFT_DOWN_MASK),
+            DefaultEditorKit.selectionEndLineAction
+        )
     }
 }
 
-private class StatusBar() : JPanel() {
+private class StatusBar : JPanel() {
     private val statusText = JLabel()
 
     init {
