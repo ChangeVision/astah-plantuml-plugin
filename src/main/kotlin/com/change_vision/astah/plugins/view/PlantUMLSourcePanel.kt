@@ -222,7 +222,7 @@ private class StatusBar : JPanel() {
                 "OK" -> Color(20, 200, 50)
                 else -> Color.RED
             }
-        statusText.text = message
+        statusText.text = "syntax : $message"
     }
 }
 
