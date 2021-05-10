@@ -70,9 +70,11 @@
     - action : entry, do, exit. trigger, guard, action
     - 状態のネスト
     - フォーク、ジョイン、デシジョン、マージ
+    - astahからplantへ生成時の順序が不定
 - アクティビティ図
     - オブジェクトノード
     - パーティション
+    - astahからplantへ生成時の順序が不定
 
 ## License
 
