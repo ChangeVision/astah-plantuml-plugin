@@ -20,7 +20,7 @@
 ## 利用方法
 
 拡張ビューにPlantUML Viewというタブが追加されます。
-![snapshot](https://raw.githubusercontent.com/ChangeVision/astah-plantuml-plugin/images/img/snapshot.png)
+![snapshot](https://github.com/ChangeVision/astah-plantuml-plugin/blob/images/img/snapshot.png?raw=true)
 左側がPlantUMLのエディタ、右側がプレビュー、「▲toAstah」ボタンでPlantUMLからastahに変換、「▼toPlant」ボタンでastahからPlantUMLに変換できます。
 エディタの内容は常時評価されプレビューに表示されます。また下部にシンタックスチェックの結果が表示されています。 エディタもプレビューもCtrl+マウスホイールで拡大・縮小できます。
 
