@@ -33,6 +33,10 @@ PlantUMLからastahに変換する際、初回は新しく図が作成されま�
 
 astahからPlantUMLへの変換はすべて再生成され、マージは行いません。
 
+#### 競合
+[スクリプトエディタプラグイン](https://astah.change-vision.com/ja/feature/script-plugin.html)と同時に使用した場合、テキストが入力できなくなる不具合があります。
+（RSyntaxTextAreaを用いているプラグイン同士は同様の不具合が発生する可能性があります。）
+
 ## 対応状況
 
 ### 対応項目
@@ -53,7 +57,8 @@ astahからPlantUMLへの変換はすべて再生成され、マージは行い�
   - 分類子：participant, actor, boundary, control, entity
     (database, collections, queueはparticipantとして表示)
   - メッセージ：同期、非同期、リターン。メッセージラベル
-  - 分類子のクラス読み込み -ステートマシン図
+  - 分類子のクラス読み込み 
+- ステートマシン図
   - 初期状態、終了状態、状態
   - 遷移
 - アクティビティ図
