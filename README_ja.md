@@ -6,10 +6,10 @@
 
 ## 対象環境
 
-- Astah* Professional 6.7
+- astah* professional 6.7以上
 - PlantUML動作環境
   (WindowsはPlantUMLのライブラリにGraphvizも同梱されるようになったためPlantUML及びGraphvizインストールは不要です。 うまく動作しない場合は、 PlantUMLの[インストール]()
-  を試してみてください。）
+  を試してください。）
 
 ## インストール方法
 
@@ -41,8 +41,8 @@ astahからPlantUMLへの変換はすべて再生成され、マージは行い�
 
 ### 対応項目
 
-- PlantUML → Astah変換
-- Astah → PlantUML変換
+- PlantUML → astah変換
+- astah → PlantUML変換
 - PlantUML エディタ
   - 逐次バリデーション、エラー表示
   - 拡大、縮小
