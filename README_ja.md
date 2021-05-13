@@ -6,7 +6,7 @@
 
 ## 対象環境
 
-- astah* professional 6.7以上
+- [astah* professional](https://astah.change-vision.com/ja/product/astah-professional.html) 6.7以上
 - PlantUML動作環境
   (WindowsはPlantUMLのライブラリにGraphvizも同梱されるようになったためPlantUML及びGraphvizインストールは不要です。 うまく動作しない場合は、 PlantUMLの[インストール](https://plantuml.com/starting)を試してください。）
 
@@ -14,7 +14,7 @@
 
 1. [Release](https://github.com/ChangeVision/astah-plantuml-plugin/releases) から最新のjarファイルをダウンロードする。
 2. astahを起動し、jarファイルをDrag & Dropする。
-3. astahを再起動し、新規プロジェクトを作成する。拡張ビューに「PlantUML View」が表示されているか確認する。
+3. astahを再起動し、新規プロジェクトを作成する。拡張ビュー(astahウィンドウ右下のペイン)に「PlantUML View」が表示されているか確認する。
 
 ## 利用方法
 
