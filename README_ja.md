@@ -8,8 +8,7 @@
 
 - astah* professional 6.7以上
 - PlantUML動作環境
-  (WindowsはPlantUMLのライブラリにGraphvizも同梱されるようになったためPlantUML及びGraphvizインストールは不要です。 うまく動作しない場合は、 PlantUMLの[インストール]()
-  を試してください。）
+  (WindowsはPlantUMLのライブラリにGraphvizも同梱されるようになったためPlantUML及びGraphvizインストールは不要です。 うまく動作しない場合は、 PlantUMLの[インストール](https://plantuml.com/starting)を試してください。）
 
 ## インストール方法
 
