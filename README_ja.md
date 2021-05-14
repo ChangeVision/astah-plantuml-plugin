@@ -7,8 +7,9 @@
 ## 対象環境
 
 - [astah* professional](https://astah.change-vision.com/ja/product/astah-professional.html) 6.7以上
-- PlantUML動作環境
-  (WindowsはPlantUMLのライブラリにGraphvizも同梱されるようになったためPlantUML及びGraphvizインストールは不要です。 うまく動作しない場合は、 PlantUMLの[インストール](https://plantuml.com/starting)を試してください。）
+- [PlantUML動作環境](https://plantuml.com/starting)
+   - Windowsは、PlantUMLのライブラリにGraphvizも同梱されるようになったためPlantUML及びGraphvizインストールは不要です。 うまく動作しない場合は、 PlantUMLの[インストール](https://plantuml.com/starting)を試してください。
+   - Windows以外の方は、クラス図、ステートマシン図の変換には、[Graphviz](https://plantuml.com/graphviz-dot)のインストールが必要です。
 
 ## インストール方法
 
