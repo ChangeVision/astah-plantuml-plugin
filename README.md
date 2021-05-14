@@ -13,7 +13,7 @@ This Plugin allows you to convert [PlantUML diagrams](https://plantuml.com/) int
 1. Download the latest version of .jar file from [Release](https://github.com/ChangeVision/astah-plantuml-plugin/releases)
 2. Launch Astah and drag the plantuml-plugin-x.x.x.jar file onto Astah's window
 3. Restart Astah and go to [File] - [New].  If you see [PlantUML view] tab on the right-bottom pane, that means installation is complete.
-4. 
+ 
    <img src="https://github.com/ChangeVision/astah-plantuml-plugin/blob/images/img/PlantUML-plugin-for-Astah.png?raw=true" width="600">
    
 ## How to use
