@@ -77,7 +77,7 @@ Currently, following models won't be converted. This may change in the future up
     - Muptiplicity and other additional information to assocciations asides the association label
 - Sequence Diagram
     - Order of Messages (Only when sending to PlantUML from Astah)
-    - Groupi ：alt/else, opt, loop, par, break, critical, group
+    - Grouping ：alt/else, opt, loop, par, break, critical, group
     - Activation
 - Statemachine Diagram
     - action : entry, do, exit. trigger, guard, action
