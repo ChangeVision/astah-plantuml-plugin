@@ -1,6 +1,8 @@
 # Astah PlantUML Plugin
 
-This Plugin allows you to convert [PlantUML diagrams](https://plantuml.com/) into [Astah](https://astah.net/products/astah-professional/) and vice versa.
+This Plugin allows you to convert [PlantUML diagrams](https://plantuml.com/) into [Astah](https://astah.net/products/astah-professional/) which allows you to:
+- import PlantUML diagrams to Astah Professional and
+- export Astah Diagrams to PlantUML
 
 ## Requirements
 
