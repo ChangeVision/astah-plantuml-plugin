@@ -5,7 +5,7 @@
         <bundle.symbolicName>com.change_vision.astah.plugins.plantuml-plugin</bundle.symbolicName>
         <bundle.namespace>com.change_vision.astah.plugins</bundle.namespace>
         <plugin.install>true</plugin.install>
-        <astah.version>6.7</astah.version>
+        <astah.version>8.0</astah.version>
         <astah.edition>all</astah.edition>
         <kotlin.version>1.4.31</kotlin.version>
         <serialization.version>1.1.0</serialization.version>
