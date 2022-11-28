@@ -133,6 +133,8 @@ private class PlantUMLSourceArea(private val textChangeListener: (String) -> Any
                 parent.dispatchEvent(e)
             }
         }
+        setForeground(UIManager.getColor("TextArea.foresground"));
+        setBackground(UIManager.getColor("TextArea.background"));
         if (isMacOSX()) {
             addMacDefaultKeybindings()
         }
@@ -219,8 +221,8 @@ private class StatusBar : JPanel() {
     fun setMessage(message: String) {
         statusText.foreground =
             when (message) {
-                "OK" -> Color(20, 200, 50)
-                else -> Color.RED
+                "OK" -> UIManager.getColor("Label.foreground")
+                else -> Color.RED.brighter()
             }
         statusText.text = "syntax : $message"
     }
