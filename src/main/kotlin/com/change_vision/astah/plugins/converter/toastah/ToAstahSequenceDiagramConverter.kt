@@ -91,6 +91,7 @@ object ToAstahSequenceDiagramConverter {
             // convert combined fragments
             val groupingDeque : ArrayDeque<GroupingStart> = ArrayDeque()
             var groupingOffset = 0.0
+            var groupingMessageOffset = 0.0
             val elseDeque : ArrayDeque<GroupingLeaf> = ArrayDeque()
             val operandMessageMap : HashMap<Int, Int> = HashMap()
             var operandIndex = 0
@@ -107,9 +108,7 @@ object ToAstahSequenceDiagramConverter {
                             var groupIndex: Int = diagram.events().indexOf(groupingStart) + 1
 
                             var x = 0.0
-                            var y = 0.0
                             var width = 0.0
-                            var height = 100.0
                             var messageCount = 0
                             val lifelines: ArrayList<INodePresentation> = ArrayList()
                             var isLeft = false
@@ -133,7 +132,7 @@ object ToAstahSequenceDiagramConverter {
                                     }
                                     messageCount++
                                 } else if (innerFragmentEvent is MessageExo) {
-                                    var lifeline: INodePresentation? = participantMap[innerFragmentEvent.participant]
+                                    val lifeline: INodePresentation? = participantMap[innerFragmentEvent.participant]
                                     if (lifeline != null && !lifelines.contains(lifeline)) {
                                         lifelines.add(lifeline)
                                     }
@@ -177,7 +176,7 @@ object ToAstahSequenceDiagramConverter {
                                     }
                                 }
                             }
-                            y = INIT_Y + Y_SPAN * (firstMessageIndex + 1.0) - 20
+                            val y = INIT_Y + Y_SPAN * (firstMessageIndex + 1.0) - 20
                             var mostLeftLifeline : INodePresentation? = null
                             var mostRightLifeline : INodePresentation? = null
                             lifelines.forEach { lifeline ->
@@ -226,11 +225,10 @@ object ToAstahSequenceDiagramConverter {
                             }
                             val point2D: Point2D = Point2D.Double(x + groupingOffset, y)
                             width -= groupingOffset * 2
-                            height = Y_SPAN * (messageCount - 1) + 40
+                            val height = Y_SPAN * (messageCount - 1) + 40
                             val fragmentPresentation : INodePresentation = diagramEditor.createCombinedFragment(comment, title, point2D, width, height)
                             if (elseDeque.isNotEmpty()) {
                                 val model : IElement = fragmentPresentation.model
-                                height = 0.0
                                 if (model is ICombinedFragment) {
                                     // 2個目以降のオペランドの高さを設定していく
                                     elseDeque.forEach { groupingElse ->
@@ -293,7 +291,6 @@ object ToAstahSequenceDiagramConverter {
                                         elseDeque.remove(processedItem)
                                     }
                                 }
-//                                fragmentPresentation.height = height + 10
                             }
                             // 次の処理のためにリセット
 //                            elseDeque.clear()
@@ -311,7 +308,7 @@ object ToAstahSequenceDiagramConverter {
             val messages : ArrayDeque<Message> = ArrayDeque()
             val messageMap : MutableMap<Message, ILinkPresentation> = mutableMapOf()
             var messageCount = 0
-            diagram.events().forEachIndexed { i, event ->
+            diagram.events().forEach { event ->
                 if (event is Message) {
                     val number = if (event.messageNumber.isNullOrBlank()) "" else event.messageNumber
                     val label = when {
