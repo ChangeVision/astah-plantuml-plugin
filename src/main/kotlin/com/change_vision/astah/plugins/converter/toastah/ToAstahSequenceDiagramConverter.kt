@@ -324,8 +324,17 @@ object ToAstahSequenceDiagramConverter {
 
                     val messagePresentation =
                         when {
-                            event.arrowConfiguration.isDotted && prevMessage != null ->
-                                diagramEditor.createReturnMessage(label, prevMessage)
+                            event.arrowConfiguration.isDotted
+                                    && prevMessage != null
+                                    && !(prevMessage!!.model as IMessage).isAsynchronous ->
+                                        diagramEditor.createReturnMessage(label, prevMessage)
+
+                            event.arrowConfiguration.isDotted && prevMessage != null -> diagramEditor.createMessage(
+                                label,
+                                participantMap[event.participant1],
+                                participantMap[event.participant2],
+                                INIT_Y + Y_SPAN * (messageCount + 1)
+                            )
 
                             event.isCreate -> diagramEditor.createCreateMessage(
                                 label,
@@ -348,8 +357,14 @@ object ToAstahSequenceDiagramConverter {
                             )
                         }
                     when {
-                        event.arrowConfiguration.isAsync1 || event.arrowConfiguration.isAsync2 -> (messagePresentation.model as IMessage).isAsynchronous =
-                            true
+//                        event.arrowConfiguration.isAsync1 || event.arrowConfiguration.isAsync2 -> (messagePresentation.model as IMessage).isAsynchronous =
+//                            true
+                        event.arrowConfiguration.isAsync -> {
+                            val message = messagePresentation.model as IMessage
+                            if (!message.isReturnMessage) {
+                                message.isAsynchronous = true
+                            }
+                        }
                     }
 
                     prevMessage = messagePresentation
