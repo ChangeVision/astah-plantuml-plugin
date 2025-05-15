@@ -4,11 +4,7 @@ import com.change_vision.astah.plugins.converter.toplant.DiagramKind
 import com.change_vision.astah.plugins.converter.toplant.createOrGetDiagram
 import com.change_vision.jude.api.inf.AstahAPI
 import com.change_vision.jude.api.inf.editor.TransactionManager
-import com.change_vision.jude.api.inf.model.IClass
-import com.change_vision.jude.api.inf.model.ICombinedFragment
-import com.change_vision.jude.api.inf.model.IElement
-import com.change_vision.jude.api.inf.model.ILifeline
-import com.change_vision.jude.api.inf.model.IMessage
+import com.change_vision.jude.api.inf.model.*
 import com.change_vision.jude.api.inf.presentation.ILinkPresentation
 import com.change_vision.jude.api.inf.presentation.INodePresentation
 import com.change_vision.jude.api.inf.presentation.PresentationPropertyUtil
@@ -36,31 +32,37 @@ object ToAstahSequenceDiagramConverter {
             val participantMap = diagram.participants().mapNotNull { participant ->
                 val editorFactory = projectAccessor.modelEditorFactory
                 val project = projectAccessor.project
-                val baseClass: IClass? = when (participant.type) {
-                    ParticipantType.ACTOR -> editorFactory.useCaseModelEditor.createActor(
-                        project,
-                        participant.code
-                    )
+                val elements = projectAccessor.findElements(IClass::class.java, participant.code).filterIsInstance<IClass>()
+                var baseClass: IClass? = null
+                if (elements.isEmpty()) {
+                    baseClass = when (participant.type) {
+                        ParticipantType.ACTOR -> editorFactory.useCaseModelEditor.createActor(
+                            project,
+                            participant.code
+                        )
 
-                    ParticipantType.BOUNDARY -> editorFactory.basicModelEditor.createClass(
-                        project,
-                        participant.code
-                    ).also { it.addStereotype("boundary") }
+                        ParticipantType.BOUNDARY -> editorFactory.basicModelEditor.createClass(
+                            project,
+                            participant.code
+                        ).also { it.addStereotype("boundary") }
 
-                    ParticipantType.ENTITY -> editorFactory.basicModelEditor.createClass(
-                        project,
-                        participant.code
-                    ).also { it.addStereotype("entity") }
+                        ParticipantType.ENTITY -> editorFactory.basicModelEditor.createClass(
+                            project,
+                            participant.code
+                        ).also { it.addStereotype("entity") }
 
-                    ParticipantType.CONTROL -> editorFactory.basicModelEditor.createClass(
-                        project,
-                        participant.code
-                    ).also { it.addStereotype("control") }
+                        ParticipantType.CONTROL -> editorFactory.basicModelEditor.createClass(
+                            project,
+                            participant.code
+                        ).also { it.addStereotype("control") }
 
-                    else -> editorFactory.basicModelEditor.createClass(
-                        project,
-                        participant.code
-                    )
+                        else -> editorFactory.basicModelEditor.createClass(
+                            project,
+                            participant.code
+                        )
+                    }
+                } else {
+                    baseClass = elements.first()
                 }
                 if (baseClass == null) {
                     val lifeline = diagramEditor.createLifeline(participant.code, prevX)
