@@ -123,35 +123,6 @@ object ToPlantSequenceDiagramConverter {
                         }
                     }
                 }
-//                operand.messages.forEach { operandMessage ->
-//                    val presentation = links[linkIndex]
-//
-//                    if (presentation.model.equals(operandMessage)) {
-//                        // 作成予定のメッセージより上にある子複合フラグメントを作成する
-//                        childrenFragments.forEach { childFragment ->
-//                            if (childFragment.rectangle.y < presentation.allPoints.minOf { it.y }) {
-//                                if (!createdFragments.contains(childFragment)) {
-//                                    convertCombinedFragment(childFragment, sb, links, combinedFragments)
-//                                    createdFragments.add(childFragment)
-//                                }
-//                            }
-//                        }
-//
-//                        // メッセージの作成
-//                        val model = presentation.model as IMessage
-//                        convertMessage(model, sb)
-//
-//                        // 作成予定のメッセージより下にある子複合フラグメントを作成する
-//                        childrenFragments.forEach { childFragment ->
-//                            if (presentation.allPoints.maxOf { it.y } < childFragment.rectangle.y) {
-//                                if (!createdFragments.contains(childFragment)) {
-//                                    convertCombinedFragment(childFragment, sb, links, combinedFragments)
-//                                    createdFragments.add(childFragment)
-//                                }
-//                            }
-//                        }
-//                    }
-//                }
             }
             if (createdFragments.isNotEmpty()) {
                 childrenFragments.removeAll(createdFragments.toSet())
