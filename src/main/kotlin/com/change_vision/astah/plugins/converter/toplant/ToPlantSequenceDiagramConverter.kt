@@ -61,14 +61,14 @@ object ToPlantSequenceDiagramConverter {
 
         while ( linkIndex < links.size) {
             val link = links[linkIndex]
-            var model = link.model as IMessage
+            val model = link.model as IMessage
             if (fragmentIndex >= combinedFragments.size) {
-                convertMessage(model, sb)
+                convertMessage(model, link.getProperty("line.color"), sb)
                 continue
             }
             val fragment = combinedFragments[fragmentIndex]
             if (link.allPoints.minOf { it.y } < fragment.location.y) {
-                convertMessage(model, sb)
+                convertMessage(model, link.getProperty("line.color"), sb)
                 continue
             }
 
@@ -130,7 +130,8 @@ object ToPlantSequenceDiagramConverter {
                     } else if (child is ILinkPresentation) {
                         val childModel = child.model
                         if (childModel is IMessage) {
-                            convertMessage(childModel, sb)
+
+                            convertMessage(childModel, child.getProperty("line.color"), sb)
                         }
                     }
                 }
@@ -183,17 +184,46 @@ object ToPlantSequenceDiagramConverter {
     }
 
     // astah -> PlantUML にメッセージを変換する
-    private fun convertMessage(model : IMessage, sb: StringBuilder) : StringBuilder {
-        val src = model.source.name.ifBlank { (model.source as ILifeline).base.name }
-        val trg = model.target.name.ifBlank { (model.target as ILifeline).base.name }
+    private fun convertMessage(model : IMessage, color : String?, sb: StringBuilder) : StringBuilder {
+        val src = ClassConverter.formatName(model.source.name.ifBlank { (model.source as ILifeline).base.name })
+        val trg = ClassConverter.formatName(model.target.name.ifBlank { (model.target as ILifeline).base.name })
 
         when {
-            model.isAsynchronous -> sb.append("$src ->> $trg")
-            model.isReturnMessage -> sb.append("$trg <-- $src")
-            model.isSynchronous -> sb.append("$src -> $trg")
+            model.isAsynchronous -> {
+                if (color.isNullOrEmpty()) {
+                    sb.append("$src ->> $trg")
+                } else {
+                    sb.append("$src -[$color]>> $trg")
+                }
+            }
+            model.isReturnMessage -> {
+                if (color.isNullOrEmpty()) {
+                sb.append("$trg <-- $src")
+                } else {
+                    sb.append("$src <-[$color]- $trg")
+                }
+            }
             model.isCreateMessage -> {
                 sb.appendLine("create $trg")
-                sb.append("$src -> $trg")
+                if (color.isNullOrEmpty()) {
+                    sb.append("$src -> $trg")
+                } else {
+                    sb.append("$src -[$color]> $trg")
+                }
+            }
+            model.isDestroyMessage -> {
+                if (    color.isNullOrEmpty()) {
+                   sb.append("$src -> $trg !!")
+                } else {
+                    sb.append("$src -[$color]> $trg !!")
+                }
+            }
+            model.isSynchronous -> {
+                if (color.isNullOrEmpty()) {
+                    sb.append("$src -> $trg")
+                } else {
+                    sb.append("$src -[$color]> $trg")
+                }
             }
         }
         if (model.name.isNotBlank()) {
