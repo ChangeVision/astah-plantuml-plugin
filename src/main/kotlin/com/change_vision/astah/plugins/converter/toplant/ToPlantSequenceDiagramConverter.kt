@@ -25,16 +25,18 @@ object ToPlantSequenceDiagramConverter {
             val model = node.model as? INamedElement
             if (model is ILifeline) {
                 val lifeLineName = ClassConverter.formatName(model.name.ifBlank { model.base.name })
+                val lifeLineColor = node.getProperty("fill.color")
                 val base = model.base
+
                 if (base == null) {
-                    sb.appendLine("participant $lifeLineName")
+                    sb.appendLine("participant $lifeLineName $lifeLineColor")
                 } else {
                     when {
-                        base.stereotypes.contains("actor") -> sb.appendLine("actor $lifeLineName")
-                        base.stereotypes.contains("entity") -> sb.appendLine("entity $lifeLineName")
-                        base.stereotypes.contains("boundary") -> sb.appendLine("boundary $lifeLineName")
-                        base.stereotypes.contains("control") -> sb.appendLine("control $lifeLineName")
-                        else -> sb.appendLine("participant $lifeLineName")
+                        base.stereotypes.contains("actor") -> sb.appendLine("actor $lifeLineName $lifeLineColor")
+                        base.stereotypes.contains("entity") -> sb.appendLine("entity $lifeLineName $lifeLineColor")
+                        base.stereotypes.contains("boundary") -> sb.appendLine("boundary $lifeLineName $lifeLineColor")
+                        base.stereotypes.contains("control") -> sb.appendLine("control $lifeLineName $lifeLineColor")
+                        else -> sb.appendLine("participant $lifeLineName $lifeLineColor")
                     }
                 }
             }
