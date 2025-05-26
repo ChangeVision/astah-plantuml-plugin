@@ -137,7 +137,7 @@ object ToPlantSequenceDiagramConverter {
                     }
                 }
                 children.addAll(childrenFragments)
-                children.sortWith(sequenceCompare())
+                children.sortWith(SequenceCompare())
 
                 children.forEach { child ->
                     if (child is INodePresentation) {
@@ -161,7 +161,7 @@ object ToPlantSequenceDiagramConverter {
 
     }
 
-    private class sequenceCompare : Comparator<IPresentation> {
+    private class SequenceCompare : Comparator<IPresentation> {
 
         override fun compare(presentation1: IPresentation?, presentation2: IPresentation?): Int {
             var y1 = 0.0
