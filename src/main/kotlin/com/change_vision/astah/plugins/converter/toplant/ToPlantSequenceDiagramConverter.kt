@@ -17,6 +17,10 @@ object ToPlantSequenceDiagramConverter {
     private val createdFragments = ArrayList<INodePresentation>()
 
     fun convert(diagram: ISequenceDiagram, sb: StringBuilder) {
+        // 図のタイトルとして頭の名前を設定する
+        sb.appendLine("title " + ClassConverter.formatName(diagram.name))
+        sb.appendLine()
+
         // ライフラインはX軸、メッセージはY軸順にソートして出力する。
         val presentations = diagram.presentations
         var nodes = diagram.presentations.filterIsInstance<INodePresentation>().sortedBy { it.location.x }
