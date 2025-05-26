@@ -22,7 +22,6 @@ object ToPlantSequenceDiagramConverter {
         sb.appendLine()
 
         // ライフラインはX軸、メッセージはY軸順にソートして出力する。
-        val presentations = diagram.presentations
         var nodes = diagram.presentations.filterIsInstance<INodePresentation>().sortedBy { it.location.x }
         val links = diagram.presentations.filterIsInstance<ILinkPresentation>().sortedBy { it.allPoints.minOf { it.y } }
         nodes.forEach { node ->
@@ -35,12 +34,25 @@ object ToPlantSequenceDiagramConverter {
                 if (base == null) {
                     sb.appendLine("participant $lifeLineName $lifeLineColor")
                 } else {
+                    val stereotypes = StringBuilder()
+
+                    base.stereotypes.forEachIndexed { index, stereotype ->
+                        if (!(index == 0 && ("actor" == stereotype
+                                    || "entity" == stereotype
+                                    || "boundary" == stereotype
+                                    || "control" == stereotype))) {
+                            stereotypes.append("<<$stereotype>>")
+                        }
+                    }
+                    if (stereotypes.isNotEmpty()) {
+                        stereotypes.append(" ")
+                    }
                     when {
-                        base.stereotypes.contains("actor") -> sb.appendLine("actor $lifeLineName $lifeLineColor")
-                        base.stereotypes.contains("entity") -> sb.appendLine("entity $lifeLineName $lifeLineColor")
-                        base.stereotypes.contains("boundary") -> sb.appendLine("boundary $lifeLineName $lifeLineColor")
-                        base.stereotypes.contains("control") -> sb.appendLine("control $lifeLineName $lifeLineColor")
-                        else -> sb.appendLine("participant $lifeLineName $lifeLineColor")
+                        base.stereotypes.first() == "actor" -> sb.appendLine("actor $lifeLineName $stereotypes$lifeLineColor")
+                        base.stereotypes.first() == "entity" -> sb.appendLine("entity $lifeLineName $stereotypes$lifeLineColor")
+                        base.stereotypes.first() == "boundary" -> sb.appendLine("boundary $lifeLineName $stereotypes$lifeLineColor")
+                        base.stereotypes.first() == "control" -> sb.appendLine("control $lifeLineName $stereotypes$lifeLineColor")
+                        else -> sb.appendLine("participant $lifeLineName $stereotypes$lifeLineColor")
                     }
                 }
             }
