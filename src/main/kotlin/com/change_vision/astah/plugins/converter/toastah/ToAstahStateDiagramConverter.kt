@@ -5,10 +5,12 @@ import com.change_vision.astah.plugins.converter.toplant.createOrGetDiagram
 import com.change_vision.jude.api.inf.AstahAPI
 import com.change_vision.jude.api.inf.editor.TransactionManager
 import com.change_vision.jude.api.inf.exception.BadTransactionException
+import com.change_vision.jude.api.inf.model.INamedElement
 import com.change_vision.jude.api.inf.model.IStateMachineDiagram
 import com.change_vision.jude.api.inf.model.ITransition
 import net.sourceforge.plantuml.SourceStringReader
-import net.sourceforge.plantuml.abel.LeafType
+import net.sourceforge.plantuml.cucadiagram.LeafType
+import net.sourceforge.plantuml.cucadiagram.LeafType.*
 import net.sourceforge.plantuml.statediagram.StateDiagram
 import java.awt.geom.Point2D
 import java.awt.geom.Rectangle2D
@@ -20,7 +22,8 @@ object ToAstahStateDiagramConverter {
     private val projectAccessor = api.projectAccessor
     private val diagramEditor = projectAccessor.diagramEditorFactory.stateMachineDiagramEditor
     fun convert(diagram: StateDiagram, reader: SourceStringReader, index: Int) {
-        projectAccessor.findElements(IStateMachineDiagram::class.java, "SequenceDiagram_$index").let {
+        // 作成予定の図と同名の図("StateDiagram_$index")があれば削除して、常に新規作成するようにする
+        projectAccessor.findElements(IStateMachineDiagram::class.java, "StateDiagram_$index").let {
             if (it.isNotEmpty()) {
                 TransactionManager.beginTransaction()
                 projectAccessor.modelEditorFactory.basicModelEditor.delete(it.first())
@@ -36,43 +39,77 @@ object ToAstahStateDiagramConverter {
         try {
             val presentationMap = diagram.leafs().mapNotNull { leaf ->
                 when (leaf.leafType) {
-                    LeafType.STATE -> {
+                    STATE -> {
                         val rect = when {
                             posMap.containsKey(leaf.name) -> posMap[leaf.name]!!
                             else -> Rectangle2D.Float(30f, 30f, 30f, 30f)
                         }
+                        // 状態 Presentation の作成
                         val statePresentation =
                             diagramEditor.createState(leaf.name, null, Point2D.Float(rect.x, rect.y)).also {
                                 leaf.bodier.rawBody.toString()
                             }
                         Pair(leaf.name, statePresentation)
                     }
-                    LeafType.CIRCLE_START -> {
+                    CIRCLE_START -> {
                         val rect = posMap["initial"]!!
+                        // 開始疑似状態 Presentation 作成
                         val initialPresentation =
                             diagramEditor.createInitialPseudostate(null, Point2D.Float(rect.x + 10, rect.y + 10))
                         Pair("initial", initialPresentation)
                     }
-                    LeafType.CIRCLE_END -> {
+                    CIRCLE_END -> {
                         val rect = posMap["final"]!!
+                        // 終了状態 Presentation 作成
                         val finalPresentation =
                             diagramEditor.createFinalState(null, Point2D.Float(rect.x + 10, rect.y + 10))
-                        Pair("final", finalPresentation)
+                        val name = leaf.codeGetName
+                        if (name != "*end") {
+                            (finalPresentation.model as INamedElement).name = name
+                            Pair(name, finalPresentation)
+                        } else {
+                            Pair("final", finalPresentation)
+                        }
+                    }
+                    DEEP_HISTORY -> {
+                        val rect = posMap["deepHistory"]!!
+                        val deepHistoryPresentation = diagramEditor.createDeepHistoryPseudostate(null, Point2D.Float(rect.x + 10, rect.y + 10))
+                        val name = leaf.codeGetName
+                        if (name != "deepHistory") {
+                            (deepHistoryPresentation.model as INamedElement).name = name
+                            Pair(name, deepHistoryPresentation)
+                        } else {
+                            Pair("deepHistory", deepHistoryPresentation)
+                        }
+                    }
+                    PSEUDO_STATE -> {
+                        val name = leaf.codeGetName
+                        if (name == "*historical") {
+                            // 浅い履歴疑似状態
+                            val rect = posMap["history"]!!
+                            val historyPresentation = diagramEditor.createShallowHistoryPseudostate(null, Point2D.Float(rect.x + 10, rect.y + 10))
+                            Pair(name, historyPresentation)
+                        } else {
+                            null
+                        }
                     }
                     else -> null
                 }
             }.toMap()
-            diagram.links.forEach { link ->
-                val source = when (link.entity1.name) {
-                    "*start*" -> presentationMap["initial"]!!
-                    else -> presentationMap[link.entity1.name]
+            diagram.links.forEach { link
+                // source の Presentation を取得
+                val source = when (link.entity1.codeGetName) {
+                    "*start" -> presentationMap["initial"]!!
+                    else -> presentationMap[link.entity1.codeGetName]
                 }
-                val target = when (link.entity2.name) {
-                    "*end*" -> presentationMap["final"]!!
-                    else -> presentationMap[link.entity2.name]
+                // target の Presentation を取得
+                val target = when (link.entity2.codeGetName) {
+                    "*end" -> presentationMap["final"]!!
+                    else -> presentationMap[link.entity2.codeGetName]
                 }
                 val transitionLabelRegex =
                     Pattern.compile("""(<?event>\w+)(?:\[(<?guard>\w)])?(?:/(<?action>\w+))?""")
+                // Transition の Presentation の作成
                 diagramEditor.createTransition(source, target)
                     .also { transition ->
                         val label = link.label.toString()

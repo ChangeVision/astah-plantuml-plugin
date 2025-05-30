@@ -155,8 +155,138 @@ object SVGEntityCollector {
                 Pair(state, rect)
             }
         }.toMap()
+        val ellipses = XPathFactory.newInstance().newXPath()
+            .compile("//ellipse[not(@fill='none')]")
+            .evaluate(doc, XPathConstants.NODESET) as NodeList
 
-        return stateMap.plus(getEllipseRectangles(XPathFactory.newInstance().newXPath() , doc))
+        var index = 0
+        while (index < ellipses.length) {
+            val ellipse = ellipses.item(index)
+            println("ellipses.item[${index}] => nodeName:${ellipse.nodeName} previousSibling:${ellipse.previousSibling?.nodeName} localName:${ellipse.localName} nodeType:${ellipse.nodeType} nodeValue:${ellipse.nodeValue} namespaceURI:${ellipse.namespaceURI} baseURI:${ellipse.baseURI}")
+            println("ellipses.item[${index}].nextSibling? => nodeName:${ellipse.nextSibling?.nodeName} localName:${ellipse.nextSibling?.localName} nodeType:${ellipse.nextSibling?.nodeType} nodeValue:${ellipse.nextSibling?.nodeValue} firstChild.nodeName:${ellipse.nextSibling?.firstChild?.nodeName} firstChild.nodeValue:${ellipse.nextSibling?.firstChild?.nodeValue} firstChild.textContent:${ellipse.nextSibling?.firstChild?.textContent} namespaceURI:${ellipse.nextSibling?.namespaceURI} baseURI:${ellipse.nextSibling?.baseURI}")
+            println("ellipses.item[${index}].nextSibling?.nextSibling? => nodeName:${ellipse.nextSibling?.nextSibling?.nodeName} localName:${ellipse.nextSibling?.nextSibling?.localName} nodeType:${ellipse.nextSibling?.nextSibling?.nodeType} nodeValue:${ellipse.nextSibling?.nextSibling?.nodeValue} firstChild.nodeName:${ellipse.nextSibling?.firstChild?.nodeName} firstChild.nodeValue:${ellipse.nextSibling?.firstChild?.nodeValue} firstChild.textContent:${ellipse.nextSibling?.firstChild?.textContent} namespaceURI:${ellipse.nextSibling?.nextSibling?.namespaceURI} baseURI:${ellipse.nextSibling?.nextSibling?.baseURI}")
+            index++
+        }
+        /*
+         * 状態以外の要素の位置は紐づけが難しいため、種類別に最後の要素の座標のみ扱うものとする。
+         * TODO 現状は、ellipseで拾える初期状態・終了状態・ヒストリのみ。他は追々対応する。
+         * Pathを追って接続関係を元に調べれなくもないが、一旦保留。
+         */
+//        val otherNodeMap = (0 until ellipses.length).map { ellipses.item(it) }
+//            .mapNotNull { ellipse ->
+//                val prevNode = ellipse.previousSibling
+//                val elementName = when {
+//                    prevNode?.nodeName == "ellipse" -> {
+//                        val cx = ellipse.attributes?.getNamedItem("cx")?.nodeValue?.toFloat()
+//                        val cy = ellipse.attributes?.getNamedItem("cy")?.nodeValue?.toFloat()
+//                        val prevCx = prevNode.attributes?.getNamedItem("cx")?.nodeValue?.toFloat()
+//                        val prevCy = prevNode.attributes?.getNamedItem("cy")?.nodeValue?.toFloat()
+//                        if (((cx?.minus(prevCx!!)) == 0.5.toFloat()) && ((cy?.minus(prevCy!!)) == 0.5.toFloat())) {
+//                            "final"
+//                        } else {
+//                            ""
+//                        }
+//                    }
+//                    ellipse.nextSibling?.nextSibling?.let { it.nodeName == "text" && it.nodeValue == "H" }!! -> "history"
+//                    else -> "initial"
+//                }
+//                    Pair(elementName, extractRectangle(ellipse))
+//            }.toMap()
+        val otherNodeMap = HashMap<String, Rectangle2D.Float>()
+        var ellipseIndex = 0
+        while (ellipseIndex < ellipses.length) {
+            val ellipse = ellipses.item(ellipseIndex)
+            if (ellipse == null) {
+                ellipseIndex++
+                continue
+            }
+            val nextEllipse = ellipses.item(ellipseIndex + 1)
+            val prevNode = ellipse.previousSibling
+            val nextNode = ellipse.nextSibling
+            var elementName = ""
+            when {
+                prevNode?.nodeName == "ellipse" -> {
+                    val cx = ellipse.attributes?.getNamedItem("cx")?.nodeValue?.toFloat()
+                    val cy = ellipse.attributes?.getNamedItem("cy")?.nodeValue?.toFloat()
+                    val prevCx = prevNode.attributes?.getNamedItem("cx")?.nodeValue?.toFloat()
+                    val prevCy = prevNode.attributes?.getNamedItem("cy")?.nodeValue?.toFloat()
+                    if (((cx?.minus(prevCx!!)) == 0.5.toFloat()) && ((cy?.minus(prevCy!!)) == 0.5.toFloat())) {
+                        elementName = "final"
+                        ellipseIndex++
+                    } else if (nextNode.nextSibling?.let { it.nodeName == "text" && it.nodeValue == "H" }!!) {
+                        elementName = "history"
+                        ellipseIndex++
+                    } else if (nextNode.nextSibling?.let { it.nodeName == "text" && it.nodeValue == "H*" }!!) {
+                        elementName = "deepHistory"
+                        ellipseIndex++
+                    } else {
+                        if (nextNode.nodeName == "ellipse") {
+                            if (nextNode.equals(nextEllipse)) {
+                                val nextCx = nextNode.attributes?.getNamedItem("cx")?.nodeValue?.toFloat()
+                                val nextCy = nextNode.attributes?.getNamedItem("cy")?.nodeValue?.toFloat()
+                                if (nextCx?.minus(cx!!) == 0.5f && nextCy?.minus(cy!!) == 0.5f) {
+                                    ellipseIndex++
+                                } else if (nextNode.nextSibling?.let { it.nodeName == "text" && it.firstChild?.nodeValue == "H" }!!) {
+                                    elementName = "history"
+                                    ellipseIndex++
+                                } else if (nextNode.nextSibling?.let { it.nodeName == "text" && it.firstChild?.nodeValue == "H*" }!!) {
+                                    elementName = "deepHistory"
+                                    ellipseIndex++
+                                } else {
+                                    elementName = "initial"
+                                    ellipseIndex++
+                                }
+                            } else {
+                                elementName = "initial"
+                                ellipseIndex++
+                            }
+                        } else {
+                            elementName = "initial"
+                            ellipseIndex++
+                        }
+                    }
+                }
+                nextNode.nodeName == "ellipse" -> {
+                    if (nextNode.equals(nextEllipse)) {
+                        val cx = ellipse.attributes?.getNamedItem("cx")?.nodeValue?.toFloat()
+                        val cy = ellipse.attributes?.getNamedItem("cy")?.nodeValue?.toFloat()
+                        val nextCx = nextNode.attributes?.getNamedItem("cx")?.nodeValue?.toFloat()
+                        val nextCy = nextNode.attributes?.getNamedItem("cy")?.nodeValue?.toFloat()
+                        if (nextCx?.minus(cx!!) == 0.5f && nextCy?.minus(cy!!) == 0.5f) {
+//                            elementName = "final"
+                            ellipseIndex++
+                        } else if (nextNode.nextSibling?.let { it.nodeName == "text" && it.firstChild?.nodeValue == "H" }!!) {
+                            elementName = "history"
+                            ellipseIndex++
+                        } else if (nextNode.nextSibling?.let { it.nodeName == "text" && it.firstChild?.nodeValue == "H*" }!!) {
+                            elementName = "deepHistory"
+                            ellipseIndex++
+                        } else {
+                            elementName = "initial"
+                            ellipseIndex++
+                        }
+                    }
+                }
+                nextNode.let { it.nodeName == "text" && it.firstChild?.nodeValue == "H" } -> {
+                    elementName = "history"
+                    ellipseIndex++
+                }
+                nextNode.let { it.nodeName == "text" && it.firstChild?.nodeValue == "H*" } -> {
+                    elementName = "deepHistory"
+                    ellipseIndex++
+                }
+                else -> {
+                    elementName = "initial"
+                    ellipseIndex++
+                }
+            }
+            if (elementName.isNotEmpty()) {
+                otherNodeMap[elementName] = extractRectangle(ellipse)
+            }
+        }
+
+
+        return stateMap.plus(otherNodeMap)
     }
 
     private fun collectEntityBoundaryForActivity(svgFile: File, activities: List<Entity>):
