@@ -258,7 +258,7 @@
                         <!-- | assume public classes are in the top package, and private classes
                             are under ".internal" -->
                         <Export-Package>
-                            !${bundle.namespace}.internal.*,${bundle.namespace}.*,kotlin.*;version="${project.version}"
+                            !${bundle.namespace}.internal.*,${bundle.namespace}.*;version="${project.version}"
                         </Export-Package>
                         <Private-Package>${bundle.namespace}.internal.*</Private-Package>
                         <Bundle-Activator>${bundle.namespace}.Activator</Bundle-Activator>
@@ -268,6 +268,7 @@
                         <_include>-osgi.bnd</_include>
                         <Embed-Dependency>*;scope=compile|runtime;type=!pom</Embed-Dependency>
                         <Embed-Transitive>true</Embed-Transitive>
+                        <_splitpackage>merge-first</_splitpackage>
                     </instructions>
                 </configuration>
             </plugin>
