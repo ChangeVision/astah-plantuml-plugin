@@ -7,6 +7,8 @@ import net.sourceforge.plantuml.activitydiagram.ActivityDiagram
 import net.sourceforge.plantuml.classdiagram.ClassDiagram
 import net.sourceforge.plantuml.abel.Entity as Entity
 import net.sourceforge.plantuml.abel.LeafType
+import net.sourceforge.plantuml.cucadiagram.GroupType
+import net.sourceforge.plantuml.cucadiagram.IGroup
 import net.sourceforge.plantuml.statediagram.StateDiagram
 import org.w3c.dom.Document
 import org.w3c.dom.Element
@@ -20,6 +22,7 @@ import javax.xml.parsers.DocumentBuilderFactory
 import javax.xml.xpath.XPath
 import javax.xml.xpath.XPathConstants
 import javax.xml.xpath.XPathFactory
+import kotlin.collections.HashMap
 
 object SVGEntityCollector {
     //ジョイン/フォークノードがリンクの始点終点どちらかを調べる
@@ -39,18 +42,64 @@ object SVGEntityCollector {
     var synchroBarTypeMap = mutableMapOf<Entity,String>()
 
     fun collectSvgPosition(reader: SourceStringReader, index: Int): Map<String, Rectangle2D.Float> {
-        val tempSvgFile = Files.createTempFile("plantsvg_${index}_", ".svg").toFile()
-        tempSvgFile.outputStream().use { os ->
-            reader.outputImage(os, index, FileFormatOption(FileFormat.SVG))
-        }
+        val diagram0 = reader.blocks[index].diagram
+//        val tempSvgFile = Files.createTempFile("plantsvg_${index}_", ".svg").toFile()
+//        tempSvgFile.outputStream().use { os ->
+//            reader.outputImage(os, index, FileFormatOption(FileFormat.SVG))
+//        }
+        var tempSvgFile : File? = null
         val result = when (val diagram = reader.blocks[index].diagram) {
             is ClassDiagram -> {
+                tempSvgFile = Files.createTempFile("plantsvg_${index}_", ".svg").toFile()
+                tempSvgFile.outputStream().use { os ->
+                    reader.outputImage(os, index, FileFormatOption(FileFormat.SVG))
+                }
                 val classBoundaries = collectClassEntityBoundary(tempSvgFile)
                 val circleBoundaries = collectCircleElements(tempSvgFile, diagram)
                 classBoundaries + circleBoundaries
             }
             is StateDiagram -> {
-                val stateNames = diagram.leafs().filter { it.leafType == LeafType.STATE }.map { it.name }
+                val stateNames = ArrayList<String>()
+                stateNames.addAll(diagram.entityFactory.groups2().filter {
+                    it.groupType == GroupType.STATE
+                }.map {
+                    it.codeGetName
+                })
+                stateNames.addAll(diagram.leafsvalues.filter {
+                    it.leafType == LeafType.STATE
+                }.map {
+                    it.codeGetName
+                })
+                diagram.leafsvalues.forEach { leaf ->
+                    println("leaf: ${leaf.codeGetName}")
+                    diagram.currentGroup.leafsDirect.forEach { child ->
+                        val name = child.codeGetName
+                        println("child leaf: $name")
+                        if (child is IGroup && child.isGroup()) {
+                            val size = child.size()
+                            println("child group size: $size")
+                            if (size > 0) {
+                                child.leafsDirect?.forEach { childchild ->
+                                    println("child's child leaf: ${childchild?.codeGetName}")
+                                }
+                            }
+                        }
+                    }
+                    val childrenGroups = diagram.getChildrenGroups(diagram.rootGroup)
+                    childrenGroups.forEach { childGroup ->
+                        if (childGroup.isGroup) {
+                            val size = childGroup.size()
+                            println("child group size: $size")
+                            childGroup.leafsDirect.forEach { childLeaf ->
+                                println("child leaf: ${childLeaf.codeGetName}")
+                            }
+                        }
+                    }
+                }
+                tempSvgFile = Files.createTempFile("plantsvg_${index}_", ".svg").toFile()
+                tempSvgFile.outputStream().use { os ->
+                    reader.outputImage(os, index, FileFormatOption(FileFormat.SVG))
+                }
                 collectEntityBoundary(tempSvgFile, stateNames)
             }
             is ActivityDiagram -> {
@@ -58,11 +107,15 @@ object SVGEntityCollector {
                     diagram.leafs().filter {
                         it.leafType in setOf(LeafType.ACTIVITY, LeafType.SYNCHRO_BAR, LeafType.BRANCH, LeafType.NOTE)
                     }
+                tempSvgFile = Files.createTempFile("plantsvg_${index}_", ".svg").toFile()
+                tempSvgFile.outputStream().use { os ->
+                    reader.outputImage(os, index, FileFormatOption(FileFormat.SVG))
+                }
                 collectEntityBoundaryForActivity(tempSvgFile, activities)
             }
             else -> emptyMap()
         }
-        tempSvgFile.delete()
+        tempSvgFile!!.delete()
         return result
     }
 
