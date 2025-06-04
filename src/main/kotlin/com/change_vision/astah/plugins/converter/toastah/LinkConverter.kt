@@ -5,9 +5,9 @@ import com.change_vision.jude.api.inf.editor.TransactionManager
 import com.change_vision.jude.api.inf.model.IAssociation
 import com.change_vision.jude.api.inf.model.IClass
 import com.change_vision.jude.api.inf.model.INamedElement
-import net.sourceforge.plantuml.cucadiagram.ILeaf
-import net.sourceforge.plantuml.cucadiagram.Link
-import net.sourceforge.plantuml.cucadiagram.LinkDecor
+import net.sourceforge.plantuml.abel.Entity
+import net.sourceforge.plantuml.abel.Link
+import net.sourceforge.plantuml.decoration.LinkDecor
 
 object LinkConverter {
     private val modelEditor = AstahAPI.getAstahAPI().projectAccessor.modelEditorFactory.basicModelEditor
@@ -16,7 +16,7 @@ object LinkConverter {
      * linkの種類に応じてastahのAssociation/Generalization/Dependencyを生成し、
      * plantモデルとastahモデルのPairをConvertResultで包んで返します。
      */
-    fun createAstahLinkElements(links: Collection<Link>, entityMap: Map<ILeaf, IClass>): List<ConvertResult> {
+    fun createAstahLinkElements(links: Collection<Link>, entityMap: Map<Entity, IClass>): List<ConvertResult> {
         TransactionManager.beginTransaction()
         return try {
             links.map { link ->
@@ -28,7 +28,7 @@ object LinkConverter {
         }
     }
 
-    private fun createLink(link: Link, elementMap: Map<ILeaf, IClass>): ConvertResult {
+    private fun createLink(link: Link, elementMap: Map<Entity, IClass>): ConvertResult {
         return when {
             isDependency(link) -> Success(Pair(link, createDependency(link, elementMap)))
             isGeneralization(link) -> Success(Pair(link, createGeneralization(link, elementMap)))
@@ -37,7 +37,7 @@ object LinkConverter {
         }
     }
 
-    private fun createAssociation(link: Link, elementMap: Map<ILeaf, IClass>): INamedElement {
+    private fun createAssociation(link: Link, elementMap: Map<Entity, IClass>): INamedElement {
         val association = modelEditor.createAssociation(
             elementMap[link.entity1],
             elementMap[link.entity2],
@@ -45,7 +45,7 @@ object LinkConverter {
                 link.label.isWhite -> ""
                 else -> link.label.toString()
             },
-            link.qualifier1, link.qualifier2
+            link.quantifier1, link.quantifier2
         )
         setAssociationAttributes(association, 1, link.type.decor1)
         setAssociationAttributes(association, 0, link.type.decor2)
@@ -84,7 +84,7 @@ object LinkConverter {
             else->false
         }
 
-    private fun createGeneralization(link: Link, elementMap: Map<ILeaf, IClass>): INamedElement {
+    private fun createGeneralization(link: Link, elementMap: Map<Entity, IClass>): INamedElement {
         return modelEditor.createGeneralization(
             elementMap[link.entity1],
             elementMap[link.entity2],
@@ -99,7 +99,7 @@ object LinkConverter {
         link.type.style.toString().contains("DASHED") // cannot match LinkStyle.Dashed()
                 && (link.type.decor1 == LinkDecor.ARROW || link.type.decor2 == LinkDecor.ARROW)
 
-    private fun createDependency(link: Link, elementMap: Map<ILeaf, IClass>): INamedElement {
+    private fun createDependency(link: Link, elementMap: Map<Entity, IClass>): INamedElement {
         return modelEditor.createDependency(
             elementMap[link.entity2],
             elementMap[link.entity1],

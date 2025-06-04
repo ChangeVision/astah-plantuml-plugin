@@ -9,8 +9,8 @@ import com.change_vision.jude.api.inf.model.IClass
 import com.change_vision.jude.api.inf.model.INamedElement
 import net.sourceforge.plantuml.SourceStringReader
 import net.sourceforge.plantuml.classdiagram.ClassDiagram
-import net.sourceforge.plantuml.cucadiagram.ILeaf
-import net.sourceforge.plantuml.cucadiagram.Link
+import net.sourceforge.plantuml.abel.Entity
+import net.sourceforge.plantuml.abel.Link
 import java.awt.geom.Point2D
 import java.awt.geom.Rectangle2D
 
@@ -22,9 +22,9 @@ object ToAstahClassDiagramConverter {
     fun convert(diagram: ClassDiagram, reader: SourceStringReader, index: Int) {
         // convert to astah model
         val leafConvertResults =
-            ClassConverter.createAstahModelElements(diagram.leafsvalues)
+            ClassConverter.createAstahModelElements(diagram.leafs())
         val entityMap = leafConvertResults
-            .filterIsInstance<Success<Pair<ILeaf, IClass>>>()
+            .filterIsInstance<Success<Pair<Entity, IClass>>>()
             .map { it.convertPair }.toMap()
 
         val linkConvertResults = LinkConverter.createAstahLinkElements(diagram.links, entityMap)
@@ -44,14 +44,14 @@ object ToAstahClassDiagramConverter {
     }
 
     private fun createPresentations(
-        entityMap: Map<ILeaf, IClass>,
+        entityMap: Map<Entity, IClass>,
         linkMap: Map<Link, INamedElement>,
         positionMap: Map<String, Rectangle2D.Float>
     ) {
         TransactionManager.beginTransaction()
         try {
             val viewElementMap = entityMap.keys.mapNotNull { entity ->
-                val code = "class " + entity.code
+                val code = "class " + entity.quark
                 if (positionMap.containsKey(code)) {
                     val position = positionMap[code]!!
                     val viewElement =

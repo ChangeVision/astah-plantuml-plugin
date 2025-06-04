@@ -5,7 +5,7 @@ import net.sourceforge.plantuml.FileFormatOption
 import net.sourceforge.plantuml.SourceStringReader
 import net.sourceforge.plantuml.activitydiagram.ActivityDiagram
 import net.sourceforge.plantuml.classdiagram.ClassDiagram
-import net.sourceforge.plantuml.cucadiagram.LeafType
+import net.sourceforge.plantuml.abel.LeafType
 import net.sourceforge.plantuml.statediagram.StateDiagram
 import org.w3c.dom.Node
 import org.w3c.dom.NodeList
@@ -26,12 +26,12 @@ object SVGEntityCollector {
         val result = when (val diagram = reader.blocks[index].diagram) {
             is ClassDiagram -> collectClassEntityBoundary(tempSvgFile)
             is StateDiagram -> {
-                val stateNames = diagram.leafsvalues.filter { it.leafType == LeafType.STATE }.map { it.codeGetName }
+                val stateNames = diagram.leafs().filter { it.leafType == LeafType.STATE }.map { it.name }
                 collectEntityBoundary(tempSvgFile, stateNames)
             }
             is ActivityDiagram -> {
                 val activityNames =
-                    diagram.leafsvalues.filter { it.leafType == LeafType.ACTIVITY }.map { it.codeGetName }
+                    diagram.leafs().filter { it.leafType == LeafType.ACTIVITY }.map { it.name }
                 collectEntityBoundary(tempSvgFile, activityNames)
             }
             else -> emptyMap()

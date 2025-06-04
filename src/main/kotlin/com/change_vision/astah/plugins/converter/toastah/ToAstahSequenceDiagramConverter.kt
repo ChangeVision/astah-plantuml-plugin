@@ -101,7 +101,7 @@ object ToAstahSequenceDiagramConverter {
                             )
                         }
                     when {
-                        event.arrowConfiguration.isAsync -> (messagePresentation.model as IMessage).isAsynchronous =
+                        event.arrowConfiguration.isAsync1 || event.arrowConfiguration.isAsync2 -> (messagePresentation.model as IMessage).isAsynchronous =
                             true
                     }
 
