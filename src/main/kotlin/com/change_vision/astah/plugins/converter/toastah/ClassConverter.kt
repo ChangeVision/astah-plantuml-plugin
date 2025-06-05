@@ -34,34 +34,34 @@ object ClassConverter {
     private val packageMap = mutableMapOf<String, IPackage>()
     private val project = api.projectAccessor.project
     private fun createPackageIfNeeded(entity: Entity): IPackage {
-        return when (getQualifiersList(entity).size) {
-            1 -> project
+        val qualifiers = getQualifiersList(entity)
+        return when (qualifiers.size) {
+            0 -> project
             else -> {
-                for (index in 1 until getQualifiersList(entity).size) {
-                    val pkgIdent = getQualifiersList(entity)
-                    val fqn = pkgIdent.toString()
+                for (index in 0 until qualifiers.size) {
+                    val fqn = qualifiers[index].name
                     if (!packageMap.containsKey(fqn)) {
                         val astahPackage = when (index) {
-                            1 -> modelEditor.createPackage(project, pkgIdent.toString())
+                            0 -> modelEditor.createPackage(project, qualifiers[index].name)
                             else -> {
-                                val parent = packageMap[pkgIdent.subList(0, index - 1).toString()]
-                                modelEditor.createPackage(parent, pkgIdent.toString())
+                                val parent = packageMap[qualifiers[index - 1].name]
+                                modelEditor.createPackage(parent, qualifiers[index].name)
                             }
                         }
                         packageMap[fqn] = astahPackage
                     }
                 }
-                packageMap[getQualifiersList(entity).toString()]!!
+                packageMap[qualifiers[qualifiers.size - 1].name]!!
             }
         }
     }
 
-    private fun getQualifiersList(entity : Entity) :MutableList<Entity>{
-        var current: Entity? = entity
+    private fun getQualifiersList(entity: Entity): MutableList<Entity> {
+        var current: Entity? = if (entity.parentContainer.isRoot) null else entity.parentContainer
         val parentStack = mutableListOf<Entity>();
         while (current != null) {
-            parentStack.add(current)
-            current = if(current.parentContainer.isRoot) null else current.parentContainer
+            parentStack.add(0, current)
+            current = if (current.parentContainer.isRoot) null else current.parentContainer
         }
         return parentStack
     }
