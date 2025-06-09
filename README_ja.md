@@ -14,7 +14,7 @@
 ## インストール方法
 
 1. [Release](https://github.com/ChangeVision/astah-plantuml-plugin/releases) から最新のjarファイルをダウンロードする。
-2. astahを起動し、jarファイルをDrag & Dropする。
+2. astahを起動し、ダウンロードしたjarファイルをドラッグ＆ドロップする。
 3. astahを再起動し、新規プロジェクトを作成する。拡張ビュー(astahウィンドウ右下のペイン)に「PlantUML View」が表示されているか確認する。
 
 ## 利用方法
@@ -22,19 +22,19 @@
 拡張ビューにPlantUML Viewというタブが追加されます。
 ![snapshot](https://github.com/ChangeVision/astah-plantuml-plugin/blob/images/img/snapshot.png?raw=true)
 左側がPlantUMLのエディタ、右側がプレビュー、「▲toAstah」ボタンでPlantUMLからastahに変換、「▼toPlant」ボタンでastahからPlantUMLに変換できます。
-エディタの内容は常時評価されプレビューに表示されます。また下部にシンタックスチェックの結果が表示されています。 エディタもプレビューもCtrl+マウスホイールで拡大・縮小できます。
+エディタの内容は随時評価され、右側のプレビューに自動反映されます。下部には構文チェックの結果が表示されます。 エディタもプレビューもCtrl+マウスホイールで拡大・縮小できます。
 
 ### 変換の仕様と注意事項
 
-PlantUMLからastahに変換する際、初回は新しく図が作成されます。 2回目以降は既存の図にマージされます。既存の要素はスキップされ、新しい要素のみ追加されます。削除は反映されずスキップされます。
+PlantUMLからastahに変換する際、初回は新しく図が作成されます。 2回目以降の変換では、既存の図にマージされます。既存の要素は変更されず、新しく追加された要素のみが反映されます。削除は反映されずスキップされます。
 現状は追加はクラス単位なので、属性や操作を追記しても反映されません。
 
 複数のPlantUMLの図(@startumlから@enduml)あった場合は、それぞれ別のastahの図として生成されますが、 2回目以降に順序や図の種類が変わった場合は、正しく動作しません。
 
 astahからPlantUMLへの変換はすべて再生成され、マージは行いません。
 
-#### 競合
-[スクリプトエディタプラグイン](https://astah.change-vision.com/ja/feature/script-plugin.html)と同時に使用した場合、テキストが入力できなくなる不具合があります。
+#### 競合について
+[スクリプトエディタ](https://astah.change-vision.com/ja/feature/script-plugin.html)と同時に使用した場合、テキストが入力できなくなる不具合があります。
 （RSyntaxTextAreaを用いているプラグイン同士は同様の不具合が発生する可能性があります。）
 
 ## 対応状況
