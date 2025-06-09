@@ -64,11 +64,11 @@ object ToAstahStateDiagramConverter {
             }.toMap()
             diagram.links.forEach { link ->
                 val source = when (link.entity1.name) {
-                    "*start" -> presentationMap["initial"]!!
+                    "*start*" -> presentationMap["initial"]!!
                     else -> presentationMap[link.entity1.name]
                 }
                 val target = when (link.entity2.name) {
-                    "*end" -> presentationMap["final"]!!
+                    "*end*" -> presentationMap["final"]!!
                     else -> presentationMap[link.entity2.name]
                 }
                 val transitionLabelRegex =
