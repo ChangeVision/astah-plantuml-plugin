@@ -6,7 +6,7 @@
 
 ## 対象環境
 
-- [astah* professional](https://astah.change-vision.com/ja/product/astah-professional.html) 6.7以上
+- [astah* professional](https://astah.change-vision.com/ja/product/astah-professional.html) 9.0以上
 - [PlantUML動作環境](https://plantuml.com/starting)
    - Windowsは、PlantUMLのライブラリにGraphvizも同梱されるようになったためPlantUML及びGraphvizインストールは不要です。 うまく動作しない場合は、 PlantUMLの[インストール](https://plantuml.com/starting)を試してください。
    - Windows以外の方は、クラス図、ステートマシン図の変換には、[Graphviz](https://plantuml.com/graphviz-dot)のインストールが必要です。
@@ -61,7 +61,7 @@ astahからPlantUMLへの変換はすべて再生成され、マージは行い�
 - ステートマシン図
   - 初期状態、終了状態、状態
   - 遷移
-- アクティビティ図
+- アクティビティ図(レガシー版)
   - 開始、終了、アクション
   - コントロールフロー
 
@@ -86,6 +86,7 @@ astahからPlantUMLへの変換はすべて再生成され、マージは行い�
     - フォーク、ジョイン、デシジョン、マージ
     - astahからplantへ生成時の順序が不定
 - アクティビティ図
+    - 新しい構文
     - オブジェクトノード
     - パーティション
     - astahからplantへ生成時の順序が不定
