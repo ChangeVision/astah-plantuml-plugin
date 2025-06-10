@@ -94,5 +94,13 @@ Currently, following models won't be converted. This may change in the future up
 
 ## License
 
-This plug-in is a free software program; you can redistribute it and/or modify it under the terms of the GNU General Public License version2. (The PlantUML library this plug-in use is licensed under GPL2.)
-If you'd like to use this under MIT, please contact us.
+This plugin includes the following open-source libraries:
+
+- [PlantUML](https://plantuml.com/) ([GPLv3 License](https://www.gnu.org/licenses/gpl-3.0.html))
+- [RSyntaxTextArea](https://github.com/bobbylight/RSyntaxTextArea) ([BSD License](https://github.com/bobbylight/RSyntaxTextArea/blob/master/LICENSE.txt))
+
+Therefore, this plugin inherits the GPLv3 license.
+
+If you would like to use this plugin under the MIT license, please consider obtaining a [PlantUML commercial license](https://plantuml.com/purchase), or contact us for more details.
+
+> For more on PlantUML's licensing, see [https://plantuml.com/license](https://plantuml.com/license)
