@@ -59,11 +59,6 @@ After installing the plugin, the "PlantUML View" tab will appear with a PlantUML
 
 - The output will be **fully regenerated** every time; no merge is performed.
 
-#### ⚠️ Known issue
-
-Using this plugin together with the [Script Editor](https://astah.net/product-plugins/script-editor/) may cause an issue where you cannot type in the editor.  
-(This issue can happen when multiple plugins use RSyntaxTextArea.)
-
 ---
 
 ## ✅ Supported diagrams and model elements

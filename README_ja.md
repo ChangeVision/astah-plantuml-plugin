@@ -42,10 +42,6 @@ PlantUMLからastahに変換する際、初回は新しく図が作成されま�
 
 astahからPlantUMLへの変換はすべて再生成され、マージは行いません。
 
-#### ⚠️ 競合について
-[スクリプトエディタ](https://astah.change-vision.com/ja/feature/script-plugin.html)と同時に使用した場合、テキストが入力できなくなる不具合があります。
-（RSyntaxTextAreaを用いているプラグイン同士は同様の不具合が発生する可能性があります。）
-
 ## ✅ 対応状況
 
 ### 📌 対応項目
