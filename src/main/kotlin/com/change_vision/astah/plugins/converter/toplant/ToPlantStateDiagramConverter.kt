@@ -57,20 +57,19 @@ object ToPlantStateDiagramConverter {
                 }
             }
             is IState -> {
-                val subvertexes = vertex.subvertexes
-                val internalTransitions = vertex.internalTransitions
+                val subVertexes = vertex.subvertexes
                 when {
-                    subvertexes.isEmpty() -> sb.appendLine("${indent}state \"${vertex.name}\"")
+                    subVertexes.isEmpty() -> sb.appendLine("${indent}state \"${vertex.name}\"")
                     else -> {
                         sb.appendLine("${indent}state ${vertex.name} {")
-                        subvertexes.forEach {
+                        subVertexes.forEach {
                             vertexConvert(it, sb, "$indent  ")
                         }
                         sb.appendLine("")
                         transitions.forEach { transition ->
                             val source = transition.source
                             val target = transition.target
-                            if (subvertexes.contains(source) && subvertexes.contains(target)) {
+                            if (subVertexes.contains(source) && subVertexes.contains(target)) {
                                 transitionConvert(transition, sb, "$indent  ")
                             }
                         }
@@ -154,7 +153,7 @@ object ToPlantStateDiagramConverter {
         }
         createdTransitions.add(transition)
         val label =
-            transition.event.let { if (it.isNotBlank()) it else "" } +
+            transition.event.let { it.ifBlank { "" } } +
                     transition.guard.let { if (it.isNotBlank()) "[$it]" else "" } +
                     transition.action.let { if (it.isNotBlank()) "/$it" else "" }
         if (label.isNotBlank()) sb.append(": $label")

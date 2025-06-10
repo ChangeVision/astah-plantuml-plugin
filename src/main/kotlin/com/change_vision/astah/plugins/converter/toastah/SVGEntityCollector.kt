@@ -3,12 +3,11 @@ package com.change_vision.astah.plugins.converter.toastah
 import net.sourceforge.plantuml.FileFormat
 import net.sourceforge.plantuml.FileFormatOption
 import net.sourceforge.plantuml.SourceStringReader
+import net.sourceforge.plantuml.abel.GroupType
+import net.sourceforge.plantuml.abel.LeafType
 import net.sourceforge.plantuml.activitydiagram.ActivityDiagram
 import net.sourceforge.plantuml.classdiagram.ClassDiagram
 import net.sourceforge.plantuml.abel.Entity as Entity
-import net.sourceforge.plantuml.abel.LeafType
-import net.sourceforge.plantuml.cucadiagram.GroupType
-import net.sourceforge.plantuml.cucadiagram.IGroup
 import net.sourceforge.plantuml.statediagram.StateDiagram
 import org.w3c.dom.Document
 import org.w3c.dom.Element
@@ -42,11 +41,6 @@ object SVGEntityCollector {
     var synchroBarTypeMap = mutableMapOf<Entity,String>()
 
     fun collectSvgPosition(reader: SourceStringReader, index: Int): Map<String, Rectangle2D.Float> {
-        val diagram0 = reader.blocks[index].diagram
-//        val tempSvgFile = Files.createTempFile("plantsvg_${index}_", ".svg").toFile()
-//        tempSvgFile.outputStream().use { os ->
-//            reader.outputImage(os, index, FileFormatOption(FileFormat.SVG))
-//        }
         var tempSvgFile : File? = null
         val result = when (val diagram = reader.blocks[index].diagram) {
             is ClassDiagram -> {
@@ -60,42 +54,16 @@ object SVGEntityCollector {
             }
             is StateDiagram -> {
                 val stateNames = ArrayList<String>()
-                stateNames.addAll(diagram.entityFactory.groups2().filter {
+                stateNames.addAll(diagram.groupsAndRoot().filter {
                     it.groupType == GroupType.STATE
                 }.map {
-                    it.codeGetName
+                    it.name
                 })
-                stateNames.addAll(diagram.leafsvalues.filter {
+                stateNames.addAll(diagram.leafs().filter {
                     it.leafType == LeafType.STATE
                 }.map {
-                    it.codeGetName
+                    it.name
                 })
-                diagram.leafsvalues.forEach { leaf ->
-                    println("leaf: ${leaf.codeGetName}")
-                    diagram.currentGroup.leafsDirect.forEach { child ->
-                        val name = child.codeGetName
-                        println("child leaf: $name")
-                        if (child is IGroup && child.isGroup()) {
-                            val size = child.size()
-                            println("child group size: $size")
-                            if (size > 0) {
-                                child.leafsDirect?.forEach { childchild ->
-                                    println("child's child leaf: ${childchild?.codeGetName}")
-                                }
-                            }
-                        }
-                    }
-                    val childrenGroups = diagram.getChildrenGroups(diagram.rootGroup)
-                    childrenGroups.forEach { childGroup ->
-                        if (childGroup.isGroup) {
-                            val size = childGroup.size()
-                            println("child group size: $size")
-                            childGroup.leafsDirect.forEach { childLeaf ->
-                                println("child leaf: ${childLeaf.codeGetName}")
-                            }
-                        }
-                    }
-                }
                 tempSvgFile = Files.createTempFile("plantsvg_${index}_", ".svg").toFile()
                 tempSvgFile.outputStream().use { os ->
                     reader.outputImage(os, index, FileFormatOption(FileFormat.SVG))
@@ -134,7 +102,7 @@ object SVGEntityCollector {
                 .map { g.childNodes.item(it) }
                 .firstOrNull { it.nodeName == "rect" } ?: continue
             // 以前は抽出したキーの接頭辞にclassがついていたため、付けておく
-            result["class " + nameAttr] = extractRectangle(rect)
+            result["class $nameAttr"] = extractRectangle(rect)
         }
 
         return result
@@ -160,7 +128,7 @@ object SVGEntityCollector {
         // Circleタイプの要素をモデルから抽出
         val circleElements = diagram.leafs().filter {
             it.leafType == LeafType.CIRCLE ||
-            it.leafType == LeafType.DESCRIPTION
+                    it.leafType == LeafType.DESCRIPTION
         }
 
         val circleNames = circleElements.map { it.name }
@@ -212,39 +180,10 @@ object SVGEntityCollector {
             .compile("//ellipse[not(@fill='none')]")
             .evaluate(doc, XPathConstants.NODESET) as NodeList
 
-        var index = 0
-        while (index < ellipses.length) {
-            val ellipse = ellipses.item(index)
-            println("ellipses.item[${index}] => nodeName:${ellipse.nodeName} previousSibling:${ellipse.previousSibling?.nodeName} localName:${ellipse.localName} nodeType:${ellipse.nodeType} nodeValue:${ellipse.nodeValue} namespaceURI:${ellipse.namespaceURI} baseURI:${ellipse.baseURI}")
-            println("ellipses.item[${index}].nextSibling? => nodeName:${ellipse.nextSibling?.nodeName} localName:${ellipse.nextSibling?.localName} nodeType:${ellipse.nextSibling?.nodeType} nodeValue:${ellipse.nextSibling?.nodeValue} firstChild.nodeName:${ellipse.nextSibling?.firstChild?.nodeName} firstChild.nodeValue:${ellipse.nextSibling?.firstChild?.nodeValue} firstChild.textContent:${ellipse.nextSibling?.firstChild?.textContent} namespaceURI:${ellipse.nextSibling?.namespaceURI} baseURI:${ellipse.nextSibling?.baseURI}")
-            println("ellipses.item[${index}].nextSibling?.nextSibling? => nodeName:${ellipse.nextSibling?.nextSibling?.nodeName} localName:${ellipse.nextSibling?.nextSibling?.localName} nodeType:${ellipse.nextSibling?.nextSibling?.nodeType} nodeValue:${ellipse.nextSibling?.nextSibling?.nodeValue} firstChild.nodeName:${ellipse.nextSibling?.firstChild?.nodeName} firstChild.nodeValue:${ellipse.nextSibling?.firstChild?.nodeValue} firstChild.textContent:${ellipse.nextSibling?.firstChild?.textContent} namespaceURI:${ellipse.nextSibling?.nextSibling?.namespaceURI} baseURI:${ellipse.nextSibling?.nextSibling?.baseURI}")
-            index++
-        }
         /*
-         * 状態以外の要素の位置は紐づけが難しいため、種類別に最後の要素の座標のみ扱うものとする。
-         * TODO 現状は、ellipseで拾える初期状態・終了状態・ヒストリのみ。他は追々対応する。
-         * Pathを追って接続関係を元に調べれなくもないが、一旦保留。
+         * ellipseから初期状態・終了状態・ヒストリを拾う
+         * 位置については PlantUML 上での位置をなるべく再現するようにした
          */
-//        val otherNodeMap = (0 until ellipses.length).map { ellipses.item(it) }
-//            .mapNotNull { ellipse ->
-//                val prevNode = ellipse.previousSibling
-//                val elementName = when {
-//                    prevNode?.nodeName == "ellipse" -> {
-//                        val cx = ellipse.attributes?.getNamedItem("cx")?.nodeValue?.toFloat()
-//                        val cy = ellipse.attributes?.getNamedItem("cy")?.nodeValue?.toFloat()
-//                        val prevCx = prevNode.attributes?.getNamedItem("cx")?.nodeValue?.toFloat()
-//                        val prevCy = prevNode.attributes?.getNamedItem("cy")?.nodeValue?.toFloat()
-//                        if (((cx?.minus(prevCx!!)) == 0.5.toFloat()) && ((cy?.minus(prevCy!!)) == 0.5.toFloat())) {
-//                            "final"
-//                        } else {
-//                            ""
-//                        }
-//                    }
-//                    ellipse.nextSibling?.nextSibling?.let { it.nodeName == "text" && it.nodeValue == "H" }!! -> "history"
-//                    else -> "initial"
-//                }
-//                    Pair(elementName, extractRectangle(ellipse))
-//            }.toMap()
         val otherNodeMap = HashMap<String, Rectangle2D.Float>()
         var ellipseIndex = 0
         while (ellipseIndex < ellipses.length) {

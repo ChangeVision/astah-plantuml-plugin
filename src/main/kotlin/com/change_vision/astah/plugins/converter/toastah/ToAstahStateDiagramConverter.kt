@@ -10,11 +10,13 @@ import com.change_vision.jude.api.inf.model.IStateMachineDiagram
 import com.change_vision.jude.api.inf.model.ITransition
 import com.change_vision.jude.api.inf.presentation.INodePresentation
 import net.sourceforge.plantuml.SourceStringReader
-import net.sourceforge.plantuml.cucadiagram.GroupType
-import net.sourceforge.plantuml.cucadiagram.IGroup
-import net.sourceforge.plantuml.cucadiagram.ILeaf
-import net.sourceforge.plantuml.cucadiagram.LeafType
-import net.sourceforge.plantuml.cucadiagram.LeafType.*
+import net.sourceforge.plantuml.abel.Entity
+import net.sourceforge.plantuml.abel.GroupType
+import net.sourceforge.plantuml.abel.LeafType.STATE
+import net.sourceforge.plantuml.abel.LeafType.CIRCLE_START
+import net.sourceforge.plantuml.abel.LeafType.CIRCLE_END
+import net.sourceforge.plantuml.abel.LeafType.DEEP_HISTORY
+import net.sourceforge.plantuml.abel.LeafType.PSEUDO_STATE
 import net.sourceforge.plantuml.statediagram.StateDiagram
 import java.awt.geom.Point2D
 import java.awt.geom.Rectangle2D
@@ -36,12 +38,12 @@ object ToAstahStateDiagramConverter {
         }
 
         // group と leaf をコピーしておく
-        val groups = ArrayList<IGroup>()
-        diagram.entityFactory.groups2().forEach { group ->
+        val groups = ArrayList<Entity>()
+        diagram.groups().forEach { group ->
             groups.add(group)
         }
-        val leafs = ArrayList<ILeaf>()
-        diagram.leafsvalues.forEach { leaf ->
+        val leafs = ArrayList<Entity>()
+        diagram.leafs().forEach { leaf ->
             leafs.add(leaf)
         }
 
@@ -52,24 +54,23 @@ object ToAstahStateDiagramConverter {
         TransactionManager.beginTransaction()
         try {
             val groupPresentationMap = HashMap<String, INodePresentation>()
-//            diagram.entityFactory.groups2().mapNotNull { group ->
             groups.forEach { group ->
                 if (group.isGroup) {
                     when (group.groupType) {
                         GroupType.STATE -> {
                             val rect = when {
-                                posMap.containsKey(group.codeGetName) -> posMap[group.codeGetName]!!
+                                posMap.containsKey(group.name) -> posMap[group.name]!!
                                 else -> Rectangle2D.Float(30f, 30f, 30f, 30f)
                             }
                             // 状態 Presentation の作成
                             val parentContainer = group.parentContainer
                             var parentPresentation: INodePresentation? = null
-                            if (groupPresentationMap.containsKey(parentContainer.codeGetName)) {
-                                parentPresentation = groupPresentationMap[parentContainer.codeGetName]
+                            if (groupPresentationMap.containsKey(parentContainer.name)) {
+                                parentPresentation = groupPresentationMap[parentContainer.name]
                             }
                             val statePresentation =
                                 diagramEditor.createState(
-                                    group.codeGetName,
+                                    group.name,
                                     parentPresentation,
                                     Point2D.Float(rect.x, rect.y)
                                 ).also {
@@ -77,7 +78,7 @@ object ToAstahStateDiagramConverter {
                                 }
                             statePresentation.width = rect.width.toDouble()
                             statePresentation.height = rect.height.toDouble()
-                            groupPresentationMap[group.codeGetName] = statePresentation
+                            groupPresentationMap[group.name] = statePresentation
                         }
 
                         else -> {}
@@ -86,32 +87,30 @@ object ToAstahStateDiagramConverter {
                     when (group.leafType) {
                         STATE -> {
                             val rect = when {
-                                posMap.containsKey(group.codeGetName) -> posMap[group.codeGetName]!!
+                                posMap.containsKey(group.name) -> posMap[group.name]!!
                                 else -> Rectangle2D.Float(30f, 30f, 30f, 30f)
                             }
                             // 状態 Presentation の作成
-                            val point = Point2D.Float(rect.x, rect.y)
                             val parentContainer = group.parentContainer
                             var parentPresentation: INodePresentation? = null
-                            if (groupPresentationMap.containsKey(parentContainer.codeGetName)) {
-                                parentPresentation = groupPresentationMap[parentContainer.codeGetName]
+                            if (groupPresentationMap.containsKey(parentContainer.name)) {
+                                parentPresentation = groupPresentationMap[parentContainer.name]
                             }
                             val statePresentation =
-                                diagramEditor.createState(group.codeGetName, parentPresentation, Point2D.Float(rect.x, rect.y)).also {
+                                diagramEditor.createState(group.name, parentPresentation, Point2D.Float(rect.x, rect.y)).also {
                                     group.bodier.rawBody.toString()
                                 }
-                            groupPresentationMap[group.codeGetName] = statePresentation
+                            groupPresentationMap[group.name] = statePresentation
                         }
-                        else -> null
+                        else -> {}
                     }
                 }
             }
-//            val presentationMap = diagram.leafsvalues.mapNotNull { leaf ->
             val presentationMap = leafs.mapNotNull { leaf ->
                 val parentContainer = leaf.parentContainer
                 var parentPresentation : INodePresentation? = null
-                if (groupPresentationMap.containsKey(parentContainer.codeGetName)) {
-                    parentPresentation = groupPresentationMap[parentContainer.codeGetName]
+                if (groupPresentationMap.containsKey(parentContainer.name)) {
+                    parentPresentation = groupPresentationMap[parentContainer.name]
                 }
                 when (leaf.leafType) {
                     STATE -> {
@@ -120,12 +119,8 @@ object ToAstahStateDiagramConverter {
                             else -> Rectangle2D.Float(30f, 30f, 30f, 30f)
                         }
                         // 状態 Presentation の作成
-                        val point = Point2D.Float(rect.x, rect.y)
-                        if (parentPresentation != null && !(parentPresentation!!.rectangle.contains(point))) {
-                            println("子状態が外にある！　parent: ${parentPresentation!!.label} state: ${leaf.codeGetName} prentPresentation(x: ${parentPresentation!!.rectangle.x} y: ${parentPresentation!!.rectangle.y} width: ${parentPresentation!!.rectangle.width} height: ${parentPresentation!!.rectangle.height}) point(x: ${point.x} y: ${point.y})")
-                        }
                         val statePresentation =
-                            diagramEditor.createState(leaf.codeGetName, parentPresentation, Point2D.Float(rect.x, rect.y)).also {
+                            diagramEditor.createState(leaf.name, parentPresentation, Point2D.Float(rect.x, rect.y)).also {
                                 leaf.bodier.rawBody.toString()
                             }
                         Pair(leaf.name, statePresentation)
@@ -142,7 +137,7 @@ object ToAstahStateDiagramConverter {
                         // 終了状態 Presentation 作成
                         val finalPresentation =
                             diagramEditor.createFinalState(parentPresentation, Point2D.Float(rect.x + 10, rect.y + 10))
-                        val name = leaf.codeGetName
+                        val name = leaf.name
                         if (name != "*end") {
                             (finalPresentation.model as INamedElement).name = name
                             Pair(name, finalPresentation)
@@ -153,7 +148,7 @@ object ToAstahStateDiagramConverter {
                     DEEP_HISTORY -> {
                         val rect = posMap["deepHistory"]!!
                         val deepHistoryPresentation = diagramEditor.createDeepHistoryPseudostate(parentPresentation, Point2D.Float(rect.x + 10, rect.y + 10))
-                        val name = leaf.codeGetName
+                        val name = leaf.name
                         if (name != "deepHistory") {
                             (deepHistoryPresentation.model as INamedElement).name = name
                             Pair(name, deepHistoryPresentation)
@@ -162,7 +157,7 @@ object ToAstahStateDiagramConverter {
                         }
                     }
                     PSEUDO_STATE -> {
-                        val name = leaf.codeGetName
+                        val name = leaf.name
                         if (name == "*historical") {
                             // 浅い履歴疑似状態
                             val rect = posMap["history"]!!
@@ -175,16 +170,16 @@ object ToAstahStateDiagramConverter {
                     else -> null
                 }
             }.toMap()
-            diagram.links.forEach { link
+            diagram.links.forEach { link ->
                 // source の Presentation を取得
-                val source = when (link.entity1.codeGetName) {
+                val source = when (link.entity1.name) {
                     "*start" -> presentationMap["initial"]!!
-                    else -> groupPresentationMap[link.entity1.codeGetName] ?: presentationMap[link.entity1.codeGetName]
+                    else -> groupPresentationMap[link.entity1.name] ?: presentationMap[link.entity1.name]
                 }
                 // target の Presentation を取得
-                val target = when (link.entity2.codeGetName) {
+                val target = when (link.entity2.name) {
                     "*end" -> presentationMap["final"]!!
-                    else -> groupPresentationMap[link.entity2.codeGetName] ?: presentationMap[link.entity2.codeGetName]
+                    else -> groupPresentationMap[link.entity2.name] ?: presentationMap[link.entity2.name]
                 }
                 val transitionLabelRegex =
                     Pattern.compile("""(<?event>\w+)(?:\[(<?guard>\w)])?(?:/(<?action>\w+))?""")
