@@ -9,7 +9,7 @@ import com.change_vision.jude.api.inf.model.IActivityDiagram
 import com.change_vision.jude.api.inf.presentation.INodePresentation
 import net.sourceforge.plantuml.SourceStringReader
 import net.sourceforge.plantuml.activitydiagram.ActivityDiagram
-import net.sourceforge.plantuml.cucadiagram.LeafType
+import net.sourceforge.plantuml.abel.LeafType
 import java.awt.geom.Point2D
 import java.awt.geom.Rectangle2D
 
@@ -33,18 +33,18 @@ object ToAstahActivityDiagramConverter {
 
         TransactionManager.beginTransaction()
         try {
-            val presentationMap = diagram.leafsvalues.mapNotNull { leaf ->
+            val presentationMap = diagram.leafs().mapNotNull { leaf ->
                 when (leaf.leafType) {
                     LeafType.ACTIVITY -> {
                         val rect = when {
-                            posMap.containsKey(leaf.codeGetName) -> posMap[leaf.codeGetName]!!
+                            posMap.containsKey(leaf.name) -> posMap[leaf.name]!!
                             else -> Rectangle2D.Float(30f, 30f, 30f, 30f)
                         }
                         val statePresentation =
-                            diagramEditor.createAction(leaf.codeGetName, Point2D.Float(rect.x, rect.y)).also {
+                            diagramEditor.createAction(leaf.name, Point2D.Float(rect.x, rect.y)).also {
                                 leaf.bodier.rawBody.toString()
                             }
-                        Pair(leaf.codeGetName, statePresentation)
+                        Pair(leaf.name, statePresentation)
                     }
                     LeafType.CIRCLE_START -> {
                         val rect = posMap["initial"]!!
@@ -67,11 +67,11 @@ object ToAstahActivityDiagramConverter {
                 else -> map[name]
             }
             diagram.links.forEach { link ->
-                val source = findPresentation(link.entity1.codeGetName, presentationMap)
-                val target = findPresentation(link.entity2.codeGetName, presentationMap)
+                val source = findPresentation(link.entity1.name, presentationMap)
+                val target = findPresentation(link.entity2.name, presentationMap)
                 when {
-                    link.entity1.codeGetName == "end" -> diagramEditor.createFlow(target, source)
-                    link.entity2.codeGetName == "start" -> diagramEditor.createFlow(target, source)
+                    link.entity1.name == "end" -> diagramEditor.createFlow(target, source)
+                    link.entity2.name == "start" -> diagramEditor.createFlow(target, source)
                     else -> diagramEditor.createFlow(source, target)
                 }
             }

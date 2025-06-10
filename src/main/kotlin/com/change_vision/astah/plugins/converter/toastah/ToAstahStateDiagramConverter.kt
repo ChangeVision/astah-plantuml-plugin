@@ -8,7 +8,7 @@ import com.change_vision.jude.api.inf.exception.BadTransactionException
 import com.change_vision.jude.api.inf.model.IStateMachineDiagram
 import com.change_vision.jude.api.inf.model.ITransition
 import net.sourceforge.plantuml.SourceStringReader
-import net.sourceforge.plantuml.cucadiagram.LeafType
+import net.sourceforge.plantuml.abel.LeafType
 import net.sourceforge.plantuml.statediagram.StateDiagram
 import java.awt.geom.Point2D
 import java.awt.geom.Rectangle2D
@@ -34,18 +34,18 @@ object ToAstahStateDiagramConverter {
 
         TransactionManager.beginTransaction()
         try {
-            val presentationMap = diagram.leafsvalues.mapNotNull { leaf ->
+            val presentationMap = diagram.leafs().mapNotNull { leaf ->
                 when (leaf.leafType) {
                     LeafType.STATE -> {
                         val rect = when {
-                            posMap.containsKey(leaf.codeGetName) -> posMap[leaf.codeGetName]!!
+                            posMap.containsKey(leaf.name) -> posMap[leaf.name]!!
                             else -> Rectangle2D.Float(30f, 30f, 30f, 30f)
                         }
                         val statePresentation =
-                            diagramEditor.createState(leaf.codeGetName, null, Point2D.Float(rect.x, rect.y)).also {
+                            diagramEditor.createState(leaf.name, null, Point2D.Float(rect.x, rect.y)).also {
                                 leaf.bodier.rawBody.toString()
                             }
-                        Pair(leaf.codeGetName, statePresentation)
+                        Pair(leaf.name, statePresentation)
                     }
                     LeafType.CIRCLE_START -> {
                         val rect = posMap["initial"]!!
@@ -63,13 +63,13 @@ object ToAstahStateDiagramConverter {
                 }
             }.toMap()
             diagram.links.forEach { link ->
-                val source = when (link.entity1.codeGetName) {
-                    "*start" -> presentationMap["initial"]!!
-                    else -> presentationMap[link.entity1.codeGetName]
+                val source = when (link.entity1.name) {
+                    "*start*" -> presentationMap["initial"]!!
+                    else -> presentationMap[link.entity1.name]
                 }
-                val target = when (link.entity2.codeGetName) {
-                    "*end" -> presentationMap["final"]!!
-                    else -> presentationMap[link.entity2.codeGetName]
+                val target = when (link.entity2.name) {
+                    "*end*" -> presentationMap["final"]!!
+                    else -> presentationMap[link.entity2.name]
                 }
                 val transitionLabelRegex =
                     Pattern.compile("""(<?event>\w+)(?:\[(<?guard>\w)])?(?:/(<?action>\w+))?""")

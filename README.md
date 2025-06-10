@@ -1,97 +1,125 @@
-# Astah PlantUML Plugin
+# 🌿 Astah PlantUML Plugin
 
-This Plugin allows you to convert [PlantUML diagrams](https://plantuml.com/) into [Astah](https://astah.net/products/astah-professional/) which allows you to:
-- import PlantUML diagrams to Astah Professional and
-- export Astah Diagrams to PlantUML
+📘 This README is also available in [日本語](./README_ja.md).
 
-## Requirements
+[![GitHub release (latest by date)](https://img.shields.io/github/v/release/ChangeVision/astah-plantuml-plugin)](https://github.com/ChangeVision/astah-plantuml-plugin/releases)
+[![GitHub last commit](https://img.shields.io/github/last-commit/ChangeVision/astah-plantuml-plugin)](https://github.com/ChangeVision/astah-plantuml-plugin/commits/)
+[![GitHub issues](https://img.shields.io/github/issues/ChangeVision/astah-plantuml-plugin)](https://github.com/ChangeVision/astah-plantuml-plugin/issues)
+[![GitHub stars](https://img.shields.io/github/stars/ChangeVision/astah-plantuml-plugin)](https://github.com/ChangeVision/astah-plantuml-plugin/stargazers)
+[![GitHub forks](https://img.shields.io/github/forks/ChangeVision/astah-plantuml-plugin)](https://github.com/ChangeVision/astah-plantuml-plugin/network)
+[![License: GPL v3](https://img.shields.io/badge/license-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 
-- [Astah Professional](https://astah.net/products/astah-professional/) v6.7 or later
-- Environment that PlantUML works
-  (If you are on Windows, no installation for PlantUML and Graphiviz is needed since PlantUML library contains Graphviz. If this plug-in does not work, please [install PlantUML locally](https://plantuml.com/starting).)
+## 📝 Overview
 
-## How to install
+This plugin allows you to convert [PlantUML diagrams](https://plantuml.com/) into [Astah](https://astah.net/products/astah-professional/), and vice versa:
 
-1. Download the latest version of .jar file from [Release](https://github.com/ChangeVision/astah-plantuml-plugin/releases)
-2. Launch Astah and drag the plantuml-plugin-x.x.x.jar file onto Astah's window
-3. Restart Astah and go to [File] - [New].  If you see [PlantUML view] tab on the right-bottom pane, that means installation is complete.
- 
-   <img src="https://github.com/ChangeVision/astah-plantuml-plugin/blob/images/img/PlantUML-plugin-for-Astah.png?raw=true" width="600">
-   
-## How to use
+- Import PlantUML diagrams into Astah Professional
+- Export Astah diagrams as PlantUML text
 
-This is the view you get after installing this plug-in which is a PlantUML editor on the left and its preview on the right.
+## 💻 Requirements
+
+- [Astah Professional](https://astah.net/products/astah-professional/) v9.0 or later
+- [PlantUML](https://plantuml.com/) runtime environment
+  - On **Windows**, no separate installation of PlantUML or Graphviz is needed because Graphviz is bundled with PlantUML.
+  - On **non-Windows OS**, to generate class diagrams or statemachine diagrams, [Graphviz](https://plantuml.com/graphviz-dot) must be installed manually.
+
+If the plugin doesn't work, try [installing PlantUML manually](https://plantuml.com/starting).
+
+## 📦 How to install
+
+1. Download the latest `.jar` file from [Releases](https://github.com/ChangeVision/astah-plantuml-plugin/releases)
+2. Launch Astah and drag & drop the `.jar` file into Astah's window
+3. Restart Astah and create a new project. If you see a "PlantUML View" tab in the bottom-right pane, installation is complete.
+
+<img src="https://github.com/ChangeVision/astah-plantuml-plugin/blob/images/img/PlantUML-plugin-for-Astah.png?raw=true" width="600">
+
+## ▶️ How to use
+
+After installing the plugin, the "PlantUML View" tab will appear with a PlantUML editor on the left and a preview pane on the right.
+
 <img src="https://github.com/ChangeVision/astah-plantuml-plugin/blob/images/img/PlantUML-View-Pane-Closeup.png?raw=true" width="600">
-- 「▲toAstah」 button generates a diagram and also creates model in Astah based on PlantUML editor
-- 「▼toPlant」 button converts Astah diagram to PlantUML text with preview
-- Syntax validator check is always running and it shows syntax errors at the bottom if there are any
-- Ctrl + scroll wheel works for zooming both on the editor and preview
 
+- `▲toAstah` generates diagrams and models in Astah from PlantUML text
+- `▼toPlant` exports the current Astah diagram to PlantUML format with preview
+- Syntax checking runs continuously and displays errors at the bottom
+- Ctrl + scroll zooms both the editor and the preview
 
+---
 
+### 🔄 Conversion Specifications
 
-### Current conversion rules
+#### 📥 From PlantUML to Astah
 
-#### From PlantUML to Astah
-- When you push from PlantUML to Astah for the first time, it creates a new diagram and renders model elements. From the second time around, updates will be merged to the existing diagram you already created instead of creating a new diagram.
-- Updates of attributes/operations in the existing class will not affect
-- Deleting model information from the text will not affect
-- Creating multiple diagrams (more than one set of @startuml - @enduml) works. However, updates will not work if you change the order of the diagrams or diagram types.
+- On the first conversion, a new diagram will be created in Astah.
+- From the second time onward, new elements will be **merged** into the existing diagram. Existing elements will be **left unchanged**, and deleted items in the PlantUML text will be **ignored**.
+- Only **new classes** are added; updating attributes or operations in existing classes will not be reflected.
+- If multiple diagrams are described (multiple `@startuml` ~ `@enduml` blocks), each one will be imported as a separate diagram. However, if the order or type of diagrams is changed afterward, updates may not work correctly.
 
+#### 📤 From Astah to PlantUML
 
-#### From Astah to PlantUML
-Sending Astah diagram to PlantUML always regenerates the existing text and preview.
+- The output will be **fully regenerated** every time; no merge is performed.
 
+---
 
-#### Existing Issue
-Installing this plug-in disables the [Astah's Script Editor](https://astah.net/product-plugins/script-editor/) - it will not let you type in the Script Editor or any other plugins which uses RSyntaxTextArea.
-This issue is planned to be fixed in June 2021.
+## ✅ Supported diagrams and model elements
 
-## Supported Diagram types and model elements
-
-- Class Diagram
+- **Class Diagram**
   - Class, Interface
   - Attribute, Operation
   - Association, Inheritance, Dependency, Association label
-- Sequence Diagram
-  - Classifier： participant, actor, boundary, control, entity
-    (database, collections an queue will be shown as participant)
-  - Message： Synchronous, Asynchronous and return with the label
-  - Classifier's class 
-- Statemachine Diagram
-  - Initial state, Final state and state
+- **Sequence Diagram**
+  - Classifiers: participant, actor, boundary, control, entity  
+    *(database, collections, and queue are displayed as participant)*
+  - Messages: synchronous, asynchronous, return, and labels
+  - Load class from classifier
+- **Statemachine Diagram**
+  - Initial state, Final state, State
   - Transition
-- Activity Diagram
-  - InitialNode, FlowFinalNode, Action
-  - ControlFlow
+- **Activity Diagram (legacy)**
+  - Initial node, Final node, Action
+  - Control flow
 
-## Unsupported models elements
-Currently, following models won't be converted. This may change in the future update.
+---
 
-- Common model elements
-    - Note
-    - Style
-- Class Diagram
+## 🚧 Unsupported elements
+
+These features are currently not supported but may be added in the future:
+
+- **Common**
+    - Notes
+    - Styles
+- **Class Diagram**
     - Package, Namespace
     - Stereotype
     - Entity
     - Nested Class
-    - Muptiplicity and other additional information to assocciations asides the association label
-- Sequence Diagram
-    - Order of Messages (Only when sending to PlantUML from Astah)
-    - Grouping ：alt/else, opt, loop, par, break, critical, group
-    - Activation
-- Statemachine Diagram
-    - action : entry, do, exit. trigger, guard, action
+    - Multiplicity with labels
+- **Sequence Diagram**
+    - Message order (when exporting from Astah)
+    - Grouping: alt/else, opt, loop, par, break, critical, group
+    - Activation bars
+- **Statemachine Diagram**
+    - Entry/Exit/Do actions, Trigger, Guard, Action
     - Nested states
     - Fork, Join, Decision, Merge
-    - Order of display is not stable (Only when sending to PlantUML from Astah)
-- Activity Diagram
-    - Object Node
+    - Unstable order (when exporting from Astah)
+- **Activity Diagram**
+    - New syntax
+    - Object node
     - Partition
-    - Order of display is not stable (Only when sending to PlantUML from Astah)
+    - Unstable order (when exporting from Astah)
 
-## License
+---
 
-This plug-in is a free software program; you can redistribute it and/or modify it under the terms of the GNU General Public License version2. (The PlantUML library this plug-in use is licensed under GPL2.)
-If you'd like to use this under MIT, please contact us.
+## 📄 License
+
+This plugin includes the following open-source libraries:
+
+- [PlantUML](https://plantuml.com/) ([GPLv3 License](https://www.gnu.org/licenses/gpl-3.0.html))
+- [RSyntaxTextArea](https://github.com/bobbylight/RSyntaxTextArea) ([BSD License](https://github.com/bobbylight/RSyntaxTextArea/blob/master/LICENSE.txt))
+
+Therefore, this plugin inherits the GPLv3 license.
+
+If you would like to use this plugin under the MIT license, please consider obtaining a [PlantUML commercial license](https://plantuml.com/purchase), or contact us for more details.
+
+> For more on PlantUML's licensing, see [https://plantuml.com/license](https://plantuml.com/license)
