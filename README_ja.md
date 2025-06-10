@@ -93,4 +93,13 @@ astahからPlantUMLへの変換はすべて再生成され、マージは行い�
 
 ## License
 
-利用しているPlantUMLライブラリがGPL2で提供されているためGPL2を継承しています。 MITで利用する方法もあるので、MITで利用したい場合はお問い合わせください。
+本プラグインには、以下のオープンソースライブラリが含まれています：
+
+- [PlantUML](https://plantuml.com/)（[GPLv3 ライセンス](https://www.gnu.org/licenses/gpl-3.0.html)）
+- [RSyntaxTextArea](https://github.com/bobbylight/RSyntaxTextArea)（[BSD ライセンス](https://github.com/bobbylight/RSyntaxTextArea/blob/master/LICENSE.txt)）
+
+このため、本プラグインは GPLv3 ライセンスを継承しています。
+
+MIT ライセンスでの利用をご希望の場合は、PlantUML の [商用ライセンス](https://plantuml.com/purchase) を取得いただくか、別途ご相談ください。
+
+> PlantUML のライセンスに関する詳細は、[https://plantuml.com/license](https://plantuml.com/license) をご参照ください。
