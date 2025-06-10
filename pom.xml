@@ -5,24 +5,24 @@
         <bundle.symbolicName>com.change_vision.astah.plugins.plantuml-plugin</bundle.symbolicName>
         <bundle.namespace>com.change_vision.astah.plugins</bundle.namespace>
         <plugin.install>true</plugin.install>
-        <astah.version>8.0</astah.version>
+        <astah.version>9.0.0</astah.version>
+        <astah.depend.version>9.0.0</astah.depend.version>
         <astah.edition>all</astah.edition>
-        <kotlin.version>1.4.31</kotlin.version>
+        <kotlin.version>1.9.25</kotlin.version>
         <serialization.version>1.1.0</serialization.version>
-        <astahPath>C:/Program Files/astah-professional</astahPath>
     </properties>
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.change_vision.astah.plugins</groupId>
     <artifactId>plantuml-plugin</artifactId>
-    <version>0.2.1</version>
-    <packaging>jar</packaging>
+    <version>1.0.0-SNAPSHOT</version>
+    <packaging>bundle</packaging>
     <name>%bundle.name</name>
     <description>%bundle.description</description>
     <pluginRepositories>
         <pluginRepository>
             <id>local_astah_repository</id>
             <name>Local Astah* Plugin Repository</name>
-            <url>file://${env.M2_HOME}/repository/</url>
+            <url>file://${env.MAVEN_HOME}/repository/</url>
             <layout>default</layout>
             <snapshots>
                 <enabled>true</enabled>
@@ -31,51 +31,13 @@
                 <updatePolicy>never</updatePolicy>
             </releases>
         </pluginRepository>
-        <pluginRepository>
-            <releases>
-                <enabled>true</enabled>
-            </releases>
-            <snapshots>
-                <enabled>false</enabled>
-            </snapshots>
-            <id>bintray.kotlin.eap</id>
-            <name>Bintray Kotlin EAP Repository</name>
-            <url>https://dl.bintray.com/kotlin/kotlin-eap</url>
-        </pluginRepository>
     </pluginRepositories>
-    <repositories>
-        <repository>
-            <id>java.net</id>
-            <name>java.net Maven Repository</name>
-            <url>http://download.java.net/maven/2</url>
-            <releases>
-            </releases>
-            <snapshots>
-                <enabled>false</enabled>
-            </snapshots>
-        </repository>
-        <repository>
-            <id>uk-central</id>
-            <url>http://uk.maven.org/maven2/</url>
-        </repository>
-        <repository>
-            <releases>
-                <enabled>true</enabled>
-            </releases>
-            <snapshots>
-                <enabled>false</enabled>
-            </snapshots>
-            <id>bintray.kotlin.eap</id>
-            <name>Bintray Kotlin EAP Repository</name>
-            <url>https://dl.bintray.com/kotlin/kotlin-eap</url>
-        </repository>
-    </repositories>
     <reporting>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-project-info-reports-plugin</artifactId>
-                <version>2.1.2</version>
+                <version>3.5.0</version>
                 <reportSets>
                     <reportSet>
                         <reports>
@@ -92,7 +54,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jxr-plugin</artifactId>
-                <version>2.3</version>
+                <version>3.3.2</version>
                 <configuration>
                     <inputEncoding>UTF-8</inputEncoding>
                     <outputEncoding>UTF-8</outputEncoding>
@@ -102,7 +64,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-site-plugin</artifactId>
-                <version>3.0</version>
+                <version>4.0.0-M13</version>
                 <configuration>
                     <locales>ja</locales>
                     <inputEncoding>UTF-8</inputEncoding>
@@ -113,7 +75,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
-                <version>2.4.2</version>
+                <version>3.2.5</version>
                 <configuration>
                     <systemPropertyVariables>
                         <file.encoding>utf-8</file.encoding>
@@ -129,13 +91,13 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-report-plugin</artifactId>
-                <version>2.4.2</version>
+                <version>3.2.5</version>
             </plugin>
 
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-javadoc-plugin</artifactId>
-                <version>2.8</version>
+                <version>3.3.1</version>
                 <configuration>
                     <source>1.8</source>
                     <encoding>UTF-8</encoding>
@@ -143,8 +105,8 @@
                     <charset>UTF-8</charset>
                     <show>protected</show>
                     <links>
-                        <link>http://java.sun.com/javase/ja/6/docs/ja/api/</link>
-                        <link>http://members.change-vision.com/javadoc/astah-api/6_2/api/ja/doc/javadoc/</link>
+                        <link>https://docs.oracle.com/javase/8/docs/api/</link>
+                        <link>https://members.change-vision.com/javadoc/astah-api/8_4_0/api/ja/doc/javadoc/</link>
                     </links>
                 </configuration>
             </plugin>
@@ -166,7 +128,7 @@
         <plugins>
             <plugin>
                 <artifactId>maven-dependency-plugin</artifactId>
-                <version>2.4</version>
+                <version>3.1.2</version>
                 <executions>
                     <execution>
                         <id>copy-dependencies</id>
@@ -185,7 +147,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-resources-plugin</artifactId>
-                <version>2.5</version>
+                <version>3.3.1</version>
                 <configuration>
                     <encoding>UTF-8</encoding>
                 </configuration>
@@ -193,7 +155,7 @@
             <plugin>
                 <groupId>com.change_vision.astah</groupId>
                 <artifactId>astah-maven-plugin</artifactId>
-                <version>1.0.0</version>
+                <version>1.1.0</version>
             </plugin>
             <plugin>
                 <groupId>org.jetbrains.kotlin</groupId>
@@ -202,7 +164,7 @@
                 <executions>
                     <execution>
                         <id>compile</id>
-                        <phase>compile</phase>
+                        <phase>process-sources</phase>
                         <goals>
                             <goal>compile</goal>
                         </goals>
@@ -240,9 +202,13 @@
                 </dependencies>
             </plugin>
             <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.8.1</version>
+                <configuration>
+                    <encoding>UTF-8</encoding>
+                    <source>1.8</source>
+                    <target>1.8</target>
+                </configuration>
                 <executions>
                     <execution>
                         <id>default-compile</id>
@@ -253,30 +219,25 @@
                         <phase>none</phase>
                     </execution>
                     <execution>
-                        <id>java-compile</id>
+                        <id>compile</id>
                         <phase>compile</phase>
                         <goals>
                             <goal>compile</goal>
                         </goals>
                     </execution>
                     <execution>
-                        <id>java-test-compile</id>
+                        <id>testCompile</id>
                         <phase>test-compile</phase>
                         <goals>
                             <goal>testCompile</goal>
                         </goals>
                     </execution>
                 </executions>
-                <configuration>
-                    <encoding>UTF-8</encoding>
-                    <source>1.8</source>
-                    <target>1.8</target>
-                </configuration>
             </plugin>
             <plugin>
                 <groupId>org.apache.felix</groupId>
                 <artifactId>maven-bundle-plugin</artifactId>
-                <version>3.5.0</version>
+                <version>5.1.4</version>
                 <extensions>true</extensions>
                 <executions>
                     <execution>
@@ -307,6 +268,7 @@
                         <_include>-osgi.bnd</_include>
                         <Embed-Dependency>*;scope=compile|runtime;type=!pom</Embed-Dependency>
                         <Embed-Transitive>true</Embed-Transitive>
+                        <_splitpackage>merge-first</_splitpackage>
                     </instructions>
                 </configuration>
             </plugin>
@@ -336,7 +298,7 @@
                                         </goals>
                                     </pluginExecutionFilter>
                                     <action>
-                                        <execute/>
+                                        <execute />
                                     </action>
                                 </pluginExecution>
                             </pluginExecutions>
@@ -350,26 +312,26 @@
         <dependency>
             <groupId>com.change_vision.astah</groupId>
             <artifactId>astah-api</artifactId>
-            <version>${astah.version}</version>
+            <version>${astah.depend.version}</version>
             <scope>system</scope>
             <systemPath>${astahPath}/astah-api.jar</systemPath>
         </dependency>
         <dependency>
             <groupId>org.osgi</groupId>
-            <artifactId>org.osgi.core</artifactId>
-            <version>4.2.0</version>
+            <artifactId>osgi.core</artifactId>
+            <version>4.3.1</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.osgi</groupId>
-            <artifactId>org.osgi.compendium</artifactId>
-            <version>4.2.0</version>
+            <artifactId>osgi.cmpn</artifactId>
+            <version>7.0.0</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-            <version>4.10</version>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-api</artifactId>
+            <version>5.10.2</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -380,17 +342,17 @@
         <dependency>
             <groupId>org.jetbrains.kotlinx</groupId>
             <artifactId>kotlinx-coroutines-core</artifactId>
-            <version>1.4.2</version>
+            <version>1.9.0</version>
         </dependency>
         <dependency>
             <groupId>org.jetbrains.kotlinx</groupId>
             <artifactId>kotlinx-coroutines-jdk8</artifactId>
-            <version>1.4.2</version>
+            <version>1.9.0</version>
         </dependency>
         <dependency>
             <groupId>org.jetbrains.kotlinx</groupId>
             <artifactId>kotlinx-coroutines-swing</artifactId>
-            <version>1.4.2</version>
+            <version>1.9.0</version>
         </dependency>
         <dependency>
             <groupId>org.jetbrains.kotlin</groupId>

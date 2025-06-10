@@ -6,7 +6,7 @@ This Plugin allows you to convert [PlantUML diagrams](https://plantuml.com/) int
 
 ## Requirements
 
-- [Astah Professional](https://astah.net/products/astah-professional/) v6.7 or later
+- [Astah Professional](https://astah.net/products/astah-professional/) v9.0 or later
 - Environment that PlantUML works
   (If you are on Windows, no installation for PlantUML and Graphiviz is needed since PlantUML library contains Graphviz. If this plug-in does not work, please [install PlantUML locally](https://plantuml.com/starting).)
 
@@ -22,8 +22,8 @@ This Plugin allows you to convert [PlantUML diagrams](https://plantuml.com/) int
 
 This is the view you get after installing this plug-in which is a PlantUML editor on the left and its preview on the right.
 <img src="https://github.com/ChangeVision/astah-plantuml-plugin/blob/images/img/PlantUML-View-Pane-Closeup.png?raw=true" width="600">
-- 「▲toAstah」 button generates a diagram and also creates model in Astah based on PlantUML editor
-- 「▼toPlant」 button converts Astah diagram to PlantUML text with preview
+- `▲toAstah` button generates a diagram and also creates model in Astah based on PlantUML editor
+- `▼toPlant` button converts Astah diagram to PlantUML text with preview
 - Syntax validator check is always running and it shows syntax errors at the bottom if there are any
 - Ctrl + scroll wheel works for zooming both on the editor and preview
 
@@ -43,10 +43,6 @@ This is the view you get after installing this plug-in which is a PlantUML edito
 Sending Astah diagram to PlantUML always regenerates the existing text and preview.
 
 
-#### Existing Issue
-Installing this plug-in disables the [Astah's Script Editor](https://astah.net/product-plugins/script-editor/) - it will not let you type in the Script Editor or any other plugins which uses RSyntaxTextArea.
-This issue is planned to be fixed in June 2021.
-
 ## Supported Diagram types and model elements
 
 - Class Diagram
@@ -54,14 +50,14 @@ This issue is planned to be fixed in June 2021.
   - Attribute, Operation
   - Association, Inheritance, Dependency, Association label
 - Sequence Diagram
-  - Classifier： participant, actor, boundary, control, entity
+  - Classifier : participant, actor, boundary, control, entity
     (database, collections an queue will be shown as participant)
-  - Message： Synchronous, Asynchronous and return with the label
+  - Message : Synchronous, Asynchronous and return with the label
   - Classifier's class 
 - Statemachine Diagram
   - Initial state, Final state and state
   - Transition
-- Activity Diagram
+- Activity Diagram (legacy)
   - InitialNode, FlowFinalNode, Action
   - ControlFlow
 
@@ -79,7 +75,7 @@ Currently, following models won't be converted. This may change in the future up
     - Muptiplicity and other additional information to assocciations asides the association label
 - Sequence Diagram
     - Order of Messages (Only when sending to PlantUML from Astah)
-    - Grouping ：alt/else, opt, loop, par, break, critical, group
+    - Grouping : alt/else, opt, loop, par, break, critical, group
     - Activation
 - Statemachine Diagram
     - action : entry, do, exit. trigger, guard, action
@@ -87,11 +83,20 @@ Currently, following models won't be converted. This may change in the future up
     - Fork, Join, Decision, Merge
     - Order of display is not stable (Only when sending to PlantUML from Astah)
 - Activity Diagram
+    - New Syntax
     - Object Node
     - Partition
     - Order of display is not stable (Only when sending to PlantUML from Astah)
 
 ## License
 
-This plug-in is a free software program; you can redistribute it and/or modify it under the terms of the GNU General Public License version2. (The PlantUML library this plug-in use is licensed under GPL2.)
-If you'd like to use this under MIT, please contact us.
+This plugin includes the following open-source libraries:
+
+- [PlantUML](https://plantuml.com/) ([GPLv3 License](https://www.gnu.org/licenses/gpl-3.0.html))
+- [RSyntaxTextArea](https://github.com/bobbylight/RSyntaxTextArea) ([BSD License](https://github.com/bobbylight/RSyntaxTextArea/blob/master/LICENSE.txt))
+
+Therefore, this plugin inherits the GPLv3 license.
+
+If you would like to use this plugin under the MIT license, please consider obtaining a [PlantUML commercial license](https://plantuml.com/purchase), or contact us for more details.
+
+> For more on PlantUML's licensing, see [https://plantuml.com/license](https://plantuml.com/license)

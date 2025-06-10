@@ -141,7 +141,7 @@ private class PlantUMLSourceArea(private val textChangeListener: (String) -> Any
     }
 
     private fun isMacOSX() =
-        System.getProperty("os.name").toLowerCase().startsWith("mac os x")
+        System.getProperty("os.name").lowercase().startsWith("mac os x")
 
     private fun addMacDefaultKeybindings() {
         //move
