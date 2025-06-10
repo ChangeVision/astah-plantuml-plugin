@@ -51,7 +51,7 @@ object ToAstahClassDiagramConverter {
         TransactionManager.beginTransaction()
         try {
             val viewElementMap = entityMap.keys.mapNotNull { entity ->
-                val code = "class " + entity.quark
+                val code = "class " + entity.name
                 if (positionMap.containsKey(code)) {
                     val position = positionMap[code]!!
                     val viewElement =
