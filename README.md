@@ -43,10 +43,6 @@ This is the view you get after installing this plug-in which is a PlantUML edito
 Sending Astah diagram to PlantUML always regenerates the existing text and preview.
 
 
-#### Existing Issue
-Installing this plug-in disables the [Astah's Script Editor](https://astah.net/product-plugins/script-editor/) - it will not let you type in the Script Editor or any other plugins which uses RSyntaxTextArea.
-This issue is planned to be fixed in June 2021.
-
 ## Supported Diagram types and model elements
 
 - Class Diagram
