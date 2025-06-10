@@ -5,6 +5,7 @@ import net.sourceforge.plantuml.FileFormatOption
 import net.sourceforge.plantuml.SourceStringReader
 import java.awt.BorderLayout
 import java.awt.Dimension
+import java.awt.Graphics
 import java.awt.Image
 import java.awt.Point
 import java.awt.event.MouseAdapter
@@ -107,4 +108,41 @@ class PlantDiagramPreviewPanel : JPanel() {
                 Image.SCALE_DEFAULT
             )
         }
+
+    private val errorArea = JTextArea().apply {
+        isEditable = false
+    }
+    private val scrollPane = JScrollPane(errorArea)
+
+    fun updatePreview(text: String) {
+        removeAll()
+        val reader = SourceStringReader(text)
+        val os = java.io.ByteArrayOutputStream()
+        reader.outputImage(os)
+        image = javax.imageio.ImageIO.read(java.io.ByteArrayInputStream(os.toByteArray()))
+        revalidate()
+        repaint()
+    }
+
+    fun showError(errors: List<String>) {
+        removeAll()
+        image = null
+        errorArea.text = errors.joinToString("\n")
+        add(scrollPane, BorderLayout.CENTER)
+        revalidate()
+        repaint()
+    }
+
+    override fun paintComponent(g: Graphics) {
+        super.paintComponent(g)
+        image?.let { img ->
+            val x = (width - img.width) / 2
+            val y = (height - img.height) / 2
+            g.drawImage(img, x, y, this)
+        }
+    }
+
+    override fun getPreferredSize(): Dimension {
+        return image?.let { Dimension(it.width, it.height) } ?: super.getPreferredSize()
+    }
 }

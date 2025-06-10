@@ -65,7 +65,7 @@ class PlantUMLSourcePanel(private val previewPanel: PlantDiagramPreviewPanel) : 
                 is ValidationOK -> "OK"
                 is EmptyError -> "Empty"
                 is SyntaxError -> "syntax error in " + validationResult.errors
-                    .map { (it.lineLocation.position + 1).toString() }.joinToString { it }
+                    .joinToString(",") { error -> (error.lineLocation.position + 1).toString() }
             }
             statusBar.setMessage(statusMessage)
             if (validationResult == ValidationOK) {
