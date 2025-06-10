@@ -1,13 +1,22 @@
-# Astah PlantUML Plugin
+# 🌿 Astah PlantUML Plugin
 
-## Overview
+📘 This README is also available in [日本語](./README_ja.md).
+
+[![GitHub release (latest by date)](https://img.shields.io/github/v/release/ChangeVision/astah-plantuml-plugin)](https://github.com/ChangeVision/astah-plantuml-plugin/releases)
+[![GitHub last commit](https://img.shields.io/github/last-commit/ChangeVision/astah-plantuml-plugin)](https://github.com/ChangeVision/astah-plantuml-plugin/commits/)
+[![GitHub issues](https://img.shields.io/github/issues/ChangeVision/astah-plantuml-plugin)](https://github.com/ChangeVision/astah-plantuml-plugin/issues)
+[![GitHub stars](https://img.shields.io/github/stars/ChangeVision/astah-plantuml-plugin)](https://github.com/ChangeVision/astah-plantuml-plugin/stargazers)
+[![GitHub forks](https://img.shields.io/github/forks/ChangeVision/astah-plantuml-plugin)](https://github.com/ChangeVision/astah-plantuml-plugin/network)
+[![License: GPL v3](https://img.shields.io/badge/license-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
+
+## 📝 Overview
 
 This plugin allows you to convert [PlantUML diagrams](https://plantuml.com/) into [Astah](https://astah.net/products/astah-professional/), and vice versa:
 
 - Import PlantUML diagrams into Astah Professional
 - Export Astah diagrams as PlantUML text
 
-## Requirements
+## 💻 Requirements
 
 - [Astah Professional](https://astah.net/products/astah-professional/) v9.0 or later
 - [PlantUML](https://plantuml.com/) runtime environment
@@ -16,7 +25,7 @@ This plugin allows you to convert [PlantUML diagrams](https://plantuml.com/) int
 
 If the plugin doesn't work, try [installing PlantUML manually](https://plantuml.com/starting).
 
-## How to install
+## 📦 How to install
 
 1. Download the latest `.jar` file from [Releases](https://github.com/ChangeVision/astah-plantuml-plugin/releases)
 2. Launch Astah and drag & drop the `.jar` file into Astah's window
@@ -24,7 +33,7 @@ If the plugin doesn't work, try [installing PlantUML manually](https://plantuml.
 
 <img src="https://github.com/ChangeVision/astah-plantuml-plugin/blob/images/img/PlantUML-plugin-for-Astah.png?raw=true" width="600">
 
-## How to use
+## ▶️ How to use
 
 After installing the plugin, the "PlantUML View" tab will appear with a PlantUML editor on the left and a preview pane on the right.
 
@@ -37,27 +46,27 @@ After installing the plugin, the "PlantUML View" tab will appear with a PlantUML
 
 ---
 
-### Conversion Specifications
+### 🔄 Conversion Specifications
 
-#### From PlantUML to Astah
+#### 📥 From PlantUML to Astah
 
 - On the first conversion, a new diagram will be created in Astah.
 - From the second time onward, new elements will be **merged** into the existing diagram. Existing elements will be **left unchanged**, and deleted items in the PlantUML text will be **ignored**.
 - Only **new classes** are added; updating attributes or operations in existing classes will not be reflected.
 - If multiple diagrams are described (multiple `@startuml` ~ `@enduml` blocks), each one will be imported as a separate diagram. However, if the order or type of diagrams is changed afterward, updates may not work correctly.
 
-#### From Astah to PlantUML
+#### 📤 From Astah to PlantUML
 
 - The output will be **fully regenerated** every time; no merge is performed.
 
-#### Known issue
+#### ⚠️ Known issue
 
 Using this plugin together with the [Script Editor](https://astah.net/product-plugins/script-editor/) may cause an issue where you cannot type in the editor.  
 (This issue can happen when multiple plugins use RSyntaxTextArea.)
 
 ---
 
-## Supported diagrams and model elements
+## ✅ Supported diagrams and model elements
 
 - **Class Diagram**
   - Class, Interface
@@ -77,7 +86,7 @@ Using this plugin together with the [Script Editor](https://astah.net/product-pl
 
 ---
 
-## Unsupported elements
+## 🚧 Unsupported elements
 
 These features are currently not supported but may be added in the future:
 
@@ -107,7 +116,7 @@ These features are currently not supported but may be added in the future:
 
 ---
 
-## License
+## 📄 License
 
 This plugin includes the following open-source libraries:
 
