@@ -1,5 +1,6 @@
 package com.change_vision.astah.plugins.converter.toplant
 
+import com.change_vision.astah.plugins.converter.toplant.classdiagram.ClassConverter
 import com.change_vision.jude.api.inf.model.ICombinedFragment
 import com.change_vision.jude.api.inf.model.ILifeline
 import com.change_vision.jude.api.inf.model.IMessage
@@ -22,16 +23,24 @@ object ToPlantSequenceDiagramConverter {
         val links = diagram.presentations.filterIsInstance<ILinkPresentation>().sortedBy { it.allPoints.minOf { it.y } }
         nodes.forEach { node ->
             val model = node.model as? INamedElement
-            if (model != null) {
-                when {
-                    model.stereotypes.contains("actor") -> sb.appendLine("actor " + model.name)
-                    model.stereotypes.contains("entity") -> sb.appendLine("entity " + model.name)
-                    model.stereotypes.contains("boundary") -> sb.appendLine("boundary " + model.name)
-                    model.stereotypes.contains("control") -> sb.appendLine("control " + model.name)
-                    model is ILifeline -> sb.appendLine("participant " + model.name)
+            if (model is ILifeline) {
+                val lifeLineName = ClassConverter.formatName(model.name.ifBlank { model.base.name })
+                val base = model.base
+                if (base == null) {
+                    sb.appendLine("participant $lifeLineName")
+                } else {
+                    when {
+                        base.stereotypes.contains("actor") -> sb.appendLine("actor $lifeLineName")
+                        base.stereotypes.contains("entity") -> sb.appendLine("entity $lifeLineName")
+                        base.stereotypes.contains("boundary") -> sb.appendLine("boundary $lifeLineName")
+                        base.stereotypes.contains("control") -> sb.appendLine("control $lifeLineName")
+                        else -> sb.appendLine("participant $lifeLineName")
+                    }
                 }
             }
         }
+        sb.appendLine()
+
         // y 座標基準でソートし直す
         nodes = nodes.sortedBy { it.location.y }
         // 複合フラグメントとオペランドを抽出
