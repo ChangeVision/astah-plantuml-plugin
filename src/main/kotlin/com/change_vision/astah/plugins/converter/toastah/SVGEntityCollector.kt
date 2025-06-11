@@ -5,7 +5,7 @@ import net.sourceforge.plantuml.FileFormatOption
 import net.sourceforge.plantuml.SourceStringReader
 import net.sourceforge.plantuml.activitydiagram.ActivityDiagram
 import net.sourceforge.plantuml.classdiagram.ClassDiagram
-import net.sourceforge.plantuml.cucadiagram.LeafType
+import net.sourceforge.plantuml.abel.LeafType
 import net.sourceforge.plantuml.statediagram.StateDiagram
 import org.w3c.dom.Node
 import org.w3c.dom.NodeList
@@ -26,12 +26,12 @@ object SVGEntityCollector {
         val result = when (val diagram = reader.blocks[index].diagram) {
             is ClassDiagram -> collectClassEntityBoundary(tempSvgFile)
             is StateDiagram -> {
-                val stateNames = diagram.leafsvalues.filter { it.leafType == LeafType.STATE }.map { it.codeGetName }
+                val stateNames = diagram.leafs().filter { it.leafType == LeafType.STATE }.map { it.name }
                 collectEntityBoundary(tempSvgFile, stateNames)
             }
             is ActivityDiagram -> {
                 val activityNames =
-                    diagram.leafsvalues.filter { it.leafType == LeafType.ACTIVITY }.map { it.codeGetName }
+                    diagram.leafs().filter { it.leafType == LeafType.ACTIVITY }.map { it.name }
                 collectEntityBoundary(tempSvgFile, activityNames)
             }
             else -> emptyMap()
@@ -41,31 +41,24 @@ object SVGEntityCollector {
     }
 
     private fun collectClassEntityBoundary(svgFile: File): Map<String, Rectangle2D.Float> {
-        val commentXpath = XPathFactory.newInstance().newXPath().compile("//comment()")
-        val commentPattern = Pattern.compile("""MD5=\[(?<md5>\w+)]\n(?<code>.*)""")
-        val builder = DocumentBuilderFactory.newInstance().newDocumentBuilder()
-        val doc = builder.parse(svgFile)
-        val comments = commentXpath.evaluate(doc, XPathConstants.NODESET) as NodeList
-        val entityBoundaryMap = mutableMapOf<String, Rectangle2D.Float>()
+        val doc = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(svgFile)
+        val result = mutableMapOf<String, Rectangle2D.Float>()
+        val gNodes = doc.getElementsByTagName("g")
 
-        for (i in 0 until comments.length) {
-            val commentNode = comments.item(i)
-            val comment = commentNode.nodeValue
-            val commentMatcher = commentPattern.matcher(comment)
-            if (commentMatcher.matches()) {
-                val entityCode = commentMatcher.group("code")
+        for (i in 0 until gNodes.length) {
+            val g = gNodes.item(i)
+            val classAttr = g.attributes?.getNamedItem("class")?.nodeValue ?: continue
+            if (classAttr != "entity") continue
 
-                val entityNode = commentNode.nextSibling
-                when (entityNode.nodeName) {
-                    "rect" -> {
-                        entityBoundaryMap[entityCode] = extractRectangle(entityNode)
-                    }
-                    else -> {
-                    }
-                }
-            }
+            val nameAttr = g.attributes?.getNamedItem("data-entity")?.nodeValue ?: continue
+            val rect = (0 until g.childNodes.length)
+                .map { g.childNodes.item(it) }
+                .firstOrNull { it.nodeName == "rect" } ?: continue
+            // 以前は抽出したキーの接頭辞にclassがついていたため、付けておく
+            result["class " + nameAttr] = extractRectangle(rect)
         }
-        return entityBoundaryMap
+
+        return result
     }
 
     private fun collectEntityBoundary(svgFile: File, stateNames: List<String>): Map<String, Rectangle2D.Float> {

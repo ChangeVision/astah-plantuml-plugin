@@ -5,8 +5,8 @@ import com.change_vision.jude.api.inf.editor.TransactionManager
 import com.change_vision.jude.api.inf.model.IClass
 import com.change_vision.jude.api.inf.model.INamedElement
 import com.change_vision.jude.api.inf.model.IPackage
-import net.sourceforge.plantuml.cucadiagram.ILeaf
-import net.sourceforge.plantuml.cucadiagram.LeafType
+import net.sourceforge.plantuml.abel.Entity
+import net.sourceforge.plantuml.abel.LeafType
 import java.util.regex.Pattern
 
 object ClassConverter {
@@ -17,11 +17,11 @@ object ClassConverter {
      * linkの種類に応じてastahのClass/Interfaceを生成し、
      * plantモデルとastahモデルのPairをConvertResultで包んで返します。
      */
-    fun createAstahModelElements(leaves: Collection<ILeaf>): List<ConvertResult> {
+    fun createAstahModelElements(leaves: Collection<Entity>): List<ConvertResult> {
         TransactionManager.beginTransaction()
         return try {
             leaves
-                .filter { api.projectAccessor.findElements(INamedElement::class.java, it.codeGetName).isEmpty() }
+                .filter { api.projectAccessor.findElements(INamedElement::class.java, it.name).isEmpty() }
                 .map { createElement(it) }
                 .also { TransactionManager.endTransaction() }
         } catch (e: Exception) {
@@ -33,50 +33,60 @@ object ClassConverter {
     // TODO パッケージ削除時、プロジェクト変更時に削除が必要。ここに持たせない方がよさそう。
     private val packageMap = mutableMapOf<String, IPackage>()
     private val project = api.projectAccessor.project
-    private fun createPackageIfNeeded(entity: ILeaf): IPackage {
-        return when (entity.ident.size()) {
-            1 -> project
+    private fun createPackageIfNeeded(entity: Entity): IPackage {
+        val qualifiers = getQualifiersList(entity)
+        return when (qualifiers.size) {
+            0 -> project
             else -> {
-                for (index in 1 until entity.ident.size()) {
-                    val pkgIdent = entity.ident.getPrefix(index)
-                    val fqn = pkgIdent.toString()
+                for (index in 0 until qualifiers.size) {
+                    val fqn = qualifiers[index].name
                     if (!packageMap.containsKey(fqn)) {
                         val astahPackage = when (index) {
-                            1 -> modelEditor.createPackage(project, pkgIdent.name)
+                            0 -> modelEditor.createPackage(project, qualifiers[index].name)
                             else -> {
-                                val parent = packageMap[pkgIdent.getPrefix(index - 1).toString()]
-                                modelEditor.createPackage(parent, pkgIdent.name)
+                                val parent = packageMap[qualifiers[index - 1].name]
+                                modelEditor.createPackage(parent, qualifiers[index].name)
                             }
                         }
                         packageMap[fqn] = astahPackage
                     }
                 }
-                packageMap[entity.ident.getPrefix(entity.ident.size() - 1).toString()]!!
+                packageMap[qualifiers[qualifiers.size - 1].name]!!
             }
         }
     }
 
-    private fun createElement(entity: ILeaf): ConvertResult {
+    private fun getQualifiersList(entity: Entity): MutableList<Entity> {
+        var current: Entity? = if (entity.parentContainer.isRoot) null else entity.parentContainer
+        val parentStack = mutableListOf<Entity>();
+        while (current != null) {
+            parentStack.add(0, current)
+            current = if (current.parentContainer.isRoot) null else current.parentContainer
+        }
+        return parentStack
+    }
+
+    private fun createElement(entity: Entity): ConvertResult {
         val owner = createPackageIfNeeded(entity)
 
         val element: Any = when (entity.leafType) {
-            LeafType.CLASS -> modelEditor.createClass(owner, entity.codeGetName)
+            LeafType.CLASS -> modelEditor.createClass(owner, entity.name)
                 .also { iClass -> createClassBody(iClass, entity.bodier.rawBody) }
-            LeafType.ABSTRACT_CLASS -> modelEditor.createClass(owner, entity.codeGetName)
+            LeafType.ABSTRACT_CLASS -> modelEditor.createClass(owner, entity.name)
                 .also { iClass ->
                     iClass.isAbstract = true
                     createClassBody(iClass, entity.bodier.rawBody)
                 }
-            LeafType.INTERFACE -> modelEditor.createInterface(owner, entity.codeGetName)
+            LeafType.INTERFACE -> modelEditor.createInterface(owner, entity.name)
                 .also { iClass ->
                     createClassBody(iClass, entity.bodier.rawBody)
                 }
-            else -> Failure("unsupported Type " + entity.leafType.name + " at " + entity.codeLine)
+            else -> Failure("unsupported Type " + entity.leafType.name + " at " + entity.location.toString())
         }
 
         return when (element) {
             is IClass -> Success(Pair(entity, element))
-            else -> Failure("unknown error at " + entity.codeLine)
+            else -> Failure("unknown error at " + entity.location.toString())
         }
     }
 
