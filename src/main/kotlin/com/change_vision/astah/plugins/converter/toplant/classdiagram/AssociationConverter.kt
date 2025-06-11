@@ -1,0 +1,104 @@
+package com.change_vision.astah.plugins.converter.toplant.classdiagram
+
+import com.change_vision.jude.api.inf.model.IAssociation
+import com.change_vision.jude.api.inf.model.IAttribute
+import com.change_vision.jude.api.inf.model.IMultiplicityRange
+
+/**
+ * クラス図の関連を変換するクラス
+ */
+object AssociationConverter {
+
+    // デバッグログの出力制御フラグ
+    private const val DEBUG = false
+
+    // デバッグ出力用
+    private fun debug(message: String) {
+        if (DEBUG) {
+            println("[AssociationConverter] $message")
+        }
+    }
+
+    /**
+     * 方向を表す列挙型
+     */
+    private enum class Direction { Left, Right }
+
+    /**
+     * 関連をPlantUML形式に変換する
+     * @param model 関連
+     * @param sb 出力用のStringBuilder
+     */
+    fun convert(model: IAssociation, sb: StringBuilder) {
+        val end1 = model.memberEnds[0]
+        val end2 = model.memberEnds[1]
+        val assocName = model.name
+
+        debug("関連の変換: ${end1.type.name} -- ${end2.type.name}, 関連名=${assocName}")
+
+        // 多重度の取得
+        val multi1 = MultiplicityConverter.getMultiplicityString(end1)
+        val multi2 = MultiplicityConverter.getMultiplicityString(end2)
+
+        debug("多重度1: '$multi1', 多重度2: '$multi2'")
+
+        sb.append(ClassConverter.formatName(end1.type.name))
+
+        // 多重度を追加
+        if (multi1.isNotEmpty()) {
+            // ダブルクォート直後の#や*の前にチルダを追加
+            val escapedMulti1 = MultiplicityConverter.escapeMultiplicityText(multi1)
+            sb.append(" \"$escapedMulti1\"")
+            debug("多重度1をエスケープして追加: '$multi1' → '$escapedMulti1'")
+        }
+        sb.append(" ")
+
+        // 集約/合成/ナビゲーション矢印を追加
+        sb.append(hatConvert(end1, Direction.Left))
+        sb.append("--")
+        sb.append(hatConvert(end2, Direction.Right))
+        sb.append(" ")
+
+        // 多重度を追加
+        if (multi2.isNotEmpty()) {
+            // ダブルクォート直後の#や*の前にチルダを追加
+            val escapedMulti2 = MultiplicityConverter.escapeMultiplicityText(multi2)
+            sb.append("\"$escapedMulti2\" ")
+            debug("多重度2をエスケープして追加: '$multi2' → '$escapedMulti2'")
+        }
+        sb.append(ClassConverter.formatName(end2.type.name))
+
+        if (!assocName.isNullOrEmpty()) {
+            sb.append(" : ")
+            sb.append(assocName.toString())
+
+            // 関連名の方向矢印を追加
+            val directionArrow = DirectionConverter.getAssociationDirectionArrow(model)
+            if (directionArrow.isNotEmpty()) {
+                sb.append(" ")
+                sb.append(directionArrow)
+            }
+        }
+        sb.appendLine()
+    }
+
+    /**
+     * 関連端の装飾を変換する
+     * @param end 関連端
+     * @param direction 方向
+     * @return PlantUMLの装飾記号
+     */
+    private fun hatConvert(end: IAttribute, direction: Direction): String =
+        when {
+            end.isComposite -> "*"
+            end.isAggregate -> "o"
+            else -> when (end.navigability) {
+                "Navigable" -> when (direction) {
+                    Direction.Left -> "<"
+                    Direction.Right -> ">"
+                }
+                "Non_Navigabl" -> "x"
+                else -> ""
+            }
+        }
+}
