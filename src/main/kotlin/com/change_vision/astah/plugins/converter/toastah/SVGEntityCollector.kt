@@ -24,7 +24,11 @@ object SVGEntityCollector {
             reader.outputImage(os, index, FileFormatOption(FileFormat.SVG))
         }
         val result = when (val diagram = reader.blocks[index].diagram) {
-            is ClassDiagram -> collectClassEntityBoundary(tempSvgFile)
+            is ClassDiagram -> {
+                val classBoundaries = collectClassEntityBoundary(tempSvgFile)
+                val circleBoundaries = collectCircleElements(tempSvgFile, diagram)
+                classBoundaries + circleBoundaries
+            }
             is StateDiagram -> {
                 val stateNames = diagram.leafs().filter { it.leafType == LeafType.STATE }.map { it.name }
                 collectEntityBoundary(tempSvgFile, stateNames)
@@ -61,13 +65,66 @@ object SVGEntityCollector {
         return result
     }
 
+    /**
+     * クラス図内のcircle/楕円要素を検出する
+     * @param svgFile SVGファイル
+     * @param diagram ClassDiagram
+     * @return 要素コードと位置情報のマップ
+     */
+    private fun collectCircleElements(svgFile: File, diagram: ClassDiagram): Map<String, Rectangle2D.Float> {
+        val builder = DocumentBuilderFactory.newInstance().newDocumentBuilder()
+        val doc = builder.parse(svgFile)
+        val entityBoundaryMap = mutableMapOf<String, Rectangle2D.Float>()
+
+        // サークル/楕円要素を検索
+        val ellipses = XPathFactory.newInstance().newXPath()
+            .compile("//ellipse | //circle")
+            .evaluate(doc, XPathConstants.NODESET) as NodeList
+
+
+        // Circleタイプの要素をモデルから抽出
+        val circleElements = diagram.leafs().filter {
+            it.leafType == LeafType.CIRCLE ||
+            it.leafType == LeafType.DESCRIPTION
+        }
+
+        val circleNames = circleElements.map { it.name }
+
+        // SVG内の各ellipse/circle要素を調査
+        for (i in 0 until ellipses.length) {
+            val ellipseNode = ellipses.item(i)
+
+            // 次の兄弟ノードがtext要素かチェック
+            var nextSibling = ellipseNode.nextSibling
+            while (nextSibling != null) {
+                if (nextSibling.nodeName == "text") {
+                    // textノードの内容からインターフェース名を抽出
+                    val textContent = nextSibling.textContent.trim()
+
+                    // インターフェース名と一致するか確認
+                    for (circleName in circleNames) {
+                        if (textContent.contains(circleName)) {
+                            val entityCode = circleName
+                            entityBoundaryMap[entityCode] = extractRectangle(ellipseNode)
+                            break
+                        }
+                    }
+                    break
+                }
+                nextSibling = nextSibling.nextSibling
+            }
+        }
+
+        return entityBoundaryMap
+    }
+
     private fun collectEntityBoundary(svgFile: File, stateNames: List<String>): Map<String, Rectangle2D.Float> {
         val doc = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(svgFile)
 
         val stateMap = stateNames.mapNotNull { state ->
             val stateRect =
                 XPathFactory.newInstance().newXPath()
-                    .compile("//text[contains(text(),'$state')]/preceding-sibling::rect")
+                    .compile("//text[text() = '$state']/preceding-sibling::rect")
                     .evaluate(doc, XPathConstants.NODESET) as NodeList
             if (stateRect.length == 0) {
                 null
@@ -103,11 +160,13 @@ object SVGEntityCollector {
     private fun extractRectangle(node: Node): Rectangle2D.Float {
         val attrs = node.attributes
         return when (node.nodeName) {
-            "ellipse" -> {
+            "ellipse", "circle" -> {
                 val cx = attrs.getNamedItem("cx").nodeValue.toFloat()
                 val cy = attrs.getNamedItem("cy").nodeValue.toFloat()
-                val rx = attrs.getNamedItem("rx").nodeValue.toFloat()
-                val ry = attrs.getNamedItem("ry").nodeValue.toFloat()
+                val rx = attrs.getNamedItem("rx")?.nodeValue?.toFloat() ?:
+                       attrs.getNamedItem("r")?.nodeValue?.toFloat() ?: 10f
+                val ry = attrs.getNamedItem("ry")?.nodeValue?.toFloat() ?:
+                       attrs.getNamedItem("r")?.nodeValue?.toFloat() ?: 10f
                 Rectangle2D.Float(cx - rx, cy - ry, rx * 2, ry * 2)
             }
             else -> {

@@ -3,7 +3,7 @@ package com.change_vision.astah.plugins.view
 import com.change_vision.astah.plugins.converter.EmptyError
 import com.change_vision.astah.plugins.converter.SyntaxError
 import com.change_vision.astah.plugins.converter.ValidationOK
-import com.change_vision.astah.plugins.converter.toastah.ToAstahConverter
+import com.change_vision.astah.plugins.converter.toastah.classstructure.ToAstahConverter
 import com.change_vision.astah.plugins.converter.toplant.ToPlantConverter
 import kotlinx.coroutines.*
 import kotlinx.coroutines.swing.Swing
