@@ -4,6 +4,7 @@ import com.change_vision.astah.plugins.converter.toplant.DiagramKind
 import com.change_vision.astah.plugins.converter.toplant.createOrGetDiagram
 import com.change_vision.jude.api.inf.AstahAPI
 import com.change_vision.jude.api.inf.editor.TransactionManager
+import com.change_vision.jude.api.inf.exception.InvalidEditingException
 import com.change_vision.jude.api.inf.model.*
 import com.change_vision.jude.api.inf.presentation.ILinkPresentation
 import com.change_vision.jude.api.inf.presentation.INodePresentation
@@ -245,7 +246,7 @@ object ToAstahSequenceDiagramConverter {
                                     }
                                     val properties : HashMap<Any, Any> = fragmentPresentation.properties
                                     var operandPropertyIndex = 1
-                                    var processedElseDeque : ArrayDeque<GroupingLeaf> = ArrayDeque()
+                                    val processedElseDeque : ArrayDeque<GroupingLeaf> = ArrayDeque()
                                     elseDeque.forEachIndexed { j, groupingElse ->
                                         if (groupingElse.groupingStart == groupingStart) {
                                             if (j == 0) {
@@ -374,6 +375,7 @@ object ToAstahSequenceDiagramConverter {
                 }
             }
         } catch (e: Exception) {
+            e.printStackTrace()
             TransactionManager.abortTransaction()
             return
         }
