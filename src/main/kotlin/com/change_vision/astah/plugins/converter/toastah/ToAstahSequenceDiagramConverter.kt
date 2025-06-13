@@ -359,9 +359,7 @@ object ToAstahSequenceDiagramConverter {
                             )
                         }
                     when {
-//                        event.arrowConfiguration.isAsync1 || event.arrowConfiguration.isAsync2 -> (messagePresentation.model as IMessage).isAsynchronous =
-//                            true
-                        event.arrowConfiguration.isAsync -> {
+                        event.arrowConfiguration.isAsync1 || event.arrowConfiguration.isAsync2 -> {
                             val message = messagePresentation.model as IMessage
                             if (!message.isReturnMessage) {
                                 message.isAsynchronous = true
