@@ -1,6 +1,6 @@
 package com.change_vision.astah.plugins.converter.toplant
 
-import com.change_vision.astah.plugins.converter.toplant.classdiagram.ClassConverter
+import com.change_vision.astah.plugins.converter.toastah.ClassConverter
 import com.change_vision.jude.api.inf.model.ICombinedFragment
 import com.change_vision.jude.api.inf.model.ILifeline
 import com.change_vision.jude.api.inf.model.IMessage
@@ -201,8 +201,22 @@ object ToPlantSequenceDiagramConverter {
 
     // astah -> PlantUML にメッセージを変換する
     private fun convertMessage(model : IMessage, color : String?, sb: StringBuilder) : StringBuilder {
-        val src = ClassConverter.formatName(model.source.name.ifBlank { (model.source as ILifeline).base.name })
-        val trg = ClassConverter.formatName(model.target.name.ifBlank { (model.target as ILifeline).base.name })
+        val src = when (model.source) {
+            is ILifeline -> {
+                ClassConverter.formatName(model.source.name.ifBlank { (model.source as ILifeline).base.name })
+            }
+            else -> {
+                ""
+            }
+        }
+        val trg = when (model.target) {
+            is ILifeline -> {
+                ClassConverter.formatName(model.target.name.ifBlank { (model.target as ILifeline).base.name })
+            }
+            else -> {
+                ""
+            }
+        }
 
         when {
             model.isAsynchronous -> {
