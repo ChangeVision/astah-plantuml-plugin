@@ -33,34 +33,37 @@ object ToAstahSequenceDiagramConverter {
                 val editorFactory = projectAccessor.modelEditorFactory
                 val project = projectAccessor.project
                 val elements = projectAccessor.findElements(IClass::class.java, participant.code).filterIsInstance<IClass>()
-                var baseClass: IClass? = null
+                val baseClass: IClass?
                 if (elements.isEmpty()) {
+                    val isAlias = !participant.code.equals(participant.getDisplay(false).toTooltipText())
+                    val baseClassName = if (isAlias) participant.getDisplay(false).toTooltipText() else participant.code
                     baseClass = when (participant.type) {
                         ParticipantType.ACTOR -> editorFactory.useCaseModelEditor.createActor(
                             project,
-                            participant.code
+                            baseClassName
                         )
 
                         ParticipantType.BOUNDARY -> editorFactory.basicModelEditor.createClass(
                             project,
-                            participant.code
+                            baseClassName
                         ).also { it.addStereotype("boundary") }
 
                         ParticipantType.ENTITY -> editorFactory.basicModelEditor.createClass(
                             project,
-                            participant.code
+                            baseClassName
                         ).also { it.addStereotype("entity") }
 
                         ParticipantType.CONTROL -> editorFactory.basicModelEditor.createClass(
                             project,
-                            participant.code
+                            baseClassName
                         ).also { it.addStereotype("control") }
 
                         else -> editorFactory.basicModelEditor.createClass(
                             project,
-                            participant.code
+                            baseClassName
                         )
                     }
+                    if (isAlias) baseClass.alias1 = participant.code
                 } else {
                     baseClass = elements.first()
                 }
@@ -93,7 +96,6 @@ object ToAstahSequenceDiagramConverter {
             // convert combined fragments
             val groupingDeque : ArrayDeque<GroupingStart> = ArrayDeque()
             var groupingOffset = 0.0
-            var groupingMessageOffset = 0.0
             val elseDeque : ArrayDeque<GroupingLeaf> = ArrayDeque()
             val operandMessageMap : HashMap<Int, Int> = HashMap()
             var operandIndex = 0
