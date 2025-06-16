@@ -4,7 +4,6 @@ import com.change_vision.astah.plugins.converter.toplant.DiagramKind
 import com.change_vision.astah.plugins.converter.toplant.createOrGetDiagram
 import com.change_vision.jude.api.inf.AstahAPI
 import com.change_vision.jude.api.inf.editor.TransactionManager
-import com.change_vision.jude.api.inf.exception.InvalidEditingException
 import com.change_vision.jude.api.inf.model.*
 import com.change_vision.jude.api.inf.presentation.ILinkPresentation
 import com.change_vision.jude.api.inf.presentation.INodePresentation
@@ -295,8 +294,6 @@ object ToAstahSequenceDiagramConverter {
                                     }
                                 }
                             }
-                            // 次の処理のためにリセット
-//                            elseDeque.clear()
                         }
                     } else if (event.type == GroupingType.ELSE) {
                         elseDeque.add(event)
@@ -345,13 +342,11 @@ object ToAstahSequenceDiagramConverter {
                                 participantMap[event.participant2],
                                 INIT_Y + Y_SPAN * (messageCount + 1)
                             )
-
                             event.isDestroy -> diagramEditor.createDestroyMessage(
                                 label,
                                 participantMap[event.participant1],
                                 participantMap[event.participant2],
                                 INIT_Y + Y_SPAN * (messageCount + 1))
-
                             else -> diagramEditor.createMessage(
                                 label,
                                 participantMap[event.participant1],
@@ -372,6 +367,76 @@ object ToAstahSequenceDiagramConverter {
                     messages.add(event)
                     messageMap[event] = messagePresentation
                     messageCount++
+                } else if (event is MessageExo) {
+                    var framePresentation : INodePresentation? = null
+                    if (sequenceDiagram != null) {
+                        for (presentation in sequenceDiagram.presentations) {
+                            if (presentation.type.equals("Frame")) {
+                                framePresentation = presentation as INodePresentation
+                                break
+                            }
+                        }
+                    }
+                    val number = if (event.messageNumber.isNullOrBlank()) "" else event.messageNumber
+                    val label = when {
+                        event.label.isWhite -> number + "message"
+                        event.label.toString().isBlank() -> number + "message"
+                        else -> event.label.toString().replace("[\\[\\]]".toRegex(), "")
+                    }
+
+                    val participant2Model = participantMap[event.participant2]?.model
+                    if (participant2Model is ILifeline) {
+                        val receiver = participant2Model.base
+                        if (receiver.operations.all { it.name != label }) {
+                            modelEditor.createOperation(receiver, label, "void")
+                        }
+                    }
+                    val messagePresentation =
+                        when (event.type) {
+                            MessageExoType.FROM_RIGHT -> {
+                                diagramEditor.createMessage(
+                                    label,
+                                    framePresentation,
+                                    participantMap[event.participant2],
+                                    INIT_Y + Y_SPAN * (messageCount + 1)
+                                )
+                            }
+                            MessageExoType.FROM_LEFT -> {
+                                diagramEditor.createMessage(
+                                    label,
+                                    framePresentation,
+                                    participantMap[event.participant2],
+                                    INIT_Y + Y_SPAN * (messageCount + 1)
+                                )
+                            }
+                            MessageExoType.TO_RIGHT -> {
+                                diagramEditor.createMessage(
+                                    label,
+                                    participantMap[event.participant1],
+                                    framePresentation,
+                                    INIT_Y + Y_SPAN * (messageCount + 1)
+                                )
+                            }
+                            MessageExoType.TO_LEFT -> {
+                                diagramEditor.createMessage(
+                                    label,
+                                    participantMap[event.participant1],
+                                    framePresentation,
+                                    INIT_Y + Y_SPAN * (messageCount + 1)
+                                )
+                            }
+                            else -> {
+                                null
+                            }
+                        }
+                    if (messagePresentation != null) {
+                        when {
+                            event.arrowConfiguration.isAsync1 || event.arrowConfiguration.isAsync2 -> (messagePresentation.model as IMessage).isAsynchronous =
+                                true
+                        }
+
+                        prevMessage = messagePresentation
+                    }
                 }
             }
         } catch (e: Exception) {
