@@ -6,10 +6,12 @@ import com.change_vision.jude.api.inf.AstahAPI
 import com.change_vision.jude.api.inf.editor.TransactionManager
 import com.change_vision.jude.api.inf.exception.BadTransactionException
 import com.change_vision.jude.api.inf.model.IActivityDiagram
+import com.change_vision.jude.api.inf.model.IFlow
 import com.change_vision.jude.api.inf.presentation.INodePresentation
 import net.sourceforge.plantuml.SourceStringReader
 import net.sourceforge.plantuml.activitydiagram.ActivityDiagram
 import net.sourceforge.plantuml.abel.LeafType
+import net.sourceforge.plantuml.klimt.creole.Display
 import java.awt.geom.Point2D
 import java.awt.geom.Rectangle2D
 
@@ -69,10 +71,17 @@ object ToAstahActivityDiagramConverter {
             diagram.links.forEach { link ->
                 val source = findPresentation(link.entity1.name, presentationMap)
                 val target = findPresentation(link.entity2.name, presentationMap)
-                when {
+                val linkPs = when {
                     link.entity1.name == "end" -> diagramEditor.createFlow(target, source)
                     link.entity2.name == "start" -> diagramEditor.createFlow(target, source)
                     else -> diagramEditor.createFlow(source, target)
+                }
+
+                println(link.label.toString())
+                val display : Display = link.label
+                (linkPs.model as? IFlow)?.let { flow ->
+                    if(!Display.isNull(display))
+                        flow.guard = display.toString().removePrefix("[").removeSuffix("]")
                 }
             }
             TransactionManager.endTransaction()
