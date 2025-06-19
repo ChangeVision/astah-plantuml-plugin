@@ -6,7 +6,7 @@ import com.change_vision.jude.api.inf.exception.BadTransactionException
 import com.change_vision.jude.api.inf.model.IDiagram
 
 enum class DiagramKind {
-    ClassDiagram, SequenceDiagram, StateDiagram, ActivityDiagram
+    ClassDiagram, SequenceDiagram, StateDiagram, ActivityDiagram, UseCaseDiagram
 }
 
 fun createOrGetDiagram(index: Int, diagramType: DiagramKind): IDiagram? {
@@ -31,6 +31,10 @@ fun createOrGetDiagram(index: Int, diagramType: DiagramKind): IDiagram? {
                         diagramName
                     )
                     DiagramKind.ActivityDiagram -> diagramEditorFactory.activityDiagramEditor.createActivityDiagram(
+                        projectAccessor.project,
+                        diagramName
+                    )
+                    DiagramKind.UseCaseDiagram -> diagramEditorFactory.useCaseDiagramEditor.createUseCaseDiagram(
                         projectAccessor.project,
                         diagramName
                     )

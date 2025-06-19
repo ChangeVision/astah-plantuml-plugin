@@ -8,6 +8,7 @@ import net.sourceforge.plantuml.abel.LeafType
 import net.sourceforge.plantuml.activitydiagram.ActivityDiagram
 import net.sourceforge.plantuml.classdiagram.ClassDiagram
 import net.sourceforge.plantuml.abel.Entity as Entity
+import net.sourceforge.plantuml.descdiagram.DescriptionDiagram
 import net.sourceforge.plantuml.statediagram.StateDiagram
 import org.w3c.dom.Document
 import org.w3c.dom.Element
@@ -64,6 +65,18 @@ object SVGEntityCollector {
                     }
                 tempSvgFile = createTempSvgFile(index, reader)
                 collectActivityEntityBoundary(tempSvgFile, activities)
+            }
+            is DescriptionDiagram -> {
+                tempSvgFile = createTempSvgFile(index, reader)
+                val leafs = diagram.leafs()
+                val useCaseNames = leafs.filter {
+                    it.leafType == LeafType.USECASE || it.leafType == LeafType.USECASE_BUSINESS
+                }.map{
+                    it.display.get(0).toString()
+                }
+                val actorNames = leafs.filter { it.leafType == LeafType.DESCRIPTION
+                        && (it.uSymbol.sNames[0].name == "actor" || it.uSymbol.sNames[0].name == "business")}.map{ it.name }
+                collectUseCaseBoundary(tempSvgFile, useCaseNames, actorNames)
             }
             else -> emptyMap()
         }
@@ -384,6 +397,36 @@ object SVGEntityCollector {
             }
         }
         return parentStateName
+    }
+
+    private fun collectUseCaseBoundary(svgFile: File, useCaseNames: List<String>, actorNames: List<String>): Map<String, Rectangle2D.Float> {
+        val doc = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(svgFile)
+
+        val useCaseMap = useCaseNames.mapNotNull { useCase ->
+            val useCaseRect =
+                XPathFactory.newInstance().newXPath()
+                    .compile("//text[contains(text(),'$useCase')]/preceding-sibling::ellipse")
+                    .evaluate(doc, XPathConstants.NODESET) as NodeList
+            if (useCaseRect.length == 0) {
+                null
+            } else {
+                val rect = extractRectangle(useCaseRect.item(useCaseRect.length - 1))
+                Pair(useCase, rect)
+            }
+        }.toMap()
+        val actorMap = actorNames.mapNotNull { actor ->
+            val actorRect =
+                XPathFactory.newInstance().newXPath()
+                    .compile("//text[contains(text(),'$actor')]/preceding-sibling::path/preceding-sibling::ellipse")
+                    .evaluate(doc, XPathConstants.NODESET) as NodeList
+            if (actorRect.length == 0) {
+                null
+            } else {
+                val rect = extractRectangle(actorRect.item(actorRect.length - 1))
+                Pair(actor, rect)
+            }
+        }
+        return useCaseMap.plus(actorMap)
     }
 
     private fun extractRectangle(node: Node): Rectangle2D.Float {
