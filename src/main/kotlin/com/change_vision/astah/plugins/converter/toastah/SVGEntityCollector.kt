@@ -3,23 +3,40 @@ package com.change_vision.astah.plugins.converter.toastah
 import net.sourceforge.plantuml.FileFormat
 import net.sourceforge.plantuml.FileFormatOption
 import net.sourceforge.plantuml.SourceStringReader
+import net.sourceforge.plantuml.abel.Entity
 import net.sourceforge.plantuml.activitydiagram.ActivityDiagram
 import net.sourceforge.plantuml.classdiagram.ClassDiagram
+import net.sourceforge.plantuml.abel.Entity as PlantEntity
 import net.sourceforge.plantuml.abel.LeafType
 import net.sourceforge.plantuml.statediagram.StateDiagram
+import org.w3c.dom.Document
+import org.w3c.dom.Element
 import org.w3c.dom.Node
 import org.w3c.dom.NodeList
+import java.awt.geom.Point2D
 import java.awt.geom.Rectangle2D
 import java.io.File
 import java.nio.file.Files
-import java.util.regex.Pattern
 import javax.xml.parsers.DocumentBuilderFactory
+import javax.xml.xpath.XPath
 import javax.xml.xpath.XPathConstants
 import javax.xml.xpath.XPathFactory
 
 object SVGEntityCollector {
+    //ジョイン/フォークノードがリンクの始点終点どちらかを調べる
+    const val LINK_END_FROM = "from"
+    const val LINK_END_TO = "to"
+    const val LINK_END_NONE = "none"
+
+    const val SYNCHRO_BAR_NODE_TYPE_FORK = "fork node"
+    const val SYNCHRO_BAR_NODE_TYPE_JOIN = "join node"
+
+    var syncroBarTypeMap = mutableMapOf<PlantEntity,String>()
+
+    lateinit var tempSvgFile : File
+
     fun collectSvgPosition(reader: SourceStringReader, index: Int): Map<String, Rectangle2D.Float> {
-        val tempSvgFile = Files.createTempFile("plantsvg_${index}_", ".svg").toFile()
+        tempSvgFile = Files.createTempFile("plantsvg_${index}_", ".svg").toFile()
         tempSvgFile.outputStream().use { os ->
             reader.outputImage(os, index, FileFormatOption(FileFormat.SVG))
         }
@@ -34,9 +51,9 @@ object SVGEntityCollector {
                 collectEntityBoundary(tempSvgFile, stateNames)
             }
             is ActivityDiagram -> {
-                val activityNames =
-                    diagram.leafs().filter { it.leafType == LeafType.ACTIVITY }.map { it.name }
-                collectEntityBoundary(tempSvgFile, activityNames)
+                val activities =
+                    diagram.leafs().filter { it.leafType == LeafType.ACTIVITY || it.leafType == LeafType.SYNCHRO_BAR ||it.leafType == LeafType.BRANCH}
+                collectEntityBoundaryForActivity(tempSvgFile, activities)
             }
             else -> emptyMap()
         }
@@ -134,7 +151,96 @@ object SVGEntityCollector {
             }
         }.toMap()
 
-        val ellipses = XPathFactory.newInstance().newXPath()
+        return stateMap.plus(getEllipseRectangles(XPathFactory.newInstance().newXPath() , doc))
+    }
+
+    private fun collectEntityBoundaryForActivity(svgFile: File, activities: List<PlantEntity>):
+            Map<String, Rectangle2D.Float> {
+        val doc = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(svgFile)
+        val xpath = XPathFactory.newInstance().newXPath()
+
+        val actionMap = activities.mapNotNull { activity ->
+            val action = activity.name
+            val actionRectangles = xpath
+                .compile("//text[contains(text(),'$action')]/preceding-sibling::rect")
+                .evaluate(doc, XPathConstants.NODESET) as NodeList
+
+            if (actionRectangles.length == 0) return@mapNotNull null
+
+            val rect = extractRectangle(actionRectangles.item(actionRectangles.length - 1))
+            action to rect
+        }.toMap()
+
+        val syncBarNodes = mutableMapOf<String, Rectangle2D.Float>()
+        val lineEndPoints = mutableMapOf<String, List<Point2D>>()
+
+        val syncBars = activities.filter { it.leafType == LeafType.SYNCHRO_BAR }
+
+        for (leaf in syncBars) {
+            val name = leaf.name
+            val lineNumber = leaf.location.position
+            val barLink = getLinksFromLineNumber(lineNumber, xpath, doc)
+            val barNode = barLink.item(0)
+
+            syncroBarTypeMap[leaf] = checkSynchroBarType(name, xpath, doc)
+
+            val barPos = checkLinkEnd(barNode, name)
+
+            val points = (0 until barNode.childNodes.length)
+                .mapNotNull { index ->
+                    val element = barNode.childNodes.item(index)
+                    if (element !is Element) return@mapNotNull null
+
+                    when (barPos) {
+                        LINK_END_FROM -> if (element.nodeName == "path") {
+                            extractPathPoints(element.getAttribute("d"))
+                        } else null
+                        LINK_END_TO -> if (element.nodeName == "polygon") {
+                            element.getAttribute("points")
+                                .split(',')
+                                .map { it.trim() }
+                                .chunked(2)
+                                .mapNotNull { chunk ->
+                                    if (chunk.size == 2) {
+                                        val x = chunk[0].toFloatOrNull()
+                                        val y = chunk[1].toFloatOrNull()
+                                        if (x != null && y != null) Point2D.Float(x, y) else null
+                                    } else null
+                                }
+                        } else null
+                        else -> null
+                    }
+                }
+                .flatten()
+
+            if (points.isNotEmpty()) {
+                lineEndPoints[name] = points
+            }
+        }
+
+        val rectList = (xpath.compile("//rect[not(following-sibling::*[1][self::text])]")
+            .evaluate(doc, XPathConstants.NODESET) as NodeList).let { nodeList ->
+            (0 until nodeList.length).map { extractRectangle(nodeList.item(it)) }
+        }
+
+        for ((name, points) in lineEndPoints) {
+            for (rect in rectList) {
+                val expandedRect = Rectangle2D.Float(rect.x - 0.5f, rect.y - 0.5f, rect.width + 2, rect.height + 2)
+                if (points.any { expandedRect.contains(it) }) {
+                    syncBarNodes[name] = rect
+                }
+            }
+        }
+
+        for((name,type) in syncroBarTypeMap){
+            println("$name , $type")
+        }
+
+        return actionMap + syncBarNodes + getEllipseRectangles(xpath , doc)
+    }
+
+    private fun getEllipseRectangles(xpath : XPath, doc : Document): Map<String, Rectangle2D.Float>{
+        val ellipseNodes = xpath
             .compile("//ellipse[not(@fill='none')]")
             .evaluate(doc, XPathConstants.NODESET) as NodeList
 
@@ -143,18 +249,20 @@ object SVGEntityCollector {
          * TODO 現状は、ellipseで拾える初期状態・終了状態・ヒストリのみ。他は追々対応する。
          * Pathを追って接続関係を元に調べれなくもないが、一旦保留。
          */
-        val otherNodeMap = (0 until ellipses.length).map { ellipses.item(it) }
-            .mapNotNull { ellipse ->
+        return (0 until ellipseNodes.length)
+            .mapNotNull { i ->
+                val ellipse = ellipseNodes.item(i)
                 val prevNode = ellipse.previousSibling
+                val nextTextNode = ellipse.nextSibling?.nextSibling
+
                 val elementName = when {
                     prevNode?.nodeName == "ellipse" -> "final"
-                    ellipse.nextSibling?.nextSibling?.let { it.nodeName == "text" && it.nodeValue == "H" }!! -> "history"
+                    nextTextNode?.nodeName == "text" && nextTextNode.nodeValue == "H" -> "history"
                     else -> "initial"
                 }
-                Pair(elementName, extractRectangle(ellipse))
-            }.toMap()
 
-        return stateMap.plus(otherNodeMap)
+                elementName to extractRectangle(ellipse)
+            }.toMap()
     }
 
     private fun extractRectangle(node: Node): Rectangle2D.Float {
@@ -177,5 +285,82 @@ object SVGEntityCollector {
                 Rectangle2D.Float(x, y, w, h)
             }
         }
+    }
+
+    fun extractPathPoints(d: String): List<Point2D.Float> {
+        val commands = Regex("[A-Za-z]").findAll(d).map { it.value }.toList()
+        val parts = d.split(Regex("[A-Za-z]")).map { it.trim() }.filter { it.isNotEmpty() }
+
+        val result = mutableListOf<Point2D.Float>()
+
+        for ((i, cmd) in commands.withIndex()) {
+            val nums = parts.getOrNull(i)?.split(",", " ")?.filter { it.isNotBlank() } ?: continue
+            val floats = nums.mapNotNull { it.toFloatOrNull() }
+
+            when (cmd) {
+                "M", "L" -> {
+                    for (j in floats.indices step 2) {
+                        if (j + 1 < floats.size) {
+                            result.add(Point2D.Float(floats[j], floats[j + 1]))
+                        }
+                    }
+                }
+                "C" -> {
+                    for (j in floats.indices step 6) {
+                        if (j + 5 < floats.size) {
+                            result.add(Point2D.Float(floats[j+4], floats[j + 5]))
+                        }
+                    }
+                }
+            }
+        }
+
+        return result
+    }
+
+    fun checkLinkEnd(linkNode : Node, nodeName : String):String{
+        if(linkNode !is Element) return LINK_END_NONE
+
+        val from = linkNode.getAttribute("data-entity-1")
+        val to = linkNode.getAttribute("data-entity-2")
+
+        return when (nodeName) {
+            from -> LINK_END_FROM
+            to -> LINK_END_TO
+            else -> LINK_END_NONE
+        }
+    }
+
+    fun checkSynchroBarType(name : String,xpath: XPath,doc : Document):String{
+        val linkList = getLinkNodeList(xpath,doc)
+        var countFrom = 0
+        var countTo = 0
+        for(index in 0 until linkList.length){
+            val link = linkList.item(index)
+            if(link !is Element) continue
+            when(checkLinkEnd(link,name)){
+                LINK_END_FROM -> countFrom++
+                LINK_END_TO -> countTo++
+            }
+        }
+        if(countFrom <= countTo){
+            return SYNCHRO_BAR_NODE_TYPE_JOIN
+        }else{
+            return SYNCHRO_BAR_NODE_TYPE_FORK
+        }
+    }
+
+    fun getLinkNodeList(xpath: XPath,doc : Document):NodeList{
+        return xpath.compile("//g[@class='link']")
+            .evaluate(doc, XPathConstants.NODESET) as NodeList
+    }
+
+    fun getLinksFromLineNumber(lineNumber:Int,xpath: XPath,doc : Document):NodeList{
+        return xpath.compile("//g[@class='link' and @data-source-line='$lineNumber']")
+            .evaluate(doc, XPathConstants.NODESET) as NodeList
+    }
+
+    fun isFork(entity: Entity): Boolean{
+        return syncroBarTypeMap[entity] == SYNCHRO_BAR_NODE_TYPE_FORK
     }
 }
