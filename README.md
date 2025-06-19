@@ -78,6 +78,7 @@ After installing the plugin, the "PlantUML View" tab will appear with a PlantUML
 - **Activity Diagram (legacy)**
   - Initial node, Final node, Action
   - Control flow
+  - Join Node, Fork Node
 
 ---
 

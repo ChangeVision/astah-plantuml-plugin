@@ -48,6 +48,23 @@ object ToAstahActivityDiagramConverter {
                             }
                         Pair(leaf.name, statePresentation)
                     }
+                    LeafType.SYNCHRO_BAR -> {
+                        val rect = when {
+                            posMap.containsKey(leaf.name) -> posMap[leaf.name]!!
+                            else -> Rectangle2D.Float(30f, 30f, 30f, 30f)
+                        }
+
+                        val barPresentation = if(SVGEntityCollector.isFork(leaf)){
+                            diagramEditor.createForkNode(null, Point2D.Float(rect.x, rect.y)).also {
+                                leaf.bodier.rawBody.toString()
+                            }
+                        }else{
+                            diagramEditor.createJoinNode(null, Point2D.Float(rect.x, rect.y)).also {
+                                leaf.bodier.rawBody.toString()
+                            }
+                        }
+                        Pair(leaf.name, barPresentation)
+                    }
                     LeafType.CIRCLE_START -> {
                         val rect = posMap["initial"]!!
                         Pair(
@@ -63,11 +80,7 @@ object ToAstahActivityDiagramConverter {
                 }
             }.toMap()
 
-            fun findPresentation(name: String, map: Map<String, INodePresentation>) = when (name) {
-                "start" -> map["initial"]!!
-                "end" -> map["final"]!!
-                else -> map[name]
-            }
+
             diagram.links.forEach { link ->
                 val source = findPresentation(link.entity1.name, presentationMap)
                 val target = findPresentation(link.entity2.name, presentationMap)
@@ -77,7 +90,7 @@ object ToAstahActivityDiagramConverter {
                     else -> diagramEditor.createFlow(source, target)
                 }
 
-                println(link.label.toString())
+
                 val display : Display = link.label
                 (linkPs.model as? IFlow)?.let { flow ->
                     if(!Display.isNull(display))
@@ -91,4 +104,11 @@ object ToAstahActivityDiagramConverter {
 
         astahDiagram?.let { api.viewManager.diagramViewManager.open(it) }
     }
+
+    fun findPresentation(name: String, map: Map<String, INodePresentation>) = when (name) {
+        "start" -> map["initial"]!!
+        "end" -> map["final"]!!
+        else -> map[name]
+    }
+
 }
