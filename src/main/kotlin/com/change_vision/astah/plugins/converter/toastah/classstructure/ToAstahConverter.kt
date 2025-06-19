@@ -4,10 +4,7 @@ import com.change_vision.astah.plugins.converter.EmptyError
 import com.change_vision.astah.plugins.converter.SyntaxError
 import com.change_vision.astah.plugins.converter.ValidationOK
 import com.change_vision.astah.plugins.converter.ValidationResult
-import com.change_vision.astah.plugins.converter.toastah.StereotypeExtractor
-import com.change_vision.astah.plugins.converter.toastah.ToAstahActivityDiagramConverter
-import com.change_vision.astah.plugins.converter.toastah.ToAstahSequenceDiagramConverter
-import com.change_vision.astah.plugins.converter.toastah.ToAstahStateDiagramConverter
+import com.change_vision.astah.plugins.converter.toastah.*
 import net.sourceforge.plantuml.SourceStringReader
 import net.sourceforge.plantuml.activitydiagram.ActivityDiagram
 import net.sourceforge.plantuml.classdiagram.ClassDiagram
@@ -64,10 +61,15 @@ object ToAstahConverter {
                     ToAstahClassDiagramConverter.convert(diagram, reader, index, stereotypeMapping, processedText)
                 }
                 is SequenceDiagram -> ToAstahSequenceDiagramConverter.convert(diagram, index)
+                is DescriptionDiagram -> { // UseCase, Component, Deployment
+                    // TODO コンポーネント図に対応する際にユースケース図かコンポーネント図かの判定も実装すること
+                    // TODO 現状ではとりあえず全てユースケース図に変換するようにする(コンポーネントは無視する)
+                    ToAstahUseCaseDiagramConverter.convert(diagram, reader, index)
+                }
                 is StateDiagram -> ToAstahStateDiagramConverter.convert(diagram, reader, index)
                 is ActivityDiagram -> ToAstahActivityDiagramConverter.convert(diagram, reader, index)
                 is PSystemError -> throw IllegalArgumentException(diagram.description.toString())
-                is DescriptionDiagram, is MindMapDiagram -> throw IllegalArgumentException("unsupported diagram type")
+                is MindMapDiagram -> throw IllegalArgumentException("unsupported diagram type")
                 else -> throw IllegalArgumentException("unknown diagram type")
             }
         }
