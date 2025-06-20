@@ -65,6 +65,17 @@ object ToAstahActivityDiagramConverter {
                         }
                         Pair(leaf.name, barPresentation)
                     }
+                    LeafType.BRANCH -> {
+                        val rect = when {
+                            posMap.containsKey(leaf.name) -> posMap[leaf.name]!!
+                            else -> Rectangle2D.Float(30f, 30f, 30f, 30f)
+                        }
+                        val decisionNodePresentation =
+                            diagramEditor.createDecisionMergeNode(null, Point2D.Float(rect.x, rect.y)).also {
+                                leaf.bodier.rawBody.toString()
+                            }
+                        Pair(leaf.name, decisionNodePresentation)
+                    }
                     LeafType.CIRCLE_START -> {
                         val rect = posMap["initial"]!!
                         Pair(
@@ -91,11 +102,22 @@ object ToAstahActivityDiagramConverter {
                 }
 
 
-                val display : Display = link.label
-                (linkPs.model as? IFlow)?.let { flow ->
-                    if(!Display.isNull(display))
-                        flow.guard = display.toString().removePrefix("[").removeSuffix("]")
+                val display = link.label
+                val quantifier1 = link.quantifier1
+                val quantifier2 = link.quantifier2
+
+                val guardText = buildString {
+                    display?.takeIf { !Display.isNull(it) }?.let {
+                        append(it.toString().removePrefix("[").removeSuffix("]"))
+                    }
+                    quantifier1?.let { append(it) }
+                    quantifier2?.let { append(it) }
                 }
+
+                if (guardText.isNotEmpty()) {
+                    (linkPs.model as? IFlow)?.guard = guardText
+                }
+
             }
             TransactionManager.endTransaction()
         } catch (e: BadTransactionException) {
