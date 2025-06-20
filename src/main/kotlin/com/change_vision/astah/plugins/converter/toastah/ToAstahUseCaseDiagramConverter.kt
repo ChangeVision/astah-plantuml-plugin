@@ -53,16 +53,8 @@ object ToAstahUseCaseDiagramConverter {
                             posMap.containsKey(display) -> posMap[display]!!
                             else -> Rectangle2D.Float(30f, 30f, 30f, 30f)
                         }
-                        val sb = StringBuilder()
-                        for (i in 0 until leaf.display.size()) {
-                            if (i == 0) {
-                                sb.append(leaf.display.get(0))
-                            } else {
-                                sb.appendLine("")
-                                sb.append(leaf.display.get(i))
-                            }
-                        }
-                        val model = modelEditor.createUseCase(projectAccessor.project, sb.toString())
+                        val displayText = leaf.display.joinToString(separator = "\n") {it}
+                        val model = modelEditor.createUseCase(projectAccessor.project, displayText)
                         val useCasePresentation = diagramEditor.createNodePresentation(model, Point2D.Float(rect.x, rect.y))
                         Pair(leaf.name, useCasePresentation)
                     }
