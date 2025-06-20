@@ -32,7 +32,6 @@ object SVGEntityCollector {
     const val SYNCHRO_BAR_NODE_TYPE_JOIN = "join node"
 
     var syncroBarTypeMap = mutableMapOf<PlantEntity,String>()
-
     lateinit var tempSvgFile : File
 
     fun collectSvgPosition(reader: SourceStringReader, index: Int): Map<String, Rectangle2D.Float> {
@@ -161,10 +160,12 @@ object SVGEntityCollector {
         val doc = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(svgFile)
         val xpath = XPathFactory.newInstance().newXPath()
 
-        val actionMap = activities.mapNotNull { activity ->
+        //アクションに限定
+        val actionMap = activities.filter { it.leafType == LeafType.ACTIVITY }.mapNotNull { activity ->
             val action = activity.name
+            val display = activity.display.toString().removePrefix("[").removeSuffix("]")
             val actionRectangles = xpath
-                .compile("//text[contains(text(),'$action')]/preceding-sibling::rect")
+                .compile("//text[contains(text(),'$display')]/preceding-sibling::rect")
                 .evaluate(doc, XPathConstants.NODESET) as NodeList
 
             if (actionRectangles.length == 0) return@mapNotNull null
