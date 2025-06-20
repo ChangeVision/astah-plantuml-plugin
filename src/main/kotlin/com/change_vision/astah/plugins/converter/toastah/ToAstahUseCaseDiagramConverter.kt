@@ -5,8 +5,14 @@ import com.change_vision.astah.plugins.converter.toplant.createOrGetDiagram
 import com.change_vision.jude.api.inf.AstahAPI
 import com.change_vision.jude.api.inf.editor.TransactionManager
 import com.change_vision.jude.api.inf.exception.BadTransactionException
+import com.change_vision.jude.api.inf.model.IClass
+import com.change_vision.jude.api.inf.model.INode
+import com.change_vision.jude.api.inf.model.IUseCase
 import com.change_vision.jude.api.inf.model.IUseCaseDiagram
+import com.change_vision.jude.api.inf.presentation.ILinkPresentation
+import com.change_vision.jude.api.inf.presentation.INodePresentation
 import net.sourceforge.plantuml.SourceStringReader
+import net.sourceforge.plantuml.abel.Entity
 import net.sourceforge.plantuml.abel.LeafType
 import net.sourceforge.plantuml.descdiagram.DescriptionDiagram
 import java.awt.geom.Point2D
@@ -18,6 +24,7 @@ object ToAstahUseCaseDiagramConverter {
     private val projectAccessor = api.projectAccessor
     private val diagramEditor = projectAccessor.diagramEditorFactory.useCaseDiagramEditor
     private val modelEditor = projectAccessor.modelEditorFactory.useCaseModelEditor
+    private val basicModelEditor = projectAccessor.modelEditorFactory.basicModelEditor
 
     fun convert(diagram: DescriptionDiagram, reader: SourceStringReader, index: Int) {
         // 作成予定の図と同名の図を探して削除する(繰り返し実行する場合は図を削除して作り直す)
@@ -40,6 +47,7 @@ object ToAstahUseCaseDiagramConverter {
             val presentationMap = diagram.leafs().mapNotNull { leaf ->
                 when (leaf.leafType) {
                     LeafType.USECASE -> {
+                        // ユースケース
                         val display = leaf.display.get(0)
                         val rect = when {
                             posMap.containsKey(display) -> posMap[display]!!
@@ -59,7 +67,7 @@ object ToAstahUseCaseDiagramConverter {
                         Pair(leaf.name, useCasePresentation)
                     }
                     LeafType.USECASE_BUSINESS -> {
-                        // TODO ビジネスユースケースにする
+                        // ビジネスユースケース
                         val display = leaf.display.get(0)
                         val rect = when {
                             posMap.containsKey(display) -> posMap[display]!!
@@ -82,62 +90,71 @@ object ToAstahUseCaseDiagramConverter {
                     LeafType.DESCRIPTION -> {
                         val symbol = leaf.uSymbol
                         val symbolStyle = symbol.sNames
+                        var actorPresentation : INodePresentation? = null
+                        val rect = when {
+                            posMap.containsKey(leaf.name) -> posMap[leaf.name]!!
+                            else -> Rectangle2D.Float(30f, 30f, 30f, 30f)
+                        }
                         if (symbolStyle.isNotEmpty()) {
                             if (symbolStyle[0].name == "actor") {
                                 // アクター
-                                val rect = when {
-                                    posMap.containsKey(leaf.name) -> posMap[leaf.name]!!
-                                    else -> Rectangle2D.Float(30f, 30f, 30f, 30f)
-                                }
                                 val actor = modelEditor.createActor(projectAccessor.project, leaf.name)
-                                val actorPresentation = diagramEditor.createNodePresentation(actor, Point2D.Float(rect.x, rect.y))
-                                Pair(leaf.name, actorPresentation)
+                                actorPresentation = diagramEditor.createNodePresentation(actor, Point2D.Float(rect.x, rect.y))
                             } else if (symbolStyle[0].name == "business") {
                                 // ビジネスアクター
-                                val rect = when {
-                                    posMap.containsKey(leaf.name) -> posMap[leaf.name]!!
-                                    else -> Rectangle2D.Float(30f, 30f, 30f, 30f)
-                                }
                                 val actor = modelEditor.createActor(projectAccessor.project, leaf.name)
                                 actor.addStereotype("business")
-                                val actorPresentation = diagramEditor.createNodePresentation(actor, Point2D.Float(rect.x, rect.y))
-                                Pair(leaf.name, actorPresentation)
+                                actorPresentation = diagramEditor.createNodePresentation(actor, Point2D.Float(rect.x, rect.y))
                             }
                         }
-
-                        Pair(leaf.name, null)
+                        Pair(leaf.name, actorPresentation)
                     }
                     else -> null
                 }
             }.toMap()
+
+            // 関係線(関連、拡張、包含)の作成
             diagram.links.forEach { link ->
-                val source = when (link.entity1.name) {
-                    "*start*" -> presentationMap["initial"]!!
-                    else -> presentationMap[link.entity1.name]
+                val source = presentationMap[link.entity1.name]
+                val target = presentationMap[link.entity2.name]
+                if (link.label.isWhite) {
+                    val model = basicModelEditor.createAssociation(
+                        (source?.model as IClass),
+                        (target?.model as IClass),
+                        null,
+                        null,
+                        null)
+                    diagramEditor.createLinkPresentation(model, source, target)
+                } else {
+                    when (val linkLabel = link.label.get(0)) {
+                        "include" -> {
+                            val model = modelEditor.createInclude(
+                                (target?.model as IUseCase),
+                                (source?.model as IUseCase),
+                                ""
+                            )
+                            diagramEditor.createLinkPresentation(model, target, source)
+                        }
+                        "extends" -> {
+                            val model = modelEditor.createExtend(
+                                (target?.model as IUseCase),
+                                (source?.model as IUseCase),
+                                ""
+                            )
+                            diagramEditor.createLinkPresentation(model, target, source)
+                        }
+                        else -> {
+                            val model = basicModelEditor.createAssociation(
+                                (source?.model as IClass),
+                                (target?.model as IClass),
+                                linkLabel?.toString(),
+                                null,
+                                null
+                            )
+                            diagramEditor.createLinkPresentation(model, source, target)
+                        }
+                    }
                 }
-                val target = when (link.entity2.name) {
-                    "*end*" -> presentationMap["final"]!!
-                    else -> presentationMap[link.entity2.name]
-                }
-                val transitionLabelRegex =
-                    Pattern.compile("""(<?event>\w+)(?:\[(<?guard>\w)])?(?:/(<?action>\w+))?""")
-//                diagramEditor.createTransition(source, target)
-//                    .also { transition ->
-//                        val label = link.label.toString()
-//                        val matcher = transitionLabelRegex.matcher(label)
-//                        if (transition.label.contains("トリガー")) {
-//                            when {
-//                                link.label.isWhite -> transition.label = ""
-//                                matcher.matches() -> {
-//                                    val model = ((transition.model) as ITransition)
-//                                    model.event = matcher.group("event") ?: ""
-//                                    model.guard = matcher.group("guard") ?: ""
-//                                    model.action = matcher.group("action") ?: ""
-//                                }
-//                                else -> transition.label = label
-//                            }
-//                        }
-//                    }
             }
             TransactionManager.endTransaction()
         } catch (e: BadTransactionException) {
