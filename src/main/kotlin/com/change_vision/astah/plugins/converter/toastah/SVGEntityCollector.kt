@@ -52,7 +52,9 @@ object SVGEntityCollector {
             }
             is ActivityDiagram -> {
                 val activities =
-                    diagram.leafs().filter { it.leafType == LeafType.ACTIVITY || it.leafType == LeafType.SYNCHRO_BAR ||it.leafType == LeafType.BRANCH}
+                    diagram.leafs().filter {
+                        it.leafType in setOf(LeafType.ACTIVITY, LeafType.SYNCHRO_BAR, LeafType.BRANCH)
+                    }
                 collectEntityBoundaryForActivity(tempSvgFile, activities)
             }
             else -> emptyMap()
@@ -171,6 +173,31 @@ object SVGEntityCollector {
             action to rect
         }.toMap()
 
+
+        val decisionMergeNodeMap = activities.mapNotNull { decisionMergeNode ->
+            val uid = decisionMergeNode.uid
+            val nodeRectangles = xpath
+                .compile("//g[@class='entity' and @data-uid='$uid']")
+                .evaluate(doc, XPathConstants.NODESET) as NodeList
+
+            if (nodeRectangles.length == 0) return@mapNotNull null
+
+            val polygonNode =nodeRectangles.item(0).childNodes.item(0)
+            if(polygonNode.nodeName != "polygon" || polygonNode !is Element)return@mapNotNull null
+            val points = getPolygonPoints(polygonNode)
+
+            val minPoints = Point2D.Float (points.minOf { it.x },points.minOf { it.y })
+
+            decisionMergeNode.name to Rectangle2D.Float( minPoints.x,minPoints.y,0f,0f)
+
+        }.toMap()
+        for((name, rect) in decisionMergeNodeMap){
+            println("$name , $rect")
+        }
+
+        println(decisionMergeNodeMap)
+
+
         val syncBarNodes = mutableMapOf<String, Rectangle2D.Float>()
         val lineEndPoints = mutableMapOf<String, List<Point2D>>()
 
@@ -196,17 +223,7 @@ object SVGEntityCollector {
                             extractPathPoints(element.getAttribute("d"))
                         } else null
                         LINK_END_TO -> if (element.nodeName == "polygon") {
-                            element.getAttribute("points")
-                                .split(',')
-                                .map { it.trim() }
-                                .chunked(2)
-                                .mapNotNull { chunk ->
-                                    if (chunk.size == 2) {
-                                        val x = chunk[0].toFloatOrNull()
-                                        val y = chunk[1].toFloatOrNull()
-                                        if (x != null && y != null) Point2D.Float(x, y) else null
-                                    } else null
-                                }
+                            getPolygonPoints(element)
                         } else null
                         else -> null
                     }
@@ -236,7 +253,7 @@ object SVGEntityCollector {
             println("$name , $type")
         }
 
-        return actionMap + syncBarNodes + getEllipseRectangles(xpath , doc)
+        return actionMap + decisionMergeNodeMap + syncBarNodes + getEllipseRectangles(xpath , doc)
     }
 
     private fun getEllipseRectangles(xpath : XPath, doc : Document): Map<String, Rectangle2D.Float>{
@@ -358,6 +375,20 @@ object SVGEntityCollector {
     fun getLinksFromLineNumber(lineNumber:Int,xpath: XPath,doc : Document):NodeList{
         return xpath.compile("//g[@class='link' and @data-source-line='$lineNumber']")
             .evaluate(doc, XPathConstants.NODESET) as NodeList
+    }
+
+    fun getPolygonPoints(element : Element) : List<Point2D.Float> {
+         return element.getAttribute("points")
+            .split(',')
+            .map { it.trim() }
+            .chunked(2)
+            .mapNotNull { chunk ->
+                if (chunk.size == 2) {
+                    val x = chunk[0].toFloatOrNull()
+                    val y = chunk[1].toFloatOrNull()
+                    if (x != null && y != null) Point2D.Float(x, y) else null
+                } else null
+            }
     }
 
     fun isFork(entity: Entity): Boolean{
