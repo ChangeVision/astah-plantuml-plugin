@@ -7,6 +7,7 @@ import com.change_vision.jude.api.inf.editor.TransactionManager
 import com.change_vision.jude.api.inf.exception.BadTransactionException
 import com.change_vision.jude.api.inf.model.IActivityDiagram
 import com.change_vision.jude.api.inf.model.IFlow
+import com.change_vision.jude.api.inf.model.INamedElement
 import com.change_vision.jude.api.inf.presentation.INodePresentation
 import net.sourceforge.plantuml.SourceStringReader
 import net.sourceforge.plantuml.activitydiagram.ActivityDiagram
@@ -38,15 +39,21 @@ object ToAstahActivityDiagramConverter {
             val presentationMap = diagram.leafs().mapNotNull { leaf ->
                 when (leaf.leafType) {
                     LeafType.ACTIVITY -> {
+                        val activityName = leaf.name
                         val rect = when {
-                            posMap.containsKey(leaf.name) -> posMap[leaf.name]!!
+                            posMap.containsKey(activityName) -> posMap[activityName]!!
                             else -> Rectangle2D.Float(30f, 30f, 30f, 30f)
                         }
-                        val statePresentation =
-                            diagramEditor.createAction(leaf.name, Point2D.Float(rect.x, rect.y)).also {
+                        val displayName = leaf.display.toString().removePrefix("[").removeSuffix("]")
+                        val actionPresentation =
+                            diagramEditor.createAction(
+                                displayName, Point2D.Float(rect.x, rect.y)).also {
                                 leaf.bodier.rawBody.toString()
                             }
-                        Pair(leaf.name, statePresentation)
+                        if(actionPresentation is INamedElement && displayName != activityName){
+                            actionPresentation.alias1 = activityName
+                        }
+                        Pair(activityName, actionPresentation)
                     }
                     LeafType.SYNCHRO_BAR -> {
                         val rect = when {
