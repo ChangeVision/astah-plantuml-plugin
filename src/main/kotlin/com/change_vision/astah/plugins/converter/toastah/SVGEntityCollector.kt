@@ -52,7 +52,7 @@ object SVGEntityCollector {
             is ActivityDiagram -> {
                 val activities =
                     diagram.leafs().filter {
-                        it.leafType in setOf(LeafType.ACTIVITY, LeafType.SYNCHRO_BAR, LeafType.BRANCH)
+                        it.leafType in setOf(LeafType.ACTIVITY, LeafType.SYNCHRO_BAR, LeafType.BRANCH, LeafType.NOTE)
                     }
                 collectEntityBoundaryForActivity(tempSvgFile, activities)
             }
@@ -175,7 +175,7 @@ object SVGEntityCollector {
         }.toMap()
 
 
-        val decisionMergeNodeMap = activities.mapNotNull { decisionMergeNode ->
+        val decisionMergeNodeMap = activities.filter { it.leafType == LeafType.BRANCH }.mapNotNull { decisionMergeNode ->
             val uid = decisionMergeNode.uid
             val nodeRectangles = xpath
                 .compile("//g[@class='entity' and @data-uid='$uid']")
@@ -191,6 +191,26 @@ object SVGEntityCollector {
 
             decisionMergeNode.name to Rectangle2D.Float( minPoints.x,minPoints.y,0f,0f)
 
+        }.toMap()
+        for((name, rect) in decisionMergeNodeMap){
+            println("$name , $rect")
+        }
+
+        val noteMap = activities.filter { it.leafType == LeafType.NOTE }.mapNotNull { note ->
+            val uid = note.uid
+            val nodeRectangles = xpath
+                .compile("//g[@class='entity' and @data-uid='$uid']")
+                .evaluate(doc, XPathConstants.NODESET) as NodeList
+
+            if (nodeRectangles.length == 0) return@mapNotNull null
+
+            val pathNode = nodeRectangles.item(0).childNodes.item(0)
+            if(pathNode.nodeName != "path" || pathNode !is Element)return@mapNotNull null
+
+            val points = extractPathPoints(pathNode.getAttribute("d"))
+            val minPoints = Point2D.Float (points.minOf { it.x },points.minOf { it.y })
+
+            note.name to Rectangle2D.Float( minPoints.x,minPoints.y,0f,0f)
         }.toMap()
         for((name, rect) in decisionMergeNodeMap){
             println("$name , $rect")
@@ -254,7 +274,7 @@ object SVGEntityCollector {
             println("$name , $type")
         }
 
-        return actionMap + decisionMergeNodeMap + syncBarNodes + getEllipseRectangles(xpath , doc)
+        return actionMap + decisionMergeNodeMap + syncBarNodes + getEllipseRectangles(xpath , doc) + noteMap
     }
 
     private fun getEllipseRectangles(xpath : XPath, doc : Document): Map<String, Rectangle2D.Float>{
