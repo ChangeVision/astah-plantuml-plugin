@@ -163,7 +163,7 @@ object SVGEntityCollector {
         //アクションに限定
         val actionMap = activities.filter { it.leafType == LeafType.ACTIVITY }.mapNotNull { activity ->
             val action = activity.name
-            val display = activity.display.toString().removePrefix("[").removeSuffix("]")
+            val display = activity.display.firstOrNull()?.removeSuffix(" ")
             val actionRectangles = xpath
                 .compile("//text[contains(text(),'$display')]/preceding-sibling::rect")
                 .evaluate(doc, XPathConstants.NODESET) as NodeList

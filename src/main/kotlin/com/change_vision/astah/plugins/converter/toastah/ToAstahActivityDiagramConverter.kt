@@ -44,7 +44,7 @@ object ToAstahActivityDiagramConverter {
                             posMap.containsKey(activityName) -> posMap[activityName]!!
                             else -> Rectangle2D.Float(30f, 30f, 30f, 30f)
                         }
-                        val displayName = leaf.display.toString().removePrefix("[").removeSuffix("]")
+                        val displayName = leaf.display.joinToString("\n")
                         val actionPresentation =
                             diagramEditor.createAction(
                                 displayName, Point2D.Float(rect.x, rect.y)).also {
