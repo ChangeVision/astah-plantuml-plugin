@@ -98,15 +98,27 @@ object ToAstahActivityDiagramConverter {
                 }
             }.toMap()
 
+            val regex = """-(left|right|up|down)?->""".toRegex()
+            val sources = reader.blocks.firstOrNull()?.data
 
             diagram.links.forEach { link ->
                 val source = findPresentation(link.entity1.name, presentationMap)
                 val target = findPresentation(link.entity2.name, presentationMap)
-                val linkPs = when {
-                    link.entity1.name == "end" -> diagramEditor.createFlow(target, source)
-                    link.entity2.name == "start" -> diagramEditor.createFlow(target, source)
-                    else -> diagramEditor.createFlow(source, target)
+
+                val code = sources?.getOrNull(link.location.position)?.toString().orEmpty()
+                val matchResult = regex.find(code,0)
+
+                val isReverse = when (matchResult?.value) {
+                    "-left->", "-up->" -> true
+                    "-right->", "-down->" -> false
+                    else -> false
                 }
+
+                val linkPs = if(isReverse){
+                        diagramEditor.createFlow(target, source)
+                    }else{
+                        diagramEditor.createFlow(source, target)
+                    }
 
 
                 val display = link.label
