@@ -8,6 +8,7 @@ import com.change_vision.jude.api.inf.exception.BadTransactionException
 import com.change_vision.jude.api.inf.model.IActivityDiagram
 import com.change_vision.jude.api.inf.model.IFlow
 import com.change_vision.jude.api.inf.model.INamedElement
+import com.change_vision.jude.api.inf.presentation.ILinkPresentation
 import com.change_vision.jude.api.inf.presentation.INodePresentation
 import net.sourceforge.plantuml.SourceStringReader
 import net.sourceforge.plantuml.activitydiagram.ActivityDiagram
@@ -94,6 +95,13 @@ object ToAstahActivityDiagramConverter {
                         val rect = posMap["final"]!!
                         Pair("final", diagramEditor.createFinalNode("final", Point2D.Float(rect.x + 10, rect.y + 10)))
                     }
+                    LeafType.NOTE -> {
+                        val rect = when {
+                            posMap.containsKey(leaf.name) -> posMap[leaf.name]!!
+                            else -> Rectangle2D.Float(30f, 30f, 30f, 30f)
+                        }
+                        Pair(leaf.name, diagramEditor.createNote(leaf.display.joinToString("\n"), Point2D.Float(rect.x, rect.y)))
+                    }
                     else -> null
                 }
             }.toMap()
@@ -114,12 +122,19 @@ object ToAstahActivityDiagramConverter {
                     else -> false
                 }
 
-                val linkPs = if(isReverse){
-                        diagramEditor.createFlow(target, source)
-                    }else{
-                        diagramEditor.createFlow(source, target)
-                    }
+                var linkPs : ILinkPresentation?
 
+                if (source?.type == "Note" ) {
+                    linkPs = diagramEditor.createNoteAnchor(source,target)
+                }else if(target?.type == "Note"){
+                    linkPs = diagramEditor.createNoteAnchor(target,source)
+                }else{
+                    if(isReverse){
+                        linkPs = diagramEditor.createFlow(target, source)
+                    }else{
+                        linkPs = diagramEditor.createFlow(source, target)
+                    }
+                }
 
                 val display = link.label
                 val quantifier1 = link.quantifier1
