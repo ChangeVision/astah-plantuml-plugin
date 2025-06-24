@@ -31,7 +31,10 @@ object SVGEntityCollector {
     const val SYNCHRO_BAR_NODE_TYPE_FORK = "fork node"
     const val SYNCHRO_BAR_NODE_TYPE_JOIN = "join node"
 
-    var syncroBarTypeMap = mutableMapOf<PlantEntity,String>()
+    const val START_NODE_NAME = "start"
+    const val END_NODE_NAME = "end"
+
+    var synchroBarTypeMap = mutableMapOf<PlantEntity,String>()
     lateinit var tempSvgFile : File
 
     fun collectSvgPosition(reader: SourceStringReader, index: Int): Map<String, Rectangle2D.Float> {
@@ -160,7 +163,7 @@ object SVGEntityCollector {
         val doc = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(svgFile)
         val xpath = XPathFactory.newInstance().newXPath()
 
-        //アクションに限定
+        //アクションの座標取得
         val actionMap = activities.filter { it.leafType == LeafType.ACTIVITY }.mapNotNull { activity ->
             val action = activity.name
             val display = activity.display.firstOrNull()?.removeSuffix(" ")
@@ -174,7 +177,7 @@ object SVGEntityCollector {
             action to rect
         }.toMap()
 
-
+        //デシジョンノード
         val decisionMergeNodeMap = activities.filter { it.leafType == LeafType.BRANCH }.mapNotNull { decisionMergeNode ->
             val uid = decisionMergeNode.uid
             val nodeRectangles = xpath
@@ -192,10 +195,8 @@ object SVGEntityCollector {
             decisionMergeNode.name to Rectangle2D.Float( minPoints.x,minPoints.y,0f,0f)
 
         }.toMap()
-        for((name, rect) in decisionMergeNodeMap){
-            println("$name , $rect")
-        }
 
+        //ノート
         val noteMap = activities.filter { it.leafType == LeafType.NOTE }.mapNotNull { note ->
             val uid = note.uid
             val nodeRectangles = xpath
@@ -212,25 +213,20 @@ object SVGEntityCollector {
 
             note.name to Rectangle2D.Float( minPoints.x,minPoints.y,0f,0f)
         }.toMap()
-        for((name, rect) in decisionMergeNodeMap){
-            println("$name , $rect")
-        }
 
-        println(decisionMergeNodeMap)
-
-
+        //ジョイン/フォークノード
         val syncBarNodes = mutableMapOf<String, Rectangle2D.Float>()
         val lineEndPoints = mutableMapOf<String, List<Point2D>>()
 
-        val syncBars = activities.filter { it.leafType == LeafType.SYNCHRO_BAR }
+        val synchroBars = activities.filter { it.leafType == LeafType.SYNCHRO_BAR }
 
-        for (leaf in syncBars) {
+        for (leaf in synchroBars) {
             val name = leaf.name
             val lineNumber = leaf.location.position
             val barLink = getLinksFromLineNumber(lineNumber, xpath, doc)
             val barNode = barLink.item(0)
 
-            syncroBarTypeMap[leaf] = checkSynchroBarType(name, xpath, doc)
+            synchroBarTypeMap[leaf] = checkSynchroBarType(name, xpath, doc)
 
             val barPos = checkLinkEnd(barNode, name)
 
@@ -270,10 +266,6 @@ object SVGEntityCollector {
             }
         }
 
-        for((name,type) in syncroBarTypeMap){
-            println("$name , $type")
-        }
-
         return actionMap + decisionMergeNodeMap + syncBarNodes + getEllipseRectangles(xpath , doc) + noteMap
     }
 
@@ -294,9 +286,9 @@ object SVGEntityCollector {
                 val nextTextNode = ellipse.nextSibling?.nextSibling
 
                 val elementName = when {
-                    prevNode?.nodeName == "ellipse" -> "final"
+                    prevNode?.nodeName == "ellipse" -> END_NODE_NAME
                     nextTextNode?.nodeName == "text" && nextTextNode.nodeValue == "H" -> "history"
-                    else -> "initial"
+                    else -> START_NODE_NAME
                 }
 
                 elementName to extractRectangle(ellipse)
@@ -413,6 +405,6 @@ object SVGEntityCollector {
     }
 
     fun isFork(entity: Entity): Boolean{
-        return syncroBarTypeMap[entity] == SYNCHRO_BAR_NODE_TYPE_FORK
+        return synchroBarTypeMap[entity] == SYNCHRO_BAR_NODE_TYPE_FORK
     }
 }
