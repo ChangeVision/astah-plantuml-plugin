@@ -5,6 +5,7 @@ import com.change_vision.astah.plugins.converter.toplant.createOrGetDiagram
 import com.change_vision.jude.api.inf.AstahAPI
 import com.change_vision.jude.api.inf.editor.TransactionManager
 import com.change_vision.jude.api.inf.exception.BadTransactionException
+import com.change_vision.jude.api.inf.model.IAssociation
 import com.change_vision.jude.api.inf.model.IClass
 import com.change_vision.jude.api.inf.model.INode
 import com.change_vision.jude.api.inf.model.IUseCase
@@ -106,10 +107,34 @@ object ToAstahUseCaseDiagramConverter {
             }.toMap()
 
             // 関係線(関連、拡張、包含)の作成
-            diagram.links.forEach { link ->
-                val source = presentationMap[link.entity1.name]
-                val target = presentationMap[link.entity2.name]
-                if (link.label.isWhite) {
+            val regex = """<?-(left|right|up|down|-*)-?>?""".toRegex()
+            val directionRegex = """(le|ri|up|do)""".toRegex()
+            val sources = reader.blocks.firstOrNull()?.data
+
+            diagram.links.filter { !it.type.style.isInvisible }.forEach { link ->
+                val entity1 = presentationMap[link.entity1.name]
+                val entity2 = presentationMap[link.entity2.name]
+
+                val code = sources?.getOrNull(link.location.position)?.toString().orEmpty()
+                val matchResult = regex.find(code,0)
+
+
+                // 関連の方向指定をパース
+                val direction = matchResult?.value.orEmpty()
+                val isReverse = when {
+                    direction.contains("le") || direction.contains("up") -> true
+                    direction.contains("ri") || direction.contains("do") -> false
+                    else -> false // デフォルト（方向指定がない場合）
+                }
+
+                val (source, target) = if (isReverse) {
+                    entity2 to entity1
+                } else {
+                    entity1 to entity2
+                }
+
+
+                val linkPresentation = if (link.label.isWhite) {
                     val model = basicModelEditor.createAssociation(
                         (source?.model as IClass),
                         (target?.model as IClass),
@@ -145,6 +170,14 @@ object ToAstahUseCaseDiagramConverter {
                             )
                             diagramEditor.createLinkPresentation(model, source, target)
                         }
+                    }
+                }
+                (linkPresentation.model as? IAssociation)?.let { assoc ->
+                    if(matchResult?.value.toString().indexOf(">") >= 0 ){
+                        assoc.memberEnds[1].navigability = "Navigable"
+                    }
+                    if(matchResult?.value.toString().indexOf("<") >= 0 ){
+                        assoc.memberEnds[0].navigability = "Navigable"
                     }
                 }
             }
