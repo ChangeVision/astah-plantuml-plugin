@@ -85,15 +85,15 @@ object ToAstahActivityDiagramConverter {
                         Pair(leaf.name, decisionNodePresentation)
                     }
                     LeafType.CIRCLE_START -> {
-                        val rect = posMap["initial"]!!
+                        val rect = posMap[SVGEntityCollector.START_NODE_NAME]!!
                         Pair(
-                            "initial",
-                            diagramEditor.createInitialNode("initial", Point2D.Float(rect.x + 10, rect.y + 10))
+                            SVGEntityCollector.START_NODE_NAME,
+                            diagramEditor.createInitialNode(SVGEntityCollector.START_NODE_NAME, Point2D.Float(rect.x + 10, rect.y + 10))
                         )
                     }
                     LeafType.CIRCLE_END -> {
-                        val rect = posMap["final"]!!
-                        Pair("final", diagramEditor.createFinalNode("final", Point2D.Float(rect.x + 10, rect.y + 10)))
+                        val rect = posMap[SVGEntityCollector.END_NODE_NAME]!!
+                        Pair(SVGEntityCollector.END_NODE_NAME, diagramEditor.createFinalNode(SVGEntityCollector.END_NODE_NAME, Point2D.Float(rect.x + 10, rect.y + 10)))
                     }
                     LeafType.NOTE -> {
                         val rect = when {
@@ -162,8 +162,8 @@ object ToAstahActivityDiagramConverter {
     }
 
     fun findPresentation(name: String, map: Map<String, INodePresentation>) = when (name) {
-        "start" -> map["initial"]!!
-        "end" -> map["final"]!!
+        "start" -> map[SVGEntityCollector.START_NODE_NAME]!!
+        "end" -> map[SVGEntityCollector.END_NODE_NAME]!!
         else -> map[name]
     }
 
