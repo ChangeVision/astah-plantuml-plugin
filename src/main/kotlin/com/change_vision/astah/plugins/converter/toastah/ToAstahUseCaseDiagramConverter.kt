@@ -7,18 +7,16 @@ import com.change_vision.jude.api.inf.editor.TransactionManager
 import com.change_vision.jude.api.inf.exception.BadTransactionException
 import com.change_vision.jude.api.inf.model.IAssociation
 import com.change_vision.jude.api.inf.model.IClass
-import com.change_vision.jude.api.inf.model.INode
 import com.change_vision.jude.api.inf.model.IUseCase
 import com.change_vision.jude.api.inf.model.IUseCaseDiagram
-import com.change_vision.jude.api.inf.presentation.ILinkPresentation
 import com.change_vision.jude.api.inf.presentation.INodePresentation
 import net.sourceforge.plantuml.SourceStringReader
-import net.sourceforge.plantuml.abel.Entity
 import net.sourceforge.plantuml.abel.LeafType
+import net.sourceforge.plantuml.abel.LinkArrow
+import net.sourceforge.plantuml.decoration.LinkDecor
 import net.sourceforge.plantuml.descdiagram.DescriptionDiagram
 import java.awt.geom.Point2D
 import java.awt.geom.Rectangle2D
-import java.util.regex.Pattern
 
 object ToAstahUseCaseDiagramConverter {
     private val api = AstahAPI.getAstahAPI()
@@ -161,14 +159,23 @@ object ToAstahUseCaseDiagramConverter {
                             diagramEditor.createLinkPresentation(model, target, source)
                         }
                         else -> {
-                            val model = basicModelEditor.createAssociation(
-                                (source?.model as IClass),
-                                (target?.model as IClass),
-                                linkLabel?.toString(),
-                                null,
-                                null
-                            )
-                            diagramEditor.createLinkPresentation(model, source, target)
+                            if (link.linkArrow == LinkArrow.NONE_OR_SEVERAL && link.type.decor1 == LinkDecor.EXTENDS) {
+                                val model = basicModelEditor.createGeneralization(
+                                    (source?.model as IClass),
+                                    (target?.model as IClass),
+                                    linkLabel?.toString()
+                                )
+                                diagramEditor.createLinkPresentation(model, source, target)
+                            } else {
+                                val model = basicModelEditor.createAssociation(
+                                    (source?.model as IClass),
+                                    (target?.model as IClass),
+                                    linkLabel?.toString(),
+                                    null,
+                                    null
+                                )
+                                diagramEditor.createLinkPresentation(model, source, target)
+                            }
                         }
                     }
                 }
