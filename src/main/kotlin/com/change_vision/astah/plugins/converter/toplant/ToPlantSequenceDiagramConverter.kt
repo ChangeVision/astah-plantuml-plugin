@@ -1,6 +1,6 @@
 package com.change_vision.astah.plugins.converter.toplant
 
-import com.change_vision.astah.plugins.converter.toastah.ClassConverter
+import com.change_vision.astah.plugins.converter.toplant.classdiagram.ClassConverter
 import com.change_vision.jude.api.inf.model.ICombinedFragment
 import com.change_vision.jude.api.inf.model.ILifeline
 import com.change_vision.jude.api.inf.model.IMessage
@@ -36,23 +36,28 @@ object ToPlantSequenceDiagramConverter {
                 } else {
                     val stereotypes = StringBuilder()
 
-                    base.stereotypes.forEachIndexed { index, stereotype ->
-                        if (!(index == 0 && ("actor" == stereotype
-                                    || "entity" == stereotype
-                                    || "boundary" == stereotype
-                                    || "control" == stereotype))) {
-                            stereotypes.append("<<$stereotype>>")
+                    if (base.stereotypes.isNotEmpty()) {
+                        base.stereotypes.forEachIndexed { index, stereotype ->
+                            if (!(index == 0 && ("actor" == stereotype
+                                        || "entity" == stereotype
+                                        || "boundary" == stereotype
+                                        || "control" == stereotype))
+                            ) {
+                                stereotypes.append("<<$stereotype>>")
+                            }
                         }
-                    }
-                    if (stereotypes.isNotEmpty()) {
-                        stereotypes.append(" ")
-                    }
-                    when {
-                        base.stereotypes.first() == "actor" -> sb.appendLine("actor $lifeLineName $stereotypes$lifeLineColor")
-                        base.stereotypes.first() == "entity" -> sb.appendLine("entity $lifeLineName $stereotypes$lifeLineColor")
-                        base.stereotypes.first() == "boundary" -> sb.appendLine("boundary $lifeLineName $stereotypes$lifeLineColor")
-                        base.stereotypes.first() == "control" -> sb.appendLine("control $lifeLineName $stereotypes$lifeLineColor")
-                        else -> sb.appendLine("participant $lifeLineName $stereotypes$lifeLineColor")
+                        if (stereotypes.isNotEmpty()) {
+                            stereotypes.append(" ")
+                        }
+                        when {
+                            base.stereotypes.first() == "actor" -> sb.appendLine("actor $lifeLineName $stereotypes$lifeLineColor")
+                            base.stereotypes.first() == "entity" -> sb.appendLine("entity $lifeLineName $stereotypes$lifeLineColor")
+                            base.stereotypes.first() == "boundary" -> sb.appendLine("boundary $lifeLineName $stereotypes$lifeLineColor")
+                            base.stereotypes.first() == "control" -> sb.appendLine("control $lifeLineName $stereotypes$lifeLineColor")
+                            else -> sb.appendLine("participant $lifeLineName $stereotypes$lifeLineColor")
+                        }
+                    } else {
+                        sb.appendLine("participant $lifeLineName $lifeLineColor")
                     }
                 }
             }
