@@ -84,7 +84,7 @@ object SVGEntityCollector {
             }
             else -> emptyMap()
         }
-        tempSvgFile!!.delete()
+        tempSvgFile?.delete()
         return result
     }
 
@@ -184,6 +184,7 @@ object SVGEntityCollector {
         /*
          * ellipseから初期状態・終了状態・ヒストリを拾う
          * 位置については PlantUML 上での位置をなるべく再現するようにした
+         * TODO 初期状態・終了状態は図中にそれぞれ1つだけある場合にのみ対応
          */
         val otherNodeMap = HashMap<String, Rectangle2D.Float>()
         var ellipseIndex = 0
