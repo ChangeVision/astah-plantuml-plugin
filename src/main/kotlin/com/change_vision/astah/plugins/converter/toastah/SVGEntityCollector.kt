@@ -22,6 +22,7 @@ import javax.xml.xpath.XPath
 import javax.xml.xpath.XPathConstants
 import javax.xml.xpath.XPathFactory
 import kotlin.collections.HashMap
+import kotlin.math.abs
 
 object SVGEntityCollector {
     //ジョイン/フォークノードがリンクの始点終点どちらかを調べる
@@ -202,7 +203,11 @@ object SVGEntityCollector {
                     val cy = ellipse.attributes?.getNamedItem("cy")?.nodeValue?.toFloat()
                     val prevCx = prevNode.attributes?.getNamedItem("cx")?.nodeValue?.toFloat()
                     val prevCy = prevNode.attributes?.getNamedItem("cy")?.nodeValue?.toFloat()
-                    if (((cx?.minus(prevCx!!)) == 0.5.toFloat()) && ((cy?.minus(prevCy!!)) == 0.5.toFloat())) {
+                    val rx = ellipse.attributes?.getNamedItem("rx")?.nodeValue?.toFloat()
+                    val ry = ellipse.attributes?.getNamedItem("ry")?.nodeValue?.toFloat()
+                    val prevRx = prevNode.attributes?.getNamedItem("rx")?.nodeValue?.toFloat()
+                    val prevRy = prevNode.attributes?.getNamedItem("ry")?.nodeValue?.toFloat()
+                    if (cx == prevCx && cy == prevCy && ((rx?.minus(prevRx!!))?.let { abs(it) } == 5.0f) && (ry?.minus(prevRy!!)?.let { abs(it) } == 5.0f)) {
                         elementName = "final"
                         ellipseIndex++
                     } else if (nextNode.nextSibling?.let { it.nodeName == "text" && it.nodeValue == "H" }!!) {
@@ -216,7 +221,10 @@ object SVGEntityCollector {
                             if (nextNode.equals(nextEllipse)) {
                                 val nextCx = nextNode.attributes?.getNamedItem("cx")?.nodeValue?.toFloat()
                                 val nextCy = nextNode.attributes?.getNamedItem("cy")?.nodeValue?.toFloat()
-                                if (nextCx?.minus(cx!!) == 0.5f && nextCy?.minus(cy!!) == 0.5f) {
+                                val nextRx = nextNode.attributes?.getNamedItem("rx")?.nodeValue?.toFloat()
+                                val nextRy = nextNode.attributes?.getNamedItem("ry")?.nodeValue?.toFloat()
+                                if (cx == nextCx && cy == nextCy
+                                    && nextRx?.minus(rx!!)?.let { abs(it) } == 5.0f && nextRy?.minus(ry!!)?.let { abs(it) } == 5.0f) {
                                     ellipseIndex++
                                 } else if (nextNode.nextSibling?.let { it.nodeName == "text" && it.firstChild?.nodeValue == "H" }!!) {
                                     elementName = "history"
@@ -244,7 +252,12 @@ object SVGEntityCollector {
                         val cy = ellipse.attributes?.getNamedItem("cy")?.nodeValue?.toFloat()
                         val nextCx = nextNode.attributes?.getNamedItem("cx")?.nodeValue?.toFloat()
                         val nextCy = nextNode.attributes?.getNamedItem("cy")?.nodeValue?.toFloat()
-                        if (nextCx?.minus(cx!!) == 0.5f && nextCy?.minus(cy!!) == 0.5f) {
+                        val rx = ellipse.attributes?.getNamedItem("rx")?.nodeValue?.toFloat()
+                        val ry = ellipse.attributes?.getNamedItem("ry")?.nodeValue?.toFloat()
+                        val nextRx = nextNode.attributes?.getNamedItem("rx")?.nodeValue?.toFloat()
+                        val nextRy = nextNode.attributes?.getNamedItem("ry")?.nodeValue?.toFloat()
+                        if (cx == nextCx && cy == nextCy
+                            && nextRx?.minus(rx!!)?.let { abs(it) } == 5.0f && nextRy?.minus(ry!!)?.let { abs(it) } == 5.0f) {
 //                            elementName = "final"
                             ellipseIndex++
                         } else if (nextNode.nextSibling?.let { it.nodeName == "text" && it.firstChild?.nodeValue == "H" }!!) {
@@ -257,6 +270,9 @@ object SVGEntityCollector {
                             elementName = "initial"
                             ellipseIndex++
                         }
+                    } else {
+                        elementName = "initial"
+                        ellipseIndex++
                     }
                 }
                 nextNode.let { it.nodeName == "text" && it.firstChild?.nodeValue == "H" } -> {
