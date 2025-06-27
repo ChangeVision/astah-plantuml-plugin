@@ -211,40 +211,27 @@ object SVGEntityCollector {
                     if (cx == prevCx && cy == prevCy && ((rx?.minus(prevRx!!))?.let { abs(it) } == 5.0f) && (ry?.minus(prevRy!!)?.let { abs(it) } == 5.0f)) {
                         elementName = "final"
                         ellipseIndex++
-                    } else if (nextNode.nextSibling?.let { it.nodeName == "text" && it.nodeValue == "H" }!!) {
+                    } else if (nextNode.let { it.nodeName == "text" && it.firstChild?.nodeValue == "H" }) {
                         elementName = "history"
                         ellipseIndex++
-                    } else if (nextNode.nextSibling?.let { it.nodeName == "text" && it.nodeValue == "H*" }!!) {
+                    } else if (nextNode.let { it.nodeName == "text" && it.firstChild?.nodeValue == "H*" }) {
                         elementName = "deepHistory"
                         ellipseIndex++
-                    } else {
-                        if (nextNode.nodeName == "ellipse") {
-                            if (nextNode.equals(nextEllipse)) {
-                                val nextCx = nextNode.attributes?.getNamedItem("cx")?.nodeValue?.toFloat()
-                                val nextCy = nextNode.attributes?.getNamedItem("cy")?.nodeValue?.toFloat()
-                                val nextRx = nextNode.attributes?.getNamedItem("rx")?.nodeValue?.toFloat()
-                                val nextRy = nextNode.attributes?.getNamedItem("ry")?.nodeValue?.toFloat()
-                                if (cx == nextCx && cy == nextCy
-                                    && nextRx?.minus(rx!!)?.let { abs(it) } == 5.0f && nextRy?.minus(ry!!)?.let { abs(it) } == 5.0f) {
-                                    ellipseIndex++
-                                } else if (nextNode.nextSibling?.let { it.nodeName == "text" && it.firstChild?.nodeValue == "H" }!!) {
-                                    elementName = "history"
-                                    ellipseIndex++
-                                } else if (nextNode.nextSibling?.let { it.nodeName == "text" && it.firstChild?.nodeValue == "H*" }!!) {
-                                    elementName = "deepHistory"
-                                    ellipseIndex++
-                                } else {
-                                    elementName = "initial"
-                                    ellipseIndex++
-                                }
-                            } else {
-                                elementName = "initial"
-                                ellipseIndex++
-                            }
+                    } else if (nextNode.nodeName == "ellipse" && nextNode.equals(nextEllipse)) {
+                        val nextCx = nextNode.attributes?.getNamedItem("cx")?.nodeValue?.toFloat()
+                        val nextCy = nextNode.attributes?.getNamedItem("cy")?.nodeValue?.toFloat()
+                        val nextRx = nextNode.attributes?.getNamedItem("rx")?.nodeValue?.toFloat()
+                        val nextRy = nextNode.attributes?.getNamedItem("ry")?.nodeValue?.toFloat()
+                        if (cx == nextCx && cy == nextCy
+                            && nextRx?.minus(rx!!)?.let { abs(it) } == 5.0f && nextRy?.minus(ry!!)?.let { abs(it) } == 5.0f) {
+                            ellipseIndex++
                         } else {
                             elementName = "initial"
                             ellipseIndex++
                         }
+                    } else {
+                        elementName = "initial"
+                        ellipseIndex++
                     }
                 }
                 nextNode.nodeName == "ellipse" -> {
@@ -259,13 +246,6 @@ object SVGEntityCollector {
                         val nextRy = nextNode.attributes?.getNamedItem("ry")?.nodeValue?.toFloat()
                         if (cx == nextCx && cy == nextCy
                             && nextRx?.minus(rx!!)?.let { abs(it) } == 5.0f && nextRy?.minus(ry!!)?.let { abs(it) } == 5.0f) {
-//                            elementName = "final"
-                            ellipseIndex++
-                        } else if (nextNode.nextSibling?.let { it.nodeName == "text" && it.firstChild?.nodeValue == "H" }!!) {
-                            elementName = "history"
-                            ellipseIndex++
-                        } else if (nextNode.nextSibling?.let { it.nodeName == "text" && it.firstChild?.nodeValue == "H*" }!!) {
-                            elementName = "deepHistory"
                             ellipseIndex++
                         } else {
                             elementName = "initial"
