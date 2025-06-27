@@ -138,7 +138,7 @@ object ToAstahStateDiagramConverter {
                         val finalPresentation =
                             diagramEditor.createFinalState(parentPresentation, Point2D.Float(rect.x + 10, rect.y + 10))
                         val name = leaf.name
-                        if (name != "*end") {
+                        if (name != "*end*") {
                             (finalPresentation.model as INamedElement).name = name
                             Pair(name, finalPresentation)
                         } else {
@@ -158,7 +158,7 @@ object ToAstahStateDiagramConverter {
                     }
                     PSEUDO_STATE -> {
                         val name = leaf.name
-                        if (name == "*historical") {
+                        if (name == "*historical*") {
                             // 浅い履歴疑似状態
                             val rect = posMap["history"]!!
                             val historyPresentation = diagramEditor.createShallowHistoryPseudostate(parentPresentation, Point2D.Float(rect.x + 10, rect.y + 10))
@@ -173,12 +173,12 @@ object ToAstahStateDiagramConverter {
             diagram.links.forEach { link ->
                 // source の Presentation を取得
                 val source = when (link.entity1.name) {
-                    "*start" -> presentationMap["initial"]!!
+                    "*start*" -> presentationMap["initial"]!!
                     else -> groupPresentationMap[link.entity1.name] ?: presentationMap[link.entity1.name]
                 }
                 // target の Presentation を取得
                 val target = when (link.entity2.name) {
-                    "*end" -> presentationMap["final"]!!
+                    "*end*" -> presentationMap["final"]!!
                     else -> groupPresentationMap[link.entity2.name] ?: presentationMap[link.entity2.name]
                 }
                 val transitionLabelRegex =
