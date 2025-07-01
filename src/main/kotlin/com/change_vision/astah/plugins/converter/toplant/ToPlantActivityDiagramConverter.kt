@@ -14,8 +14,7 @@ object ToPlantActivityDiagramConverter {
             .filterIsInstance<INodePresentation>()
             .filter { it.model is IActivityNode }
 
-        ActivityConverter.clearConvertedLinks()
-        ActivityConverter.clearConvertedNodes()
+        ActivityConverter.clearConvertedPresentations()
         val startPresentations = nodes
             .filter { ActivityConvertUtil.isFirstNode(it) }
             //開始ノードがリストの最初に来るようにソート
