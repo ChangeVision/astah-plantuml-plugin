@@ -14,7 +14,8 @@ object ToPlantActivityDiagramConverter {
             .filterIsInstance<INodePresentation>()
             .filter { it.model is IActivityNode }
 
-        ActivityConverter.clearConvertedPresentations()
+        ActivityConverter.clearConvertedLinks()
+        ActivityConverter.clearConvertedNodes()
         val startPresentations = nodes
             .filter { ActivityConvertUtil.isFirstNode(it) }
             //開始ノードがリストの最初に来るようにソート
@@ -24,5 +25,18 @@ object ToPlantActivityDiagramConverter {
         for (startPresentation in startPresentations) {
             ActivityConverter.convert(startPresentation, sb)
         }
+    }
+
+    private fun createIdMap(nodes: List<INodePresentation>): Map<INodePresentation, String> {
+        val assigner = NodeIdAssigner(
+            listOf(
+                ActivityDiagramNodeType.ACTION,
+                ActivityDiagramNodeType.OBJECT_NODE,
+                ActivityDiagramNodeType.FORK_NODE,
+                ActivityDiagramNodeType.JOIN_NODE,
+                ActivityDiagramNodeType.DECISION_MERGE_NODE
+            )
+        )
+        return assigner.assign(nodes)
     }
 }

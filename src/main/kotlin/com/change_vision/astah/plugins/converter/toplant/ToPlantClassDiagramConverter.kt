@@ -7,6 +7,7 @@ import com.change_vision.astah.plugins.converter.toplant.classdiagram.ClassConve
 import com.change_vision.astah.plugins.converter.toplant.classdiagram.AssociationConverter
 import com.change_vision.astah.plugins.converter.toplant.classdiagram.RelationshipConverter
 import com.change_vision.astah.plugins.converter.toplant.NoteConverter
+import com.change_vision.astah.plugins.converter.toplant.node.NodeType
 
 /**
  * クラス図をPlantUML形式に変換するコンバーター
@@ -50,7 +51,7 @@ object ToPlantClassDiagramConverter {
                             }
                             else -> {
                                 // ノート判定
-                                if (pres.type == "Note" && !pres.label.isNullOrBlank()) {
+                                if (NodeType.NOTE(pres)) {
                                     noteNodes.add(pres)
                                     debug("ノート要素を検出: ID=${pres.id}, ラベル='${pres.label}'")
                                 }
