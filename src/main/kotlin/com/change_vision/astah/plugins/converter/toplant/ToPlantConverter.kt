@@ -5,6 +5,7 @@ import com.change_vision.jude.api.inf.model.IActivityDiagram
 import com.change_vision.jude.api.inf.model.IClassDiagram
 import com.change_vision.jude.api.inf.model.ISequenceDiagram
 import com.change_vision.jude.api.inf.model.IStateMachineDiagram
+import com.change_vision.jude.api.inf.model.IUseCaseDiagram
 
 object ToPlantConverter {
     private val api = AstahAPI.getAstahAPI()
@@ -17,6 +18,7 @@ object ToPlantConverter {
             is ISequenceDiagram -> ToPlantSequenceDiagramConverter.convert(diagram, sb)
             is IStateMachineDiagram -> ToPlantStateDiagramConverter.convert(diagram, sb)
             is IActivityDiagram -> ToPlantActivityDiagramConverter.convert(diagram, sb)
+            is IUseCaseDiagram -> ToPlantUseCaseDiagramConverter.convert(diagram, sb)
         }
         sb.appendLine("@enduml")
         return sb.toString()

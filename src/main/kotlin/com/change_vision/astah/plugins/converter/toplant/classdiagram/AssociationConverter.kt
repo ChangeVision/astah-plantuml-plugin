@@ -42,7 +42,7 @@ object AssociationConverter {
 
         debug("多重度1: '$multi1', 多重度2: '$multi2'")
 
-        sb.append(ClassConverter.formatName(end1.type.name))
+        sb.append(ClassConverter.formatName(end1.type))
 
         // 多重度を追加
         if (multi1.isNotEmpty()) {
@@ -66,7 +66,7 @@ object AssociationConverter {
             sb.append("\"$escapedMulti2\" ")
             debug("多重度2をエスケープして追加: '$multi2' → '$escapedMulti2'")
         }
-        sb.append(ClassConverter.formatName(end2.type.name))
+        sb.append(ClassConverter.formatName(end2.type))
 
         if (!assocName.isNullOrEmpty()) {
             sb.append(" : ")
