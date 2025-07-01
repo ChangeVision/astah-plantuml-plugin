@@ -8,11 +8,17 @@ import com.change_vision.jude.api.inf.presentation.INodePresentation
 
 object ActivityConverter {
     private val convertedLinks = mutableSetOf<ILinkPresentation>()
+    private val noteConvertedNodes = mutableListOf<INodePresentation>()
     private lateinit var nodeLabelFormatter: NodeNameFormatter
 
     fun clearConvertedLinks(){
         convertedLinks.clear()
     }
+    //TODO ここふたつまとめていいと思う
+    fun clearConvertedNodes(){
+        noteConvertedNodes.clear()
+    }
+
 
     fun initNodeNameFormatter(nodes : List<INodePresentation>){
         nodeLabelFormatter = ActivityDiagramNodeNameFormatter(createIdMap(nodes))
@@ -58,6 +64,16 @@ object ActivityConverter {
                 val guard = getLinkLabel(outgoing).takeIf { it.isNotBlank() }
                 lines += LegacyActivityDiagramSyntax.flow(source = source, target = targetLabel, guard = guard)
                 convertedLinks.add(outgoing)
+            }
+
+            //ノートの変換機構
+            if(ActivityDiagramNodeType.ACTION(target) && !noteConvertedNodes.contains(target)){
+                for(note in ActivityConvertUtil.getNotes(target)){
+                    lines.add("note right")
+                    lines.addAll(note.label.split("\n"))
+                    lines.add("end note")
+                }
+                noteConvertedNodes.add(target)
             }
 
             lines += convertLines(target)

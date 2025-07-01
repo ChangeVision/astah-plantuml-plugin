@@ -11,6 +11,7 @@ enum class ActivityDiagramNodeType(
     private val predicate: (INodePresentation) -> Boolean
 ) : NodeType {
 
+    NOTE("note" , { it.type == "Note" && !it.label.isNullOrBlank() }),
     ACTION("Action", { it.model is IAction }),
     OBJECT_NODE("Object Node", { it.model is IObjectNode }),
     FORK_NODE("Fork Node", { (it.model as? IControlNode)?.isForkNode == true }),

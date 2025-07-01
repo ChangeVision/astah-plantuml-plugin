@@ -19,4 +19,16 @@ object ActivityConvertUtil {
     fun isFirstNode(presentation: INodePresentation): Boolean {
         return getIncomings(presentation).isEmpty()
     }
+
+    fun getNotes(node: INodePresentation) : List<INodePresentation>{
+        val noteAnchors = node.links
+            .filter { it.type == "NoteAnchor" }
+
+        val results = mutableListOf<INodePresentation>()
+        for (noteAnchor in noteAnchors){
+            if(noteAnchor.source == node){ results.add(noteAnchor.target)
+            }else results.add(noteAnchor.source)
+        }
+        return results
+    }
 }
