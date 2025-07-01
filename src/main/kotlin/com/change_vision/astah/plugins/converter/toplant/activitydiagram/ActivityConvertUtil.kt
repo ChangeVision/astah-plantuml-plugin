@@ -7,11 +7,13 @@ object ActivityConvertUtil {
     fun getIncomings(node: INodePresentation): List<ILinkPresentation> =
         node.links
             .filterIsInstance<ILinkPresentation>()
+            .filter { it.type == "ControlFlow/ObjectFlow" }
             .filter { it.target == node }
 
     fun getOutgoings(node: INodePresentation): List<ILinkPresentation> =
         node.links
             .filterIsInstance<ILinkPresentation>()
+            .filter { it.type == "ControlFlow/ObjectFlow" }
             .filter { it.source == node }
 
     fun isFirstNode(presentation: INodePresentation): Boolean {
