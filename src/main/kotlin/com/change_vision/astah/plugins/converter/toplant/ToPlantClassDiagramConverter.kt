@@ -5,8 +5,8 @@ import com.change_vision.jude.api.inf.presentation.ILinkPresentation
 import com.change_vision.jude.api.inf.presentation.INodePresentation
 import com.change_vision.astah.plugins.converter.toplant.classdiagram.ClassConverter
 import com.change_vision.astah.plugins.converter.toplant.classdiagram.AssociationConverter
+import com.change_vision.astah.plugins.converter.toplant.classdiagram.ClassDiagramNoteConverter
 import com.change_vision.astah.plugins.converter.toplant.classdiagram.RelationshipConverter
-import com.change_vision.astah.plugins.converter.toplant.NoteConverter
 import com.change_vision.astah.plugins.converter.toplant.node.NodeType
 
 /**
@@ -78,7 +78,7 @@ object ToPlantClassDiagramConverter {
             // ノート変換
             if (noteNodes.isNotEmpty()) {
                 sb.appendLine()
-                NoteConverter.convert(noteNodes, allLinks, sb)
+                ClassDiagramNoteConverter.convert(noteNodes, allLinks, sb)
             }
         } catch (e: Exception) {
             debug("変換処理中にエラーが発生しました: ${e.message}")

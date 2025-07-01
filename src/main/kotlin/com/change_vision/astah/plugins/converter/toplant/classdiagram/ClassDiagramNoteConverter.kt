@@ -1,14 +1,14 @@
-package com.change_vision.astah.plugins.converter.toplant
+package com.change_vision.astah.plugins.converter.toplant.classdiagram
 
+import com.change_vision.astah.plugins.converter.toastah.presentations.note.NoteCreator
+import com.change_vision.astah.plugins.converter.toplant.node.NoteConverter
 import com.change_vision.jude.api.inf.presentation.ILinkPresentation
 import com.change_vision.jude.api.inf.presentation.INodePresentation
-import com.change_vision.astah.plugins.converter.toastah.presentations.note.NoteCreator
-import com.change_vision.astah.plugins.converter.toastah.presentations.note.NotePosition
 
 /**
- * ノートをPlantUML形式に変換するクラス
+ * ノートをクラス図のPlantUML形式に変換するクラス
  */
-object NoteConverter {
+object ClassDiagramNoteConverter : NoteConverter {
     private const val DEBUG = false
 
     private fun debug(message: String) {
@@ -64,19 +64,6 @@ object NoteConverter {
     }
 
     /**
-     * 位置情報を文字列に変換する
-     */
-    private fun positionToString(position: NotePosition): String {
-        return when (position) {
-            NotePosition.TOP -> "top"
-            NotePosition.BOTTOM -> "bottom"
-            NotePosition.LEFT -> "left"
-            NotePosition.RIGHT -> "right"
-            NotePosition.NONE -> "right" // NONEの場合はrightとして扱う
-        }
-    }
-
-    /**
      * ノートとその接続先を見つける
      */
     private fun findNoteConnections(
@@ -126,9 +113,4 @@ object NoteConverter {
             }
         }
     }
-
-    /**
-     * テキストをPlantUML用にエスケープ
-     */
-    private fun escape(text: String) = text.replace("\n", "\\n")
 }
