@@ -1,7 +1,9 @@
 package com.change_vision.astah.plugins.converter.toplant.classdiagram
 
+import com.change_vision.jude.api.inf.model.IClass
 import com.change_vision.jude.api.inf.model.IDependency
 import com.change_vision.jude.api.inf.model.IGeneralization
+import com.change_vision.jude.api.inf.model.INamedElement
 import com.change_vision.jude.api.inf.model.IRealization
 
 /**
@@ -15,9 +17,9 @@ object RelationshipConverter {
      * @param sb 出力用のStringBuilder
      */
     fun convertGeneralization(model: IGeneralization, sb: StringBuilder) {
-        sb.append(ClassConverter.formatName(model.subType.name))
+        sb.append(ClassConverter.formatName(model.subType))
         sb.append(" --|> ")
-        sb.append(ClassConverter.formatName(model.superType.name))
+        sb.append(ClassConverter.formatName(model.superType))
         if (!model.name.isNullOrEmpty()) {
             sb.append(" : ")
             sb.append(model.name)
@@ -31,9 +33,9 @@ object RelationshipConverter {
      * @param sb 出力用のStringBuilder
      */
     fun convertRealization(model: IRealization, sb: StringBuilder) {
-        sb.append(ClassConverter.formatName(model.client.name))
+        sb.append(ClassConverter.formatName(model.client))
         sb.append(" ..|> ")
-        sb.append(ClassConverter.formatName(model.supplier.name))
+        sb.append(ClassConverter.formatName(model.supplier))
         if (!model.name.isNullOrEmpty()) {
             sb.append(" : ")
             sb.append(model.name)
@@ -47,9 +49,9 @@ object RelationshipConverter {
      * @param sb 出力用のStringBuilder
      */
     fun convertDependency(model: IDependency, sb: StringBuilder) {
-        sb.append(ClassConverter.formatName(model.client.name))
+        sb.append(ClassConverter.formatName(model.client))
         sb.append(" ..> ")
-        sb.append(ClassConverter.formatName(model.supplier.name))
+        sb.append(ClassConverter.formatName(model.supplier))
         if (!model.name.isNullOrEmpty()) {
             sb.append(" : ")
             sb.append(model.name)

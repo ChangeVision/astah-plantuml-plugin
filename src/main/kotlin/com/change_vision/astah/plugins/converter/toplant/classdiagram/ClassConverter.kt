@@ -6,6 +6,7 @@ import com.change_vision.jude.api.inf.model.INamedElement
 import com.change_vision.jude.api.inf.model.IParameter
 import com.change_vision.jude.api.inf.presentation.PresentationPropertyConstants
 import com.change_vision.astah.plugins.converter.pattern.ClassPattern
+import com.change_vision.jude.api.inf.model.IUseCase
 
 /**
  * クラス図のクラス要素を変換するクラス
@@ -132,6 +133,40 @@ object ClassConverter {
 
     /**
      * 名前をPlantUML形式にフォーマットする
+     * @param namedElement エレメント
+     * @return フォーマットされた名前
+     */
+    fun formatName(namedElement: INamedElement): String {
+        return  when(namedElement){
+            is IClass -> formatName(namedElement)
+            else -> formatName(namedElement.name)
+        }
+    }
+
+    /**
+     * 名前をPlantUML形式にフォーマットする
+     * @param clazz クラスオブジェクト
+     * @return フォーマットされた名前
+     */
+    fun formatName(clazz: IClass): String {
+        //前処理、後処理しながらformatNameに渡す。
+        if(clazz !is IUseCase && !clazz.hasStereotype("actor")) return formatName(clazz.name)
+        var  result : String = ""
+
+        result = when{
+            clazz is IUseCase -> "(${formatName(clazz.name)})"
+
+            clazz.hasStereotype("actor") -> ":${formatName(clazz.name)}:"
+            else -> formatName(clazz.name)
+        }
+
+        if(clazz.hasStereotype("business")) result += "/"
+
+        return result
+    }
+
+    /**
+     * 名前をPlantUML形式にフォーマットする
      * @param name 名前
      * @return フォーマットされた名前
      */
@@ -146,7 +181,7 @@ object ClassConverter {
         // ダブルクォートで囲む場合、先頭に#や*があればチルダを追加
         else {
             val escapedName = name.replace(Regex("^([#*])"), "~$1")
-            return "\"$escapedName\""
+            return "\"${escapedName.replace("\n", "\\n")}\""
         }
     }
 }
