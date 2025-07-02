@@ -3,10 +3,9 @@ package com.change_vision.astah.plugins.converter.toastah
 import net.sourceforge.plantuml.FileFormat
 import net.sourceforge.plantuml.FileFormatOption
 import net.sourceforge.plantuml.SourceStringReader
-import net.sourceforge.plantuml.abel.Entity
 import net.sourceforge.plantuml.activitydiagram.ActivityDiagram
 import net.sourceforge.plantuml.classdiagram.ClassDiagram
-import net.sourceforge.plantuml.abel.Entity as PlantEntity
+import net.sourceforge.plantuml.abel.Entity as Entity
 import net.sourceforge.plantuml.abel.LeafType
 import net.sourceforge.plantuml.statediagram.StateDiagram
 import org.w3c.dom.Document
@@ -34,11 +33,13 @@ object SVGEntityCollector {
     const val START_NODE_NAME = "start"
     const val END_NODE_NAME = "end"
 
-    var synchroBarTypeMap = mutableMapOf<PlantEntity,String>()
-    lateinit var tempSvgFile : File
+    const val RECTANGLE_MARGIN = 0.5f
+    const val RECTANGLE_EXPANSION = 2f
+
+    var synchroBarTypeMap = mutableMapOf<Entity,String>()
 
     fun collectSvgPosition(reader: SourceStringReader, index: Int): Map<String, Rectangle2D.Float> {
-        tempSvgFile = Files.createTempFile("plantsvg_${index}_", ".svg").toFile()
+        val tempSvgFile = Files.createTempFile("plantsvg_${index}_", ".svg").toFile()
         tempSvgFile.outputStream().use { os ->
             reader.outputImage(os, index, FileFormatOption(FileFormat.SVG))
         }
@@ -158,7 +159,7 @@ object SVGEntityCollector {
         return stateMap.plus(getEllipseRectangles(XPathFactory.newInstance().newXPath() , doc))
     }
 
-    private fun collectEntityBoundaryForActivity(svgFile: File, activities: List<PlantEntity>):
+    private fun collectEntityBoundaryForActivity(svgFile: File, activities: List<Entity>):
             Map<String, Rectangle2D.Float> {
         val doc = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(svgFile)
         val xpath = XPathFactory.newInstance().newXPath()
@@ -190,9 +191,15 @@ object SVGEntityCollector {
             if(polygonNode.nodeName != "polygon" || polygonNode !is Element)return@mapNotNull null
             val points = getPolygonPoints(polygonNode)
 
-            val minPoints = Point2D.Float (points.minOf { it.x },points.minOf { it.y })
+            val minPoints = Point2D.Float(points.minOf { it.x }, points.minOf { it.y })
+            val maxPoints = Point2D.Float(points.maxOf { it.x }, points.maxOf { it.y })
 
-            decisionMergeNode.name to Rectangle2D.Float( minPoints.x,minPoints.y,0f,0f)
+            decisionMergeNode.name to Rectangle2D.Float(
+                minPoints.x,
+                minPoints.y,
+                maxPoints.x - minPoints.x,
+                maxPoints.y - minPoints.y
+            )
 
         }.toMap()
 
@@ -224,6 +231,8 @@ object SVGEntityCollector {
             val name = leaf.name
             val lineNumber = leaf.location.position
             val barLink = getLinksFromLineNumber(lineNumber, xpath, doc)
+
+            if (barLink.length ==  0 ) continue
             val barNode = barLink.item(0)
 
             synchroBarTypeMap[leaf] = checkSynchroBarType(name, xpath, doc)
@@ -259,7 +268,8 @@ object SVGEntityCollector {
 
         for ((name, points) in lineEndPoints) {
             for (rect in rectList) {
-                val expandedRect = Rectangle2D.Float(rect.x - 0.5f, rect.y - 0.5f, rect.width + 2, rect.height + 2)
+                val expandedRect = Rectangle2D.Float(rect.x - RECTANGLE_MARGIN, rect.y - RECTANGLE_MARGIN,
+                    rect.width + RECTANGLE_EXPANSION, rect.height + RECTANGLE_EXPANSION)
                 if (points.any { expandedRect.contains(it) }) {
                     syncBarNodes[name] = rect
                 }
@@ -373,11 +383,9 @@ object SVGEntityCollector {
                 LINK_END_TO -> countTo++
             }
         }
-        if(countFrom <= countTo){
-            return SYNCHRO_BAR_NODE_TYPE_JOIN
-        }else{
-            return SYNCHRO_BAR_NODE_TYPE_FORK
-        }
+
+        return if(countFrom <= countTo) SYNCHRO_BAR_NODE_TYPE_JOIN
+        else SYNCHRO_BAR_NODE_TYPE_FORK
     }
 
     fun getLinkNodeList(xpath: XPath,doc : Document):NodeList{

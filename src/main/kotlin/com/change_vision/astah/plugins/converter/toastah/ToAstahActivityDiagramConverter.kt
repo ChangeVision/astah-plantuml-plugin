@@ -8,7 +8,6 @@ import com.change_vision.jude.api.inf.exception.BadTransactionException
 import com.change_vision.jude.api.inf.model.IActivityDiagram
 import com.change_vision.jude.api.inf.model.IFlow
 import com.change_vision.jude.api.inf.model.INamedElement
-import com.change_vision.jude.api.inf.presentation.ILinkPresentation
 import com.change_vision.jude.api.inf.presentation.INodePresentation
 import net.sourceforge.plantuml.SourceStringReader
 import net.sourceforge.plantuml.activitydiagram.ActivityDiagram
@@ -48,12 +47,7 @@ object ToAstahActivityDiagramConverter {
                         val displayName = leaf.display.joinToString("\n")
                         val actionPresentation =
                             diagramEditor.createAction(
-                                displayName, Point2D.Float(rect.x, rect.y)).also {
-                                leaf.bodier.rawBody.toString()
-                            }
-                        if(actionPresentation is INamedElement && displayName != activityName){
-                            actionPresentation.alias1 = activityName
-                        }
+                                displayName, Point2D.Float(rect.x, rect.y))
                         Pair(activityName, actionPresentation)
                     }
                     LeafType.SYNCHRO_BAR -> {
@@ -63,13 +57,9 @@ object ToAstahActivityDiagramConverter {
                         }
 
                         val barPresentation = if(SVGEntityCollector.isFork(leaf)){
-                            diagramEditor.createForkNode(null, Point2D.Float(rect.x, rect.y)).also {
-                                leaf.bodier.rawBody.toString()
-                            }
+                            diagramEditor.createForkNode(null, Point2D.Float(rect.x, rect.y))
                         }else{
-                            diagramEditor.createJoinNode(null, Point2D.Float(rect.x, rect.y)).also {
-                                leaf.bodier.rawBody.toString()
-                            }
+                            diagramEditor.createJoinNode(null, Point2D.Float(rect.x, rect.y))
                         }
                         Pair(leaf.name, barPresentation)
                     }
@@ -79,41 +69,46 @@ object ToAstahActivityDiagramConverter {
                             else -> Rectangle2D.Float(30f, 30f, 30f, 30f)
                         }
                         val decisionNodePresentation =
-                            diagramEditor.createDecisionMergeNode(null, Point2D.Float(rect.x, rect.y)).also {
-                                leaf.bodier.rawBody.toString()
-                            }
+                            diagramEditor.createDecisionMergeNode(null, Point2D.Float(rect.x, rect.y))
                         Pair(leaf.name, decisionNodePresentation)
                     }
                     LeafType.CIRCLE_START -> {
                         val rect = posMap[SVGEntityCollector.START_NODE_NAME]!!
                         Pair(
                             SVGEntityCollector.START_NODE_NAME,
-                            diagramEditor.createInitialNode(SVGEntityCollector.START_NODE_NAME, Point2D.Float(rect.x + 10, rect.y + 10))
+                            diagramEditor.createInitialNode(SVGEntityCollector.START_NODE_NAME,
+                                Point2D.Float(rect.x + 10, rect.y + 10))
                         )
                     }
                     LeafType.CIRCLE_END -> {
                         val rect = posMap[SVGEntityCollector.END_NODE_NAME]!!
-                        Pair(SVGEntityCollector.END_NODE_NAME, diagramEditor.createFinalNode(SVGEntityCollector.END_NODE_NAME, Point2D.Float(rect.x + 10, rect.y + 10)))
+                        Pair(SVGEntityCollector.END_NODE_NAME, diagramEditor.createFinalNode(
+                            SVGEntityCollector.END_NODE_NAME, Point2D.Float(rect.x + 10, rect.y + 10)))
                     }
                     LeafType.NOTE -> {
                         val rect = when {
                             posMap.containsKey(leaf.name) -> posMap[leaf.name]!!
                             else -> Rectangle2D.Float(30f, 30f, 30f, 30f)
                         }
-                        Pair(leaf.name, diagramEditor.createNote(leaf.display.joinToString("\n"), Point2D.Float(rect.x, rect.y)))
+                        Pair(leaf.name, diagramEditor.createNote(leaf.display.joinToString("\n"),
+                            Point2D.Float(rect.x, rect.y)))
                     }
                     else -> null
                 }
             }.toMap()
 
             val regex = """-(left|right|up|down)?->""".toRegex()
-            val sources = reader.blocks.firstOrNull()?.data
+            val codes = reader.blocks.firstOrNull()?.data
 
             diagram.links.forEach { link ->
                 val source = findPresentation(link.entity1.name, presentationMap)
                 val target = findPresentation(link.entity2.name, presentationMap)
 
-                val code = sources?.getOrNull(link.location.position)?.toString().orEmpty()
+                if(source == null || target == null){
+                    return@forEach
+                }
+
+                val code = codes?.getOrNull(link.location.position)?.toString().orEmpty()
                 val matchResult = regex.find(code,0)
 
                 val isReverse = when (matchResult?.value) {
@@ -122,30 +117,19 @@ object ToAstahActivityDiagramConverter {
                     else -> false
                 }
 
-                var linkPs : ILinkPresentation?
-
-                if (source?.type == "Note" ) {
-                    linkPs = diagramEditor.createNoteAnchor(source,target)
-                }else if(target?.type == "Note"){
-                    linkPs = diagramEditor.createNoteAnchor(target,source)
-                }else{
-                    if(isReverse){
-                        linkPs = diagramEditor.createFlow(target, source)
-                    }else{
-                        linkPs = diagramEditor.createFlow(source, target)
-                    }
+                val linkPs = when {
+                    source.type == "Note" -> diagramEditor.createNoteAnchor(source, target)
+                    target.type == "Note" -> diagramEditor.createNoteAnchor(target, source)
+                    isReverse            -> diagramEditor.createFlow(target,  source)
+                    else                 -> diagramEditor.createFlow(source,  target)
                 }
 
-                val display = link.label
-                val quantifier1 = link.quantifier1
-                val quantifier2 = link.quantifier2
-
                 val guardText = buildString {
-                    display?.takeIf { !Display.isNull(it) }?.let {
+                    link.label?.takeIf { !Display.isNull(it) }?.let {
                         append(it.toString().removePrefix("[").removeSuffix("]"))
                     }
-                    quantifier1?.let { append(it) }
-                    quantifier2?.let { append(it) }
+                    link.quantifier1?.let { append(it) }
+                    link.quantifier2?.let { append(it) }
                 }
 
                 if (guardText.isNotEmpty()) {
@@ -162,9 +146,8 @@ object ToAstahActivityDiagramConverter {
     }
 
     fun findPresentation(name: String, map: Map<String, INodePresentation>) = when (name) {
-        "start" -> map[SVGEntityCollector.START_NODE_NAME]!!
-        "end" -> map[SVGEntityCollector.END_NODE_NAME]!!
+        "start" -> map[SVGEntityCollector.START_NODE_NAME]
+        "end" -> map[SVGEntityCollector.END_NODE_NAME]
         else -> map[name]
     }
-
 }
