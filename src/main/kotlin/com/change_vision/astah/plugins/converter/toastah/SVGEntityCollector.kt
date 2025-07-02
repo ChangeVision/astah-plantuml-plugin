@@ -184,7 +184,6 @@ object SVGEntityCollector {
         /*
          * ellipseから初期状態・終了状態・ヒストリを拾う
          * 位置については PlantUML 上での位置をなるべく再現するようにした
-         * TODO 初期状態・終了状態は図中にそれぞれ1つだけある場合にのみ対応
          */
         val otherNodeMap = HashMap<String, Rectangle2D.Float>()
         var ellipseIndex = 0
@@ -198,6 +197,10 @@ object SVGEntityCollector {
             val prevNode = ellipse.previousSibling
             val nextNode = ellipse.nextSibling
             var elementName = ""
+            var parentState = getEllipseParent(stateMap, ellipse)
+            if (parentState.isNotEmpty()) {
+                parentState += "."
+            }
             when {
                 prevNode?.nodeName == "ellipse" -> {
                     val cx = ellipse.attributes?.getNamedItem("cx")?.nodeValue?.toFloat()
@@ -209,13 +212,13 @@ object SVGEntityCollector {
                     val prevRx = prevNode.attributes?.getNamedItem("rx")?.nodeValue?.toFloat()
                     val prevRy = prevNode.attributes?.getNamedItem("ry")?.nodeValue?.toFloat()
                     if (cx == prevCx && cy == prevCy && ((rx?.minus(prevRx!!))?.let { abs(it) } == 5.0f) && (ry?.minus(prevRy!!)?.let { abs(it) } == 5.0f)) {
-                        elementName = "final"
+                        elementName = parentState + "final"
                         ellipseIndex++
                     } else if (nextNode.let { it.nodeName == "text" && it.firstChild?.nodeValue == "H" }) {
-                        elementName = "history"
+                        elementName = parentState + "history"
                         ellipseIndex++
                     } else if (nextNode.let { it.nodeName == "text" && it.firstChild?.nodeValue == "H*" }) {
-                        elementName = "deepHistory"
+                        elementName = parentState + "deepHistory"
                         ellipseIndex++
                     } else if (nextNode.nodeName == "ellipse" && nextNode.equals(nextEllipse)) {
                         val nextCx = nextNode.attributes?.getNamedItem("cx")?.nodeValue?.toFloat()
@@ -226,11 +229,11 @@ object SVGEntityCollector {
                             && nextRx?.minus(rx!!)?.let { abs(it) } == 5.0f && nextRy?.minus(ry!!)?.let { abs(it) } == 5.0f) {
                             ellipseIndex++
                         } else {
-                            elementName = "initial"
+                            elementName = parentState + "initial"
                             ellipseIndex++
                         }
                     } else {
-                        elementName = "initial"
+                        elementName = parentState + "initial"
                         ellipseIndex++
                     }
                 }
@@ -248,24 +251,24 @@ object SVGEntityCollector {
                             && nextRx?.minus(rx!!)?.let { abs(it) } == 5.0f && nextRy?.minus(ry!!)?.let { abs(it) } == 5.0f) {
                             ellipseIndex++
                         } else {
-                            elementName = "initial"
+                            elementName = parentState + "initial"
                             ellipseIndex++
                         }
                     } else {
-                        elementName = "initial"
+                        elementName = parentState + "initial"
                         ellipseIndex++
                     }
                 }
                 nextNode.let { it.nodeName == "text" && it.firstChild?.nodeValue == "H" } -> {
-                    elementName = "history"
+                    elementName = parentState + "history"
                     ellipseIndex++
                 }
                 nextNode.let { it.nodeName == "text" && it.firstChild?.nodeValue == "H*" } -> {
-                    elementName = "deepHistory"
+                    elementName = parentState + "deepHistory"
                     ellipseIndex++
                 }
                 else -> {
-                    elementName = "initial"
+                    elementName = parentState + "initial"
                     ellipseIndex++
                 }
             }
@@ -398,7 +401,7 @@ object SVGEntityCollector {
         return actionMap + decisionMergeNodeMap + syncBarNodes + getEllipseRectangles(xpath , doc) + noteMap
     }
 
-    private fun getEllipseRectangles(xpath : XPath, doc : Document): Map<String, Rectangle2D.Float>{
+    private fun getEllipseRectangles(xpath : XPath, doc : Document): Map<String, Rectangle2D.Float> {
         val ellipseNodes = xpath
             .compile("//ellipse[not(@fill='none')]")
             .evaluate(doc, XPathConstants.NODESET) as NodeList
@@ -422,6 +425,27 @@ object SVGEntityCollector {
 
                 elementName to extractRectangle(ellipse)
             }.toMap()
+    }
+
+    private fun getEllipseParent(stateMap: Map<String, Rectangle2D.Float>, ellipse: Node): String {
+        var parentStateName = ""
+        var parentStateRect : Rectangle2D.Float? = null
+        for (key in stateMap.keys) {
+            val rect = stateMap[key]
+            val ellipseRect = extractRectangle(ellipse)
+            if (rect != null && rect.contains(ellipseRect)) {
+                if (parentStateName.isEmpty()) {
+                    // 初めて楕円の親を見つけた時
+                    parentStateName = key
+                    parentStateRect = rect
+                } else if (parentStateRect != null && parentStateRect.contains(rect)) {
+                    // 既に見つけている親候補より大きさが小さい親を見つけた時
+                    parentStateName = key
+                    parentStateRect = rect
+                }
+            }
+        }
+        return parentStateName
     }
 
     private fun extractRectangle(node: Node): Rectangle2D.Float {
