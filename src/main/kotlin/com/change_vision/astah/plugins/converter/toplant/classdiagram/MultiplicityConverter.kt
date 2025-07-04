@@ -138,15 +138,14 @@ object MultiplicityConverter {
     private fun buildResultString(visibility: String, name: String, multiplicityStr: String): String {
         val result = StringBuilder()
         
-        // 可視性を常に追加する（ラベル名の有無に関わらず）
-        if (visibility.isNotEmpty()) {
-            result.append(visibility)
-            debug("可視性を追加: '$visibility'")
-        }
-        
-        // 名前が設定されていれば追加（可視性との間にスペースを入れる）
+        // 名前が設定されていれば、可視性と名前を追加
         if (name.isNotEmpty()) {
-            if (result.isNotEmpty()) result.append(" ")
+            if (visibility.isNotEmpty()) {
+                result.append(visibility)
+                result.append(" ")
+                debug("可視性を追加: '$visibility'")
+            }
+
             result.append(name)
             debug("名前を追加: '$name'")
         }
