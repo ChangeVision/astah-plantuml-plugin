@@ -1,6 +1,11 @@
 package com.change_vision.astah.plugins.converter.toplant
 
-import com.change_vision.jude.api.inf.model.*
+import com.change_vision.jude.api.inf.model.IFinalState
+import com.change_vision.jude.api.inf.model.IPseudostate
+import com.change_vision.jude.api.inf.model.IState
+import com.change_vision.jude.api.inf.model.IStateMachineDiagram
+import com.change_vision.jude.api.inf.model.ITransition
+import com.change_vision.jude.api.inf.model.IVertex
 import com.change_vision.jude.api.inf.presentation.ILinkPresentation
 import com.change_vision.jude.api.inf.presentation.INodePresentation
 
@@ -46,14 +51,6 @@ object ToPlantStateDiagramConverter {
                         sb.appendLine("${indent}state \"${vertex.name}\" <<choice>>")
                         createdVertexes.add(vertex)
                     }
-//                    vertex.isShallowHistoryPseudostate -> {
-//                        sb.appendLine("${indent}[H]")
-//                        createdVertexes.add(vertex)
-//                    }
-//                    vertex.isDeepHistoryPseudostate -> {
-//                        sb.appendLine("${indent}[H*]")
-//                        createdVertexes.add(vertex)
-//                    }
                 }
             }
             is IState -> {
@@ -84,73 +81,9 @@ object ToPlantStateDiagramConverter {
         if (createdTransitions.contains(transition)) {
             return
         }
-        when (val source = transition.source) {
-            is IPseudostate -> {
-                if (source.isShallowHistoryPseudostate) {
-                    sb.append("${indent}[H]")
-                } else if (source.isDeepHistoryPseudostate) {
-                    sb.append("${indent}[H*]")
-                } else if (createdVertexes.contains(source)) {
-                    // 作成済みの場合は、名前を指定する
-                    sb.append("${indent}${source.name}")
-                } else {
-                    sb.append("${indent}[*]")
-                }
-            }
-            is IFinalState -> {
-                if (createdVertexes.contains(source)) {
-                    // 作成済みの場合は、名前を指定する
-                    sb.append("${indent}${source.name}")
-                } else {
-                    sb.append("${indent}[*]")
-                }
-            }
-            is IState -> {
-                sb.append("${indent}${source.name}")
-            }
-            else -> {
-                if (createdVertexes.contains(source)) {
-                    // 作成済みの場合は、名前を指定する
-                    sb.append("${indent}${source.name}")
-                } else {
-                    sb.append("${indent}[*]")
-                }
-            }
-        }
+        sb.append(convertTransitionEnd(transition.source, indent))
         sb.append(" --> ")
-        when (val target = transition.target) {
-            is IPseudostate -> {
-                if (target.isShallowHistoryPseudostate) {
-                    sb.append("${indent}[H]")
-                } else if (target.isDeepHistoryPseudostate) {
-                    sb.append("${indent}[H*]")
-                } else if (createdVertexes.contains(target)) {
-                    // 作成済みの場合は、名前を指定する
-                    sb.append("${indent}${target.name}")
-                } else {
-                    sb.append("${indent}[*]")
-                }
-            }
-            is IFinalState -> {
-                if (createdVertexes.contains(target)) {
-                    // 作成済みの場合は、名前を指定する
-                    sb.append("${indent}${target.name}")
-                } else {
-                    sb.append("${indent}[*]")
-                }
-            }
-            is IState -> {
-                sb.append("${indent}${target.name}")
-            }
-            else -> {
-                if (createdVertexes.contains(target)) {
-                    // 作成済みの場合は、名前を指定する
-                    sb.append("${indent}${target.name}")
-                } else {
-                    sb.append("${indent}[*]")
-                }
-            }
-        }
+        sb.append(convertTransitionEnd(transition.target, ""))
         createdTransitions.add(transition)
         val label =
             transition.event.let { it.ifBlank { "" } } +
@@ -158,5 +91,41 @@ object ToPlantStateDiagramConverter {
                     transition.action.let { if (it.isNotBlank()) "/$it" else "" }
         if (label.isNotBlank()) sb.append(": $label")
         sb.appendLine()
+    }
+
+    private fun convertTransitionEnd(vertex : IVertex, indent : String) : String {
+        return when (vertex) {
+            is IPseudostate -> {
+                if (vertex.isShallowHistoryPseudostate) {
+                    "${indent}[H]"
+                } else if (vertex.isDeepHistoryPseudostate) {
+                    "${indent}[H*]"
+                } else if (createdVertexes.contains(vertex)) {
+                    // 作成済みの場合は、名前を指定する
+                    "${indent}${vertex.name}"
+                } else {
+                    "${indent}[*]"
+                }
+            }
+            is IFinalState -> {
+                if (createdVertexes.contains(vertex)) {
+                    // 作成済みの場合は、名前を指定する
+                    "${indent}${vertex.name}"
+                } else {
+                    "${indent}[*]"
+                }
+            }
+            is IState -> {
+                "${indent}${vertex.name}"
+            }
+            else -> {
+                if (createdVertexes.contains(vertex)) {
+                    // 作成済みの場合は、名前を指定する
+                    "${indent}${vertex.name}"
+                } else {
+                    "${indent}[*]"
+                }
+            }
+        }
     }
 }

@@ -196,89 +196,44 @@ object SVGEntityCollector {
             val nextEllipse = ellipses.item(ellipseIndex + 1)
             val prevNode = ellipse.previousSibling
             val nextNode = ellipse.nextSibling
-            var elementName = ""
             var parentState = getEllipseParent(stateMap, ellipse)
             if (parentState.isNotEmpty()) {
                 parentState += "."
             }
-            when {
-                prevNode?.nodeName == "ellipse" -> {
-                    val cx = ellipse.attributes?.getNamedItem("cx")?.nodeValue?.toFloat()
-                    val cy = ellipse.attributes?.getNamedItem("cy")?.nodeValue?.toFloat()
-                    val prevCx = prevNode.attributes?.getNamedItem("cx")?.nodeValue?.toFloat()
-                    val prevCy = prevNode.attributes?.getNamedItem("cy")?.nodeValue?.toFloat()
-                    val rx = ellipse.attributes?.getNamedItem("rx")?.nodeValue?.toFloat()
-                    val ry = ellipse.attributes?.getNamedItem("ry")?.nodeValue?.toFloat()
-                    val prevRx = prevNode.attributes?.getNamedItem("rx")?.nodeValue?.toFloat()
-                    val prevRy = prevNode.attributes?.getNamedItem("ry")?.nodeValue?.toFloat()
-                    if (cx == prevCx && cy == prevCy && ((rx?.minus(prevRx!!))?.let { abs(it) } == 5.0f) && (ry?.minus(prevRy!!)?.let { abs(it) } == 5.0f)) {
-                        elementName = parentState + "final"
-                        ellipseIndex++
-                    } else if (nextNode.let { it.nodeName == "text" && it.firstChild?.nodeValue == "H" }) {
-                        elementName = parentState + "history"
-                        ellipseIndex++
-                    } else if (nextNode.let { it.nodeName == "text" && it.firstChild?.nodeValue == "H*" }) {
-                        elementName = parentState + "deepHistory"
-                        ellipseIndex++
-                    } else if (nextNode.nodeName == "ellipse" && nextNode.equals(nextEllipse)) {
-                        val nextCx = nextNode.attributes?.getNamedItem("cx")?.nodeValue?.toFloat()
-                        val nextCy = nextNode.attributes?.getNamedItem("cy")?.nodeValue?.toFloat()
-                        val nextRx = nextNode.attributes?.getNamedItem("rx")?.nodeValue?.toFloat()
-                        val nextRy = nextNode.attributes?.getNamedItem("ry")?.nodeValue?.toFloat()
-                        if (cx == nextCx && cy == nextCy
-                            && nextRx?.minus(rx!!)?.let { abs(it) } == 5.0f && nextRy?.minus(ry!!)?.let { abs(it) } == 5.0f) {
-                            ellipseIndex++
-                        } else {
-                            elementName = parentState + "initial"
-                            ellipseIndex++
-                        }
-                    } else {
-                        elementName = parentState + "initial"
-                        ellipseIndex++
-                    }
-                }
-                nextNode.nodeName == "ellipse" -> {
-                    if (nextNode.equals(nextEllipse)) {
-                        val cx = ellipse.attributes?.getNamedItem("cx")?.nodeValue?.toFloat()
-                        val cy = ellipse.attributes?.getNamedItem("cy")?.nodeValue?.toFloat()
-                        val nextCx = nextNode.attributes?.getNamedItem("cx")?.nodeValue?.toFloat()
-                        val nextCy = nextNode.attributes?.getNamedItem("cy")?.nodeValue?.toFloat()
-                        val rx = ellipse.attributes?.getNamedItem("rx")?.nodeValue?.toFloat()
-                        val ry = ellipse.attributes?.getNamedItem("ry")?.nodeValue?.toFloat()
-                        val nextRx = nextNode.attributes?.getNamedItem("rx")?.nodeValue?.toFloat()
-                        val nextRy = nextNode.attributes?.getNamedItem("ry")?.nodeValue?.toFloat()
-                        if (cx == nextCx && cy == nextCy
-                            && nextRx?.minus(rx!!)?.let { abs(it) } == 5.0f && nextRy?.minus(ry!!)?.let { abs(it) } == 5.0f) {
-                            ellipseIndex++
-                        } else {
-                            elementName = parentState + "initial"
-                            ellipseIndex++
-                        }
-                    } else {
-                        elementName = parentState + "initial"
-                        ellipseIndex++
-                    }
-                }
-                nextNode.let { it.nodeName == "text" && it.firstChild?.nodeValue == "H" } -> {
-                    elementName = parentState + "history"
-                    ellipseIndex++
-                }
-                nextNode.let { it.nodeName == "text" && it.firstChild?.nodeValue == "H*" } -> {
-                    elementName = parentState + "deepHistory"
-                    ellipseIndex++
-                }
-                else -> {
-                    elementName = parentState + "initial"
-                    ellipseIndex++
-                }
+            val elementName = when {
+                isHistory(ellipse) -> parentState + "history"
+                isDeepHistory(ellipse) -> parentState + "deepHistory"
+                prevNode?.nodeName == "ellipse" && isFinalState(prevNode, ellipse) -> parentState + "final"
+                nextNode.let {it.nodeName == "ellipse" && it.equals(nextEllipse) && isFinalState(ellipse, it)} -> "" // 終了疑似状態の最初の楕円なので次のループで変換する
+                else -> parentState + "initial"
             }
+            ellipseIndex++
             if (elementName.isNotEmpty()) {
                 otherNodeMap[elementName] = extractRectangle(ellipse)
             }
         }
 
-
         return stateMap.plus(otherNodeMap)
+    }
+
+    private fun isHistory(ellipse : Node) : Boolean {
+        return ellipse.nextSibling.let { it.nodeName == "text" && it.firstChild?.nodeValue == "H" }
+    }
+
+    private fun isDeepHistory(ellipse : Node) : Boolean {
+        return ellipse.nextSibling.let { it.nodeName == "text" && it.firstChild?.nodeValue == "H*" }
+    }
+
+    private fun isFinalState(prevNode : Node, node : Node) : Boolean {
+        val cx = node.attributes?.getNamedItem("cx")?.nodeValue?.toFloat()
+        val cy = node.attributes?.getNamedItem("cy")?.nodeValue?.toFloat()
+        val prevCx = prevNode.attributes?.getNamedItem("cx")?.nodeValue?.toFloat()
+        val prevCy = prevNode.attributes?.getNamedItem("cy")?.nodeValue?.toFloat()
+        val rx = node.attributes?.getNamedItem("rx")?.nodeValue?.toFloat()
+        val ry = node.attributes?.getNamedItem("ry")?.nodeValue?.toFloat()
+        val prevRx = prevNode.attributes?.getNamedItem("rx")?.nodeValue?.toFloat()
+        val prevRy = prevNode.attributes?.getNamedItem("ry")?.nodeValue?.toFloat()
+        return cx == prevCx && cy == prevCy && ((rx?.minus(prevRx!!))?.let { abs(it) } == 5.0f) && (ry?.minus(prevRy!!)?.let { abs(it) } == 5.0f)
     }
 
     private fun collectEntityBoundaryForActivity(svgFile: File, activities: List<Entity>):

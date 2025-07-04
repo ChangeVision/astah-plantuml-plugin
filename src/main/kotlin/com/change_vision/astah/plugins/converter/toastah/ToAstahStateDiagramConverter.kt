@@ -27,6 +27,7 @@ object ToAstahStateDiagramConverter {
     private val api = AstahAPI.getAstahAPI()
     private val projectAccessor = api.projectAccessor
     private val diagramEditor = projectAccessor.diagramEditorFactory.stateMachineDiagramEditor
+
     fun convert(diagram: StateDiagram, reader: SourceStringReader, index: Int) {
         // 作成予定の図と同名の図("StateDiagram_$index")があれば削除して、常に新規作成するようにする
         projectAccessor.findElements(IStateMachineDiagram::class.java, "StateDiagram_$index").let {
@@ -51,6 +52,12 @@ object ToAstahStateDiagramConverter {
             }
             val presentationMap = diagram.leafs().mapNotNull { leaf ->
                 val parentContainer = leaf.parentContainer
+                val namespace =
+                    if (isRoot(parentContainer)) {
+                        ""
+                    } else {
+                        parentContainer.name + "."
+                    }
                 var parentPresentation : INodePresentation? = null
                 if (groupPresentationMap.containsKey(parentContainer.name)) {
                     parentPresentation = groupPresentationMap[parentContainer.name]
@@ -65,22 +72,14 @@ object ToAstahStateDiagramConverter {
                         Pair(leaf.name, presentation)
                     }
                     CIRCLE_START -> {
-                        val key = if (isRoot(parentContainer)) {
-                            "initial"
-                        } else {
-                            parentContainer.name + ".initial"
-                        }
+                        val key = namespace + "initial"
                         val rect = posMap[key]!!
                         // 開始疑似状態 Presentation 作成
                         val presentation = diagramEditor.createInitialPseudostate(parentPresentation, Point2D.Float(rect.x, rect.y))
                         Pair(key, presentation)
                     }
                     CIRCLE_END -> {
-                        val key = if (isRoot(parentContainer)) {
-                            "final"
-                        } else {
-                            parentContainer.name + ".final"
-                        }
+                        val key = namespace + "final"
                         val rect = posMap[key]!!
                         // 終了状態 Presentation 作成
                         val presentation = diagramEditor.createFinalState(parentPresentation, Point2D.Float(rect.x, rect.y))
@@ -93,11 +92,7 @@ object ToAstahStateDiagramConverter {
                         }
                     }
                     DEEP_HISTORY -> {
-                        val key = if (isRoot(parentContainer)) {
-                            "deepHistory"
-                        } else {
-                            parentContainer.name + ".deepHistory"
-                        }
+                        val key = namespace + "deepHistory"
                         val rect = posMap[key]!!
                         val presentation = diagramEditor.createDeepHistoryPseudostate(parentPresentation, Point2D.Float(rect.x, rect.y))
                         val name = leaf.name
@@ -109,11 +104,7 @@ object ToAstahStateDiagramConverter {
                         }
                     }
                     PSEUDO_STATE -> {
-                        val key = if (isRoot(parentContainer)) {
-                            "history"
-                        } else {
-                            parentContainer.name + ".history"
-                        }
+                        val key = namespace + "history"
                         val rect = posMap[key]!!
                         val presentation = diagramEditor.createShallowHistoryPseudostate(parentPresentation, Point2D.Float(rect.x, rect.y))
                         val name = leaf.name
@@ -131,78 +122,36 @@ object ToAstahStateDiagramConverter {
             }.toMap()
             // TODO 一部の線が diagram.links から取得できない。他のモデルからも取得できない。
             diagram.links.forEach { link ->
-                // source の Presentation を取得
-                val sourceName = link.entity1.name
-                val sourceParent = link.entity1.parentContainer
-                val source = if (sourceName.endsWith("start*")) {
-                    if (isRoot(sourceParent)) {
-                        presentationMap["initial"]
-                    } else {
-                        presentationMap[sourceParent.name + ".initial"]
-                    }
-                } else if (link.entity1.leafType == DEEP_HISTORY) {
-                    if (isRoot(sourceParent)) {
-                        presentationMap["deepHistory"]
-                    } else {
-                        presentationMap[sourceParent.name + ".deepHistory"]
-                    }
-                } else if (sourceName.endsWith("historical*")) {
-                    if (isRoot(sourceParent)) {
-                        presentationMap["history"]
-                    } else {
-                        presentationMap[sourceParent.name + ".history"]
-                    }
-                } else {
-                    groupPresentationMap[sourceName] ?: presentationMap[sourceName]
+                // source と target の Presentation を取得
+                val source = getTransitionEndPresentation(link.entity1, presentationMap, groupPresentationMap)
+                val target = getTransitionEndPresentation(link.entity2, presentationMap, groupPresentationMap)
+                if (source == null || target == null) {
+                    // 片方が null であることはありえないため中断して次の処理に移る
+                    return@forEach
                 }
 
-                // target の Presentation を取得
-                val targetName = link.entity2.name
-                val targetParent = link.entity2.parentContainer
-                val target = if (targetName.endsWith("end*")) {
-                    if (isRoot(targetParent)) {
-                        presentationMap["final"]
-                    } else {
-                        presentationMap[targetParent.name + ".final"]
-                    }
-                } else if (link.entity2.leafType == DEEP_HISTORY) {
-                    if (isRoot(targetParent)) {
-                        presentationMap["deepHistory"]
-                    } else {
-                        presentationMap[targetParent.name + ".deepHistory"]
-                    }
-                } else if (targetName.endsWith("historical*")) {
-                    if (isRoot(targetParent)) {
-                        presentationMap["history"]
-                    } else {
-                        presentationMap[targetParent.name + ".history"]
-                    }
-                } else {
-                    groupPresentationMap[targetName] ?: presentationMap[targetName]
-                }
-                val transitionLabelRegex =
-                    Pattern.compile("""(<?event>\w+)(?:\[(<?guard>\w)])?(?:/(<?action>\w+))?""")
+                // Transition のラベルを取得するための正規表現
+                val transitionLabelRegex = Pattern.compile("""(<?event>\w+)(?:\[(<?guard>\w)])?(?:/(<?action>\w+))?""")
+
                 // Transition の Presentation の作成
-                if (source != null && target != null) {
-                    diagramEditor.createTransition(source, target)
-                        .also { transition ->
-                            val label = link.label.toString()
-                            val matcher = transitionLabelRegex.matcher(label)
-                            if (transition.label.contains("トリガー")) {
-                                when {
-                                    link.label.isWhite -> transition.label = ""
-                                    matcher.matches() -> {
-                                        val model = ((transition.model) as ITransition)
-                                        model.event = matcher.group("event") ?: ""
-                                        model.guard = matcher.group("guard") ?: ""
-                                        model.action = matcher.group("action") ?: ""
-                                    }
-
-                                    else -> transition.label = label
+                diagramEditor.createTransition(source, target)
+                    .also { transition ->
+                        val label = link.label.toString()
+                        val matcher = transitionLabelRegex.matcher(label)
+                        if (transition.label.contains("トリガー")) {
+                            when {
+                                link.label.isWhite -> transition.label = ""
+                                matcher.matches() -> {
+                                    val model = ((transition.model) as ITransition)
+                                    model.event = matcher.group("event") ?: ""
+                                    model.guard = matcher.group("guard") ?: ""
+                                    model.action = matcher.group("action") ?: ""
                                 }
+
+                                else -> transition.label = label
                             }
                         }
-                }
+                    }
             }
             TransactionManager.endTransaction()
         } catch (e: BadTransactionException) {
@@ -212,9 +161,33 @@ object ToAstahStateDiagramConverter {
         astahDiagram?.let { api.viewManager.diagramViewManager.open(it) }
     }
 
+    private fun getTransitionEndPresentation(transitionEnd : Entity, presentationMap: Map<String, INodePresentation>, groupPresentationMap: Map<String, INodePresentation>) : INodePresentation? {
+        val name = transitionEnd.name
+        val parent = transitionEnd.parentContainer
+        val namespace =
+            if (isRoot(parent)) {
+                ""
+            } else {
+                parent.name + "."
+            }
+
+        return if (name.endsWith("start*")) {
+            presentationMap[namespace + "initial"]
+        } else if (name.endsWith("end*")) {
+            presentationMap[namespace + "final"]
+        } else if (transitionEnd.leafType == DEEP_HISTORY) {
+            presentationMap[namespace + "deepHistory"]
+        } else if (name.endsWith("historical*")) {
+            presentationMap[namespace + "history"]
+        } else {
+            groupPresentationMap[name] ?: presentationMap[name]
+        }
+    }
+
     private fun isRoot(entity : Entity) : Boolean {
         return entity.isGroup && entity.groupType == GroupType.ROOT
     }
+
     private fun createStatePresentation(entity : Entity, posMap : Map<String, Rectangle2D.Float>, groupPresentationMap : HashMap<String, INodePresentation>) : INodePresentation {
         val rect = when {
             posMap.containsKey(entity.name) -> posMap[entity.name]!!
@@ -227,9 +200,10 @@ object ToAstahStateDiagramConverter {
             parentPresentation = groupPresentationMap[parentContainer.name]
         }
         val location = Point2D.Float(rect.x, rect.y)
-        val statePresentation = diagramEditor.createState(entity.name, parentPresentation, location).also {
-                entity.bodier.rawBody.toString()
-            }
+        val statePresentation = diagramEditor.createState(entity.name, parentPresentation, location)
+//            .also {
+//                entity.bodier.rawBody.toString()
+//            }
         statePresentation.width = rect.width.toDouble()
         statePresentation.height = rect.height.toDouble()
         return statePresentation
