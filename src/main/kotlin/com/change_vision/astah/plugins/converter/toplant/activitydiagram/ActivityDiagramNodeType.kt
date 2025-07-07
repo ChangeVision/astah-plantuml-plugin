@@ -17,6 +17,7 @@ enum class ActivityDiagramNodeType(
     JOIN_NODE("Join Node", { (it.model as? IControlNode)?.isJoinNode == true }),
     INITIAL_NODE("Initial Node", { (it.model as? IControlNode)?.isInitialNode == true }),
     FINAL_NODE("Final Node", { (it.model as? IControlNode)?.isFinalNode == true }),
+    FLOW_FINAL_NODE( "Flow Final Node",  { (it.model as? IControlNode)?.isFlowFinalNode == true }),
     DECISION_MERGE_NODE("Decision/Merge Node", { (it.model as? IControlNode)?.isDecisionMergeNode == true }),
     DECISION_NODE("Decision Node", {
         DECISION_MERGE_NODE(it)
