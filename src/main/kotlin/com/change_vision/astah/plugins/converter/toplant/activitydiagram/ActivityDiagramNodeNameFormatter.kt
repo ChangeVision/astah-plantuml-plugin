@@ -20,6 +20,11 @@ class ActivityDiagramNodeNameFormatter(
                 LegacyActivityDiagramSyntax.forkJoinNode(node.label, id)
             }
 
+            ActivityDiagramNodeType.FLOW_FINAL_NODE(node) ->{
+                val id = idMap[node]
+                LegacyActivityDiagramSyntax.node("フロー終了ノード", id)
+            }
+
             else -> {
                 val id = idMap[node]
                 if (id != null) {

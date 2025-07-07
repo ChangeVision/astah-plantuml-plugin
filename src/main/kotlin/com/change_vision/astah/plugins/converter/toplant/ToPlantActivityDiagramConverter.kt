@@ -25,17 +25,4 @@ object ToPlantActivityDiagramConverter {
             ActivityConverter.convert(startPresentation, sb)
         }
     }
-
-    private fun createIdMap(nodes: List<INodePresentation>): Map<INodePresentation, String> {
-        val assigner = NodeIdAssigner(
-            listOf(
-                ActivityDiagramNodeType.ACTION,
-                ActivityDiagramNodeType.OBJECT_NODE,
-                ActivityDiagramNodeType.FORK_NODE,
-                ActivityDiagramNodeType.JOIN_NODE,
-                ActivityDiagramNodeType.DECISION_MERGE_NODE
-            )
-        )
-        return assigner.assign(nodes)
-    }
 }

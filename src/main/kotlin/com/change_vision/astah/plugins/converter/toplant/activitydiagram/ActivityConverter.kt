@@ -92,6 +92,7 @@ object ActivityConverter {
                 ActivityDiagramNodeType.OBJECT_NODE,
                 ActivityDiagramNodeType.FORK_NODE,
                 ActivityDiagramNodeType.JOIN_NODE,
+                ActivityDiagramNodeType.FLOW_FINAL_NODE,
                 ActivityDiagramNodeType.DECISION_MERGE_NODE
             )
         )
