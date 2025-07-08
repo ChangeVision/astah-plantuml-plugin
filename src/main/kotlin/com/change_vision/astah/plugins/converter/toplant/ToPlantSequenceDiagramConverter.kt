@@ -1,6 +1,7 @@
 package com.change_vision.astah.plugins.converter.toplant
 
 import com.change_vision.astah.plugins.converter.toplant.classdiagram.ClassConverter
+import com.change_vision.jude.api.inf.model.IClass
 import com.change_vision.jude.api.inf.model.ICombinedFragment
 import com.change_vision.jude.api.inf.model.ILifeline
 import com.change_vision.jude.api.inf.model.IMessage
@@ -18,12 +19,28 @@ object ToPlantSequenceDiagramConverter {
 
     fun convert(diagram: ISequenceDiagram, sb: StringBuilder) {
         // 図のタイトルとして頭の名前を設定する
-        sb.appendLine("title " + ClassConverter.formatName(diagram.name))
-        sb.appendLine()
+        convertTitle(diagram, sb)
 
         // ライフラインはX軸、メッセージはY軸順にソートして出力する。
-        var nodes = diagram.presentations.filterIsInstance<INodePresentation>().sortedBy { it.location.x }
-        val links = diagram.presentations.filterIsInstance<ILinkPresentation>().sortedBy { it.allPoints.minOf { it.y } }
+        convertLifeLine(diagram, sb)
+
+        // 複合フラグメントを出力する
+        convertCombinedFragment(diagram, sb)
+    }
+
+    private fun convertTitle(diagram: ISequenceDiagram, sb: StringBuilder) {
+        sb.appendLine("title " + ClassConverter.formatName(diagram.name))
+        sb.appendLine()
+    }
+
+    private fun getCombinedFragmentPresentations(diagram: ISequenceDiagram) : List<INodePresentation> {
+        return diagram.presentations.filterIsInstance<INodePresentation>()
+                    .filter { it.model is ICombinedFragment }
+                    .sortedBy { it.location.y }
+    }
+
+    private fun convertLifeLine(diagram: ISequenceDiagram, sb: StringBuilder) {
+        val nodes = diagram.presentations.filterIsInstance<INodePresentation>().sortedBy { it.location.x }
         nodes.forEach { node ->
             val model = node.model as? INamedElement
             if (model is ILifeline) {
@@ -31,48 +48,36 @@ object ToPlantSequenceDiagramConverter {
                 val lifeLineColor = node.getProperty("fill.color")
                 val base = model.base
 
-                if (base == null) {
+                if (base == null || base.stereotypes.isNullOrEmpty()) {
                     sb.appendLine("participant $lifeLineName $lifeLineColor")
                 } else {
-                    val stereotypes = StringBuilder()
-
-                    if (base.stereotypes.isNotEmpty()) {
-                        base.stereotypes.forEachIndexed { index, stereotype ->
-                            if (!(index == 0 && ("actor" == stereotype
-                                        || "entity" == stereotype
-                                        || "boundary" == stereotype
-                                        || "control" == stereotype))
-                            ) {
-                                stereotypes.append("<<$stereotype>>")
-                            }
-                        }
-                        if (stereotypes.isNotEmpty()) {
-                            stereotypes.append(" ")
-                        }
-                        when {
-                            base.stereotypes.first() == "actor" -> sb.appendLine("actor $lifeLineName $stereotypes$lifeLineColor")
-                            base.stereotypes.first() == "entity" -> sb.appendLine("entity $lifeLineName $stereotypes$lifeLineColor")
-                            base.stereotypes.first() == "boundary" -> sb.appendLine("boundary $lifeLineName $stereotypes$lifeLineColor")
-                            base.stereotypes.first() == "control" -> sb.appendLine("control $lifeLineName $stereotypes$lifeLineColor")
-                            else -> sb.appendLine("participant $lifeLineName $stereotypes$lifeLineColor")
-                        }
-                    } else {
-                        sb.appendLine("participant $lifeLineName $lifeLineColor")
+                    val stereotypes = getStereotypes(base)
+                    when {
+                        base.stereotypes.first() == "actor" -> sb.appendLine("actor $lifeLineName $stereotypes$lifeLineColor")
+                        base.stereotypes.first() == "entity" -> sb.appendLine("entity $lifeLineName $stereotypes$lifeLineColor")
+                        base.stereotypes.first() == "boundary" -> sb.appendLine("boundary $lifeLineName $stereotypes$lifeLineColor")
+                        base.stereotypes.first() == "control" -> sb.appendLine("control $lifeLineName $stereotypes$lifeLineColor")
+                        else -> sb.appendLine("participant $lifeLineName $stereotypes$lifeLineColor")
                     }
                 }
             }
         }
         sb.appendLine()
+    }
 
-        // y 座標基準でソートし直す
-        nodes = nodes.sortedBy { it.location.y }
-        // 複合フラグメントとオペランドを抽出
-        val combinedFragments : ArrayList<INodePresentation> = ArrayList()
-        nodes.forEach { node ->
-            if (node.model is ICombinedFragment) {
-                combinedFragments.add(node)
-            }
+    private fun getStereotypes(base: IClass) : String {
+        val stereotypeList = listOf("actor", "entity", "boundary", "control")
+        val stereotypes = base.stereotypes
+                            .filterIndexed { index, stereotype -> !(index == 0 && (stereotype in stereotypeList)) }
+                            .joinToString(separator = "") { "<<${it}>>" }
+        if (stereotypes.isEmpty()) {
+            return ""
         }
+        return "$stereotypes "
+    }
+
+    private fun convertCombinedFragment(diagram: ISequenceDiagram, sb: StringBuilder) {
+        val combinedFragments = getCombinedFragmentPresentations(diagram)
 
         fragmentIndex = 0
         linkIndex = 0
@@ -80,6 +85,8 @@ object ToPlantSequenceDiagramConverter {
             createdFragments.clear()
         }
 
+        // y 座標基準でソートして取得する
+        val links = diagram.presentations.filterIsInstance<ILinkPresentation>().sortedBy { it -> it.allPoints.minOf { it.y } }
         while ( linkIndex < links.size) {
             val link = links[linkIndex]
             val model = link.model as IMessage
@@ -99,11 +106,11 @@ object ToPlantSequenceDiagramConverter {
     }
 
     // astah -> PlantUML に複合フラグメントを変換する
-    private fun convertCombinedFragment(fragment : INodePresentation, sb : StringBuilder, links :  List<ILinkPresentation>, combinedFragments: ArrayList<INodePresentation>) {
+    private fun convertCombinedFragment(fragment: INodePresentation, sb: StringBuilder, links:  List<ILinkPresentation>, combinedFragments: List<INodePresentation>) {
         // 子の複合フラグメントを取得
         val childrenFragments = getChildrenCombinedFragment(fragment, combinedFragments)
 
-        val fragmentModel: ICombinedFragment = fragment.model as ICombinedFragment
+        val fragmentModel = fragment.model as ICombinedFragment
         fragmentModel.interactionOperands.forEachIndexed { operandIndex, operand ->
             if (operandIndex == 0) {
                 when {
@@ -132,7 +139,7 @@ object ToPlantSequenceDiagramConverter {
                 }
             } else {
                 // 複合フラグメント内のメッセージと複合フラグメントを上から順番に並べる
-                val children = ArrayList<IPresentation>()
+                val children = mutableListOf<IPresentation>()
 
                 links.forEach { linkPresentation ->
                     operand.messages.forEach { operandMessage ->
@@ -166,33 +173,8 @@ object ToPlantSequenceDiagramConverter {
 
     }
 
-    private class SequenceCompare : Comparator<IPresentation> {
-
-        override fun compare(presentation1: IPresentation?, presentation2: IPresentation?): Int {
-            var y1 = 0.0
-            var y2 = 0.0
-            if (presentation1 is INodePresentation) {
-                y1 = presentation1.location.y
-            } else if (presentation1 is ILinkPresentation) {
-                y1 = presentation1.allPoints.minOf { it.y }
-            }
-            if (presentation2 is INodePresentation) {
-                y2 = presentation2.location.y
-            } else if (presentation2 is ILinkPresentation) {
-                y2 = presentation2.allPoints.minOf { it.y }
-            }
-            return if (y1 < y2) {
-                -1
-            } else if (y2 < y1) {
-                1
-            } else {
-                0
-            }
-        }
-
-    }
-    private fun getChildrenCombinedFragment(parentFragment : INodePresentation, fragments : List<INodePresentation>) : ArrayList<INodePresentation> {
-        val result = ArrayList<INodePresentation>()
+    private fun getChildrenCombinedFragment(parentFragment : INodePresentation, fragments : List<INodePresentation>) : MutableList<INodePresentation> {
+        val result = mutableListOf<INodePresentation>()
         var childIndex = fragmentIndex + 1
         while (childIndex < fragments.size) {
             val child = fragments[childIndex]
@@ -233,7 +215,7 @@ object ToPlantSequenceDiagramConverter {
             }
             model.isReturnMessage -> {
                 if (color.isNullOrEmpty()) {
-                sb.append("$trg <-- $src")
+                    sb.append("$trg <-- $src")
                 } else {
                     sb.append("$src <-[$color]- $trg")
                 }
@@ -247,8 +229,8 @@ object ToPlantSequenceDiagramConverter {
                 }
             }
             model.isDestroyMessage -> {
-                if (    color.isNullOrEmpty()) {
-                   sb.append("$src -> $trg !!")
+                if (color.isNullOrEmpty()) {
+                    sb.append("$src -> $trg !!")
                 } else {
                     sb.append("$src -[$color]> $trg !!")
                 }
@@ -268,5 +250,30 @@ object ToPlantSequenceDiagramConverter {
         }
         linkIndex++
         return sb
+    }
+
+    private class SequenceCompare : Comparator<IPresentation> {
+
+        override fun compare(presentation1: IPresentation?, presentation2: IPresentation?): Int {
+            var y1 = 0.0
+            var y2 = 0.0
+            if (presentation1 is INodePresentation) {
+                y1 = presentation1.location.y
+            } else if (presentation1 is ILinkPresentation) {
+                y1 = presentation1.allPoints.minOf { it.y }
+            }
+            if (presentation2 is INodePresentation) {
+                y2 = presentation2.location.y
+            } else if (presentation2 is ILinkPresentation) {
+                y2 = presentation2.allPoints.minOf { it.y }
+            }
+            return if (y1 < y2) {
+                -1
+            } else if (y2 < y1) {
+                1
+            } else {
+                0
+            }
+        }
     }
 }
