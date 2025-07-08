@@ -1,9 +1,7 @@
 package com.change_vision.astah.plugins.converter.toplant.classdiagram
 
-import com.change_vision.jude.api.inf.model.IClass
 import com.change_vision.jude.api.inf.model.IDependency
 import com.change_vision.jude.api.inf.model.IGeneralization
-import com.change_vision.jude.api.inf.model.INamedElement
 import com.change_vision.jude.api.inf.model.IRealization
 
 /**
