@@ -20,7 +20,7 @@ object ToPlantClassDiagramConverter {
      */
     private fun debug(message: String) {
         if (DEBUG) {
-            kotlin.io.println("[ToPlantClassDiagramConverter] $message")
+            println("[ToPlantClassDiagramConverter] $message")
         }
     }
 
