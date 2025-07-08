@@ -12,7 +12,7 @@ object ClassDiagramNoteConverter : NoteConverter {
     private const val DEBUG = false
 
     private fun debug(message: String) {
-        if (DEBUG) kotlin.io.println("[NoteConverter] $message")
+        if (DEBUG) println("[ClassDiagramNoteConverter] $message")
     }
 
     /**
