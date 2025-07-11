@@ -16,76 +16,65 @@ import org.w3c.dom.NodeList
 import java.awt.geom.Point2D
 import java.awt.geom.Rectangle2D
 import java.io.File
+import java.math.BigDecimal
 import java.nio.file.Files
 import javax.xml.parsers.DocumentBuilderFactory
 import javax.xml.xpath.XPath
 import javax.xml.xpath.XPathConstants
 import javax.xml.xpath.XPathFactory
 import kotlin.collections.HashMap
-import kotlin.math.abs
 
 object SVGEntityCollector {
     //ジョイン/フォークノードがリンクの始点終点どちらかを調べる
-    const val LINK_END_FROM = "from"
-    const val LINK_END_TO = "to"
-    const val LINK_END_NONE = "none"
+    private const val LINK_END_FROM = "from"
+    private const val LINK_END_TO = "to"
+    private const val LINK_END_NONE = "none"
 
-    const val SYNCHRO_BAR_NODE_TYPE_FORK = "fork node"
-    const val SYNCHRO_BAR_NODE_TYPE_JOIN = "join node"
+    private const val SYNCHRO_BAR_NODE_TYPE_FORK = "fork node"
+    private const val SYNCHRO_BAR_NODE_TYPE_JOIN = "join node"
+
+    private const val RECTANGLE_MARGIN = 0.5f
+    private const val RECTANGLE_EXPANSION = 2f
 
     const val START_NODE_NAME = "start"
     const val END_NODE_NAME = "end"
 
-    const val RECTANGLE_MARGIN = 0.5f
-    const val RECTANGLE_EXPANSION = 2f
-
-    var synchroBarTypeMap = mutableMapOf<Entity,String>()
+    private var synchroBarTypeMap = mutableMapOf<Entity,String>()
 
     fun collectSvgPosition(reader: SourceStringReader, index: Int): Map<String, Rectangle2D.Float> {
         var tempSvgFile : File? = null
         val result = when (val diagram = reader.blocks[index].diagram) {
             is ClassDiagram -> {
-                tempSvgFile = Files.createTempFile("plantsvg_${index}_", ".svg").toFile()
-                tempSvgFile.outputStream().use { os ->
-                    reader.outputImage(os, index, FileFormatOption(FileFormat.SVG))
-                }
+                tempSvgFile = createTempSvgFile(index, reader)
                 val classBoundaries = collectClassEntityBoundary(tempSvgFile)
-                val circleBoundaries = collectCircleElements(tempSvgFile, diagram)
+                val circleBoundaries = collectClassCircleElements(tempSvgFile, diagram)
                 classBoundaries + circleBoundaries
             }
             is StateDiagram -> {
                 val stateNames = ArrayList<String>()
-                stateNames.addAll(diagram.groupsAndRoot().filter {
-                    it.groupType == GroupType.STATE
-                }.map {
-                    it.name
-                })
-                stateNames.addAll(diagram.leafs().filter {
-                    it.leafType == LeafType.STATE
-                }.map {
-                    it.name
-                })
-                tempSvgFile = Files.createTempFile("plantsvg_${index}_", ".svg").toFile()
-                tempSvgFile.outputStream().use { os ->
-                    reader.outputImage(os, index, FileFormatOption(FileFormat.SVG))
-                }
-                collectEntityBoundary(tempSvgFile, stateNames)
+                stateNames.addAll(diagram.groupsAndRoot().filter { it.groupType == GroupType.STATE }.map { it.name })
+                stateNames.addAll(diagram.leafs().filter { it.leafType == LeafType.STATE }.map { it.name })
+                tempSvgFile = createTempSvgFile(index, reader)
+                collectStateEntityBoundary(tempSvgFile, stateNames)
             }
             is ActivityDiagram -> {
                 val activities =
                     diagram.leafs().filter {
                         it.leafType in setOf(LeafType.ACTIVITY, LeafType.SYNCHRO_BAR, LeafType.BRANCH, LeafType.NOTE)
                     }
-                tempSvgFile = Files.createTempFile("plantsvg_${index}_", ".svg").toFile()
-                tempSvgFile.outputStream().use { os ->
-                    reader.outputImage(os, index, FileFormatOption(FileFormat.SVG))
-                }
-                collectEntityBoundaryForActivity(tempSvgFile, activities)
+                tempSvgFile = createTempSvgFile(index, reader)
+                collectActivityEntityBoundary(tempSvgFile, activities)
             }
             else -> emptyMap()
         }
         tempSvgFile?.delete()
         return result
+    }
+
+    private fun createTempSvgFile(index: Int, reader: SourceStringReader): File {
+        val tempSvgFile = Files.createTempFile("plantsvg_${index}_", ".svg").toFile()
+        tempSvgFile.outputStream().use { os -> reader.outputImage(os, index, FileFormatOption(FileFormat.SVG)) }
+        return tempSvgFile
     }
 
     private fun collectClassEntityBoundary(svgFile: File): Map<String, Rectangle2D.Float> {
@@ -115,7 +104,7 @@ object SVGEntityCollector {
      * @param diagram ClassDiagram
      * @return 要素コードと位置情報のマップ
      */
-    private fun collectCircleElements(svgFile: File, diagram: ClassDiagram): Map<String, Rectangle2D.Float> {
+    private fun collectClassCircleElements(svgFile: File, diagram: ClassDiagram): Map<String, Rectangle2D.Float> {
         val builder = DocumentBuilderFactory.newInstance().newDocumentBuilder()
         val doc = builder.parse(svgFile)
         val entityBoundaryMap = mutableMapOf<String, Rectangle2D.Float>()
@@ -148,8 +137,7 @@ object SVGEntityCollector {
                     // インターフェース名と一致するか確認
                     for (circleName in circleNames) {
                         if (textContent.contains(circleName)) {
-                            val entityCode = circleName
-                            entityBoundaryMap[entityCode] = extractRectangle(ellipseNode)
+                            entityBoundaryMap[circleName] = extractRectangle(ellipseNode)
                             break
                         }
                     }
@@ -162,7 +150,7 @@ object SVGEntityCollector {
         return entityBoundaryMap
     }
 
-    private fun collectEntityBoundary(svgFile: File, stateNames: List<String>): Map<String, Rectangle2D.Float> {
+    private fun collectStateEntityBoundary(svgFile: File, stateNames: List<String>): Map<String, Rectangle2D.Float> {
         val doc = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(svgFile)
 
         val stateMap = stateNames.mapNotNull { state ->
@@ -186,30 +174,23 @@ object SVGEntityCollector {
          * 位置については PlantUML 上での位置をなるべく再現するようにした
          */
         val otherNodeMap = HashMap<String, Rectangle2D.Float>()
-        var ellipseIndex = 0
-        while (ellipseIndex < ellipses.length) {
-            val ellipse = ellipses.item(ellipseIndex)
-            if (ellipse == null) {
-                ellipseIndex++
-                continue
-            }
+        for (ellipseIndex in 0 until ellipses.length) {
+            val ellipse = ellipses.item(ellipseIndex)?: continue
             val nextEllipse = ellipses.item(ellipseIndex + 1)
             val prevNode = ellipse.previousSibling
             val nextNode = ellipse.nextSibling
             var parentState = getEllipseParent(stateMap, ellipse)
             if (parentState.isNotEmpty()) {
-                parentState += "."
+                parentState = "${parentState}."
             }
-            val elementName = when {
-                isHistory(ellipse) -> parentState + "history"
-                isDeepHistory(ellipse) -> parentState + "deepHistory"
-                prevNode?.nodeName == "ellipse" && isFinalState(prevNode, ellipse) -> parentState + "final"
+            when {
+                isHistory(ellipse) -> "${parentState}history"
+                isDeepHistory(ellipse) -> "${parentState}deepHistory"
+                prevNode?.nodeName == "ellipse" && isFinalState(prevNode, ellipse) -> "${parentState}final"
                 nextNode.let {it.nodeName == "ellipse" && it.equals(nextEllipse) && isFinalState(ellipse, it)} -> "" // 終了疑似状態の最初の楕円なので次のループで変換する
-                else -> parentState + "initial"
-            }
-            ellipseIndex++
-            if (elementName.isNotEmpty()) {
-                otherNodeMap[elementName] = extractRectangle(ellipse)
+                else -> "${parentState}initial"
+            }.also {
+                if (it.isNotEmpty()) otherNodeMap[it] = extractRectangle(ellipse)
             }
         }
 
@@ -225,18 +206,21 @@ object SVGEntityCollector {
     }
 
     private fun isFinalState(prevNode : Node, node : Node) : Boolean {
-        val cx = node.attributes?.getNamedItem("cx")?.nodeValue?.toFloat()
-        val cy = node.attributes?.getNamedItem("cy")?.nodeValue?.toFloat()
-        val prevCx = prevNode.attributes?.getNamedItem("cx")?.nodeValue?.toFloat()
-        val prevCy = prevNode.attributes?.getNamedItem("cy")?.nodeValue?.toFloat()
-        val rx = node.attributes?.getNamedItem("rx")?.nodeValue?.toFloat()
-        val ry = node.attributes?.getNamedItem("ry")?.nodeValue?.toFloat()
-        val prevRx = prevNode.attributes?.getNamedItem("rx")?.nodeValue?.toFloat()
-        val prevRy = prevNode.attributes?.getNamedItem("ry")?.nodeValue?.toFloat()
-        return cx == prevCx && cy == prevCy && ((rx?.minus(prevRx!!))?.let { abs(it) } == 5.0f) && (ry?.minus(prevRy!!)?.let { abs(it) } == 5.0f)
+        val cx = BigDecimal(node.attributes?.getNamedItem("cx")?.nodeValue)
+        val cy = BigDecimal(node.attributes?.getNamedItem("cy")?.nodeValue)
+        val prevCx = BigDecimal(prevNode.attributes?.getNamedItem("cx")?.nodeValue)
+        val prevCy = BigDecimal(prevNode.attributes?.getNamedItem("cy")?.nodeValue)
+        val rx = BigDecimal(node.attributes?.getNamedItem("rx")?.nodeValue)
+        val ry = BigDecimal(node.attributes?.getNamedItem("ry")?.nodeValue)
+        val prevRx = BigDecimal(prevNode.attributes?.getNamedItem("rx")?.nodeValue)
+        val prevRy = BigDecimal(prevNode.attributes?.getNamedItem("ry")?.nodeValue)
+        return cx.compareTo(prevCx) == 0
+                && cy.compareTo(prevCy) == 0
+                && ((rx - prevRx).abs().compareTo(BigDecimal(5.0)) == 0)
+                && ((ry - prevRy).abs().compareTo(BigDecimal(5.0)) == 0)
     }
 
-    private fun collectEntityBoundaryForActivity(svgFile: File, activities: List<Entity>):
+    private fun collectActivityEntityBoundary(svgFile: File, activities: List<Entity>):
             Map<String, Rectangle2D.Float> {
         val doc = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(svgFile)
         val xpath = XPathFactory.newInstance().newXPath()
@@ -384,19 +368,18 @@ object SVGEntityCollector {
 
     private fun getEllipseParent(stateMap: Map<String, Rectangle2D.Float>, ellipse: Node): String {
         var parentStateName = ""
+        val ellipseRect = extractRectangle(ellipse)
         var parentStateRect : Rectangle2D.Float? = null
-        for (key in stateMap.keys) {
-            val rect = stateMap[key]
-            val ellipseRect = extractRectangle(ellipse)
-            if (rect != null && rect.contains(ellipseRect)) {
-                if (parentStateName.isEmpty()) {
-                    // 初めて楕円の親を見つけた時
-                    parentStateName = key
-                    parentStateRect = rect
-                } else if (parentStateRect != null && parentStateRect.contains(rect)) {
-                    // 既に見つけている親候補より大きさが小さい親を見つけた時
-                    parentStateName = key
-                    parentStateRect = rect
+        stateMap.forEach {
+            if (it.value.contains(ellipseRect)) {
+                // 初めて楕円の親を見つけた時
+                val isFirstParent = parentStateName.isEmpty()
+                // 既に見つけている親候補より大きさが小さい親を見つけた時
+                val isMoreSmallParent = parentStateRect?.contains(it.value) == true
+
+                if (isFirstParent || isMoreSmallParent) {
+                    parentStateName = it.key
+                    parentStateRect = it.value
                 }
             }
         }
@@ -425,7 +408,7 @@ object SVGEntityCollector {
         }
     }
 
-    fun extractPathPoints(d: String): List<Point2D.Float> {
+    private fun extractPathPoints(d: String): List<Point2D.Float> {
         val commands = Regex("[A-Za-z]").findAll(d).map { it.value }.toList()
         val parts = d.split(Regex("[A-Za-z]")).map { it.trim() }.filter { it.isNotEmpty() }
 
@@ -456,7 +439,7 @@ object SVGEntityCollector {
         return result
     }
 
-    fun checkLinkEnd(linkNode : Node, nodeName : String):String{
+    private fun checkLinkEnd(linkNode : Node, nodeName : String):String{
         if(linkNode !is Element) return LINK_END_NONE
 
         val from = linkNode.getAttribute("data-entity-1")
@@ -469,7 +452,7 @@ object SVGEntityCollector {
         }
     }
 
-    fun checkSynchroBarType(name : String,xpath: XPath,doc : Document):String{
+    private fun checkSynchroBarType(name : String, xpath: XPath, doc : Document):String{
         val linkList = getLinkNodeList(xpath,doc)
         var countFrom = 0
         var countTo = 0
@@ -486,17 +469,17 @@ object SVGEntityCollector {
         else SYNCHRO_BAR_NODE_TYPE_FORK
     }
 
-    fun getLinkNodeList(xpath: XPath,doc : Document):NodeList{
+    private fun getLinkNodeList(xpath: XPath, doc : Document):NodeList{
         return xpath.compile("//g[@class='link']")
             .evaluate(doc, XPathConstants.NODESET) as NodeList
     }
 
-    fun getLinksFromLineNumber(lineNumber:Int,xpath: XPath,doc : Document):NodeList{
+    private fun getLinksFromLineNumber(lineNumber:Int, xpath: XPath, doc : Document):NodeList{
         return xpath.compile("//g[@class='link' and @data-source-line='$lineNumber']")
             .evaluate(doc, XPathConstants.NODESET) as NodeList
     }
 
-    fun getPolygonPoints(element : Element) : List<Point2D.Float> {
+    private fun getPolygonPoints(element : Element) : List<Point2D.Float> {
          return element.getAttribute("points")
             .split(',')
             .map { it.trim() }
