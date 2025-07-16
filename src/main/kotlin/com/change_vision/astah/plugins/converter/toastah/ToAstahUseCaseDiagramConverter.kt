@@ -9,9 +9,10 @@ import com.change_vision.jude.api.inf.model.IAssociation
 import com.change_vision.jude.api.inf.model.IClass
 import com.change_vision.jude.api.inf.model.IUseCase
 import com.change_vision.jude.api.inf.model.IUseCaseDiagram
-import com.change_vision.jude.api.inf.presentation.INodePresentation
 import net.sourceforge.plantuml.SourceStringReader
-import net.sourceforge.plantuml.abel.LeafType
+import net.sourceforge.plantuml.abel.LeafType.USECASE
+import net.sourceforge.plantuml.abel.LeafType.USECASE_BUSINESS
+import net.sourceforge.plantuml.abel.LeafType.DESCRIPTION
 import net.sourceforge.plantuml.abel.LinkArrow
 import net.sourceforge.plantuml.decoration.LinkDecor
 import net.sourceforge.plantuml.descdiagram.DescriptionDiagram
@@ -19,6 +20,8 @@ import java.awt.geom.Point2D
 import java.awt.geom.Rectangle2D
 
 object ToAstahUseCaseDiagramConverter {
+    private val DEFAULT_RECT = Rectangle2D.Float(30f, 30f, 30f, 30f)
+
     private val api = AstahAPI.getAstahAPI()
     private val projectAccessor = api.projectAccessor
     private val diagramEditor = projectAccessor.diagramEditorFactory.useCaseDiagramEditor
@@ -42,62 +45,45 @@ object ToAstahUseCaseDiagramConverter {
 
         TransactionManager.beginTransaction()
         try {
-            val leafs = diagram.leafs()
+            val project = projectAccessor.project
             val presentationMap = diagram.leafs().mapNotNull { leaf ->
                 when (leaf.leafType) {
-                    LeafType.USECASE -> {
+                    USECASE -> {
                         // ユースケース
                         val display = leaf.display.get(0)
-                        val rect = when {
-                            posMap.containsKey(display) -> posMap[display]!!
-                            else -> Rectangle2D.Float(30f, 30f, 30f, 30f)
-                        }
+                        val rect = posMap.getOrDefault(display, DEFAULT_RECT)
                         val displayText = leaf.display.joinToString(separator = "\n") {it}
-                        val model = modelEditor.createUseCase(projectAccessor.project, displayText)
+                        val model = modelEditor.createUseCase(project, displayText)
                         val useCasePresentation = diagramEditor.createNodePresentation(model, Point2D.Float(rect.x, rect.y))
                         Pair(leaf.name, useCasePresentation)
                     }
-                    LeafType.USECASE_BUSINESS -> {
+                    USECASE_BUSINESS -> {
                         // ビジネスユースケース
                         val display = leaf.display.get(0)
-                        val rect = when {
-                            posMap.containsKey(display) -> posMap[display]!!
-                            else -> Rectangle2D.Float(30f, 30f, 30f, 30f)
-                        }
-                        val sb = StringBuilder()
-                        for (i in 0 until leaf.display.size()) {
-                            if (i == 0) {
-                                sb.append(leaf.display.get(0))
-                            } else {
-                                sb.appendLine("")
-                                sb.append(leaf.display.get(i))
-                            }
-                        }
-                        val model = modelEditor.createUseCase(projectAccessor.project, sb.toString())
+                        val rect = posMap.getOrDefault(display, DEFAULT_RECT)
+                        val displayText = leaf.display.joinToString(separator = "\n") {it}
+                        val model = modelEditor.createUseCase(project, displayText)
                         model.addStereotype("business")
                         val useCasePresentation = diagramEditor.createNodePresentation(model, Point2D.Float(rect.x, rect.y))
                         Pair(leaf.name, useCasePresentation)
                     }
-                    LeafType.DESCRIPTION -> {
-                        val symbol = leaf.uSymbol
-                        val symbolStyle = symbol.sNames
-                        var actorPresentation : INodePresentation? = null
-                        val rect = when {
-                            posMap.containsKey(leaf.name) -> posMap[leaf.name]!!
-                            else -> Rectangle2D.Float(30f, 30f, 30f, 30f)
+                    DESCRIPTION -> {
+                        val symbolStyle = leaf.uSymbol.sNames
+                        if (symbolStyle.isNullOrEmpty()) {
+                            Pair(leaf.name, null)
                         }
-                        if (symbolStyle.isNotEmpty()) {
-                            if (symbolStyle[0].name == "actor") {
-                                // アクター
-                                val actor = modelEditor.createActor(projectAccessor.project, leaf.name)
-                                actorPresentation = diagramEditor.createNodePresentation(actor, Point2D.Float(rect.x, rect.y))
-                            } else if (symbolStyle[0].name == "business") {
-                                // ビジネスアクター
-                                val actor = modelEditor.createActor(projectAccessor.project, leaf.name)
-                                actor.addStereotype("business")
-                                actorPresentation = diagramEditor.createNodePresentation(actor, Point2D.Float(rect.x, rect.y))
-                            }
-                        }
+
+                        val rect = posMap.getOrDefault(leaf.name, DEFAULT_RECT)
+                        val model = when (symbolStyle[0].name) {
+                                        "actor" -> modelEditor.createActor(project, leaf.name) // アクター
+                                        "business" -> { // ビジネスアクター
+                                            val actor = modelEditor.createActor(project, leaf.name)
+                                            actor.addStereotype("business")
+                                            actor
+                                        }
+                                        else -> null
+                                    }
+                        val actorPresentation = diagramEditor.createNodePresentation(model, Point2D.Float(rect.x, rect.y))
                         Pair(leaf.name, actorPresentation)
                     }
                     else -> null
@@ -106,7 +92,6 @@ object ToAstahUseCaseDiagramConverter {
 
             // 関係線(関連、拡張、包含)の作成
             val regex = """<?-(left|right|up|down|-*)-?>?""".toRegex()
-            val directionRegex = """(le|ri|up|do)""".toRegex()
             val sources = reader.blocks.firstOrNull()?.data
 
             diagram.links.filter { !it.type.style.isInvisible }.forEach { link ->
@@ -130,7 +115,6 @@ object ToAstahUseCaseDiagramConverter {
                 } else {
                     entity1 to entity2
                 }
-
 
                 val linkPresentation = if (link.label.isWhite) {
                     val model = basicModelEditor.createAssociation(
