@@ -44,25 +44,39 @@ object ToPlantSequenceDiagramConverter {
         nodes.forEach { node ->
             val model = node.model as? INamedElement
             if (model is ILifeline) {
-                val lifeLineName = ClassConverter.formatName(model.name.ifBlank { model.base.name })
-                val lifeLineColor = node.getProperty("fill.color")
                 val base = model.base
+
+                // 名前を取得できなかったライフラインは作成しない
+                val lifeLineName = getLifelineName(model) ?: return@forEach
+
+                val lifeLineColor = node.getProperty("fill.color")
 
                 if (base == null || base.stereotypes.isNullOrEmpty()) {
                     sb.appendLine("participant $lifeLineName $lifeLineColor")
                 } else {
                     val stereotypes = getStereotypes(base)
+                    val firstStereotype = base.stereotypes.first()
                     when {
-                        base.stereotypes.first() == "actor" -> sb.appendLine("actor $lifeLineName $stereotypes$lifeLineColor")
-                        base.stereotypes.first() == "entity" -> sb.appendLine("entity $lifeLineName $stereotypes$lifeLineColor")
-                        base.stereotypes.first() == "boundary" -> sb.appendLine("boundary $lifeLineName $stereotypes$lifeLineColor")
-                        base.stereotypes.first() == "control" -> sb.appendLine("control $lifeLineName $stereotypes$lifeLineColor")
+                        firstStereotype == "actor" -> sb.appendLine("actor $lifeLineName $stereotypes$lifeLineColor")
+                        firstStereotype == "entity" -> sb.appendLine("entity $lifeLineName $stereotypes$lifeLineColor")
+                        firstStereotype == "boundary" -> sb.appendLine("boundary $lifeLineName $stereotypes$lifeLineColor")
+                        firstStereotype == "control" -> sb.appendLine("control $lifeLineName $stereotypes$lifeLineColor")
                         else -> sb.appendLine("participant $lifeLineName $stereotypes$lifeLineColor")
                     }
                 }
             }
         }
         sb.appendLine()
+    }
+
+    private fun getLifelineName(model: ILifeline): String? {
+        val base = model.base
+        if (!model.name.isNullOrEmpty()) {
+            return ClassConverter.formatName(model.name)
+        } else if (base != null && !base.name.isNullOrEmpty()) {
+            return ClassConverter.formatName(base.name )
+        }
+        return null
     }
 
     private fun getStereotypes(base: IClass) : String {
@@ -187,61 +201,33 @@ object ToPlantSequenceDiagramConverter {
     }
 
     // astah -> PlantUML にメッセージを変換する
-    private fun convertMessage(model : IMessage, color : String?, sb: StringBuilder) : StringBuilder {
-        val src = when (model.source) {
-            is ILifeline -> {
-                ClassConverter.formatName(model.source.name.ifBlank { (model.source as ILifeline).base.name })
-            }
-            else -> {
-                ""
-            }
+    private fun convertMessage(model : IMessage, color : String?, sb: StringBuilder) {
+        val src = when (val source = model.source) {
+                    is ILifeline -> getLifelineName(source)
+                    else -> ""
         }
-        val trg = when (model.target) {
-            is ILifeline -> {
-                ClassConverter.formatName(model.target.name.ifBlank { (model.target as ILifeline).base.name })
-            }
-            else -> {
-                ""
-            }
+        val trg = when (val target = model.target) {
+                    is ILifeline -> getLifelineName(target)
+                    else -> ""
+        }
+        if (src == null || trg == null) {
+            // 接続先を取得できないメッセージは作成せずに処理済みとする
+            linkIndex++
+            return
         }
 
+        val convertColor = if (color.isNullOrEmpty()) ""
+                           else "[$color]"
+
         when {
-            model.isAsynchronous -> {
-                if (color.isNullOrEmpty()) {
-                    sb.append("$src ->> $trg")
-                } else {
-                    sb.append("$src -[$color]>> $trg")
-                }
-            }
-            model.isReturnMessage -> {
-                if (color.isNullOrEmpty()) {
-                    sb.append("$trg <-- $src")
-                } else {
-                    sb.append("$src <-[$color]- $trg")
-                }
-            }
+            model.isAsynchronous -> sb.append("$src -$convertColor>> $trg")
+            model.isReturnMessage -> sb.append("$src <-$convertColor- $trg")
             model.isCreateMessage -> {
                 sb.appendLine("create $trg")
-                if (color.isNullOrEmpty()) {
-                    sb.append("$src -> $trg")
-                } else {
-                    sb.append("$src -[$color]> $trg")
-                }
+                sb.append("$src -$convertColor> $trg")
             }
-            model.isDestroyMessage -> {
-                if (color.isNullOrEmpty()) {
-                    sb.append("$src -> $trg !!")
-                } else {
-                    sb.append("$src -[$color]> $trg !!")
-                }
-            }
-            model.isSynchronous -> {
-                if (color.isNullOrEmpty()) {
-                    sb.append("$src -> $trg")
-                } else {
-                    sb.append("$src -[$color]> $trg")
-                }
-            }
+            model.isDestroyMessage -> sb.append("$src -$convertColor> $trg !!")
+            model.isSynchronous -> sb.append("$src -$convertColor> $trg")
         }
         if (model.name.isNotBlank()) {
             sb.appendLine(":" + model.name)
@@ -249,7 +235,6 @@ object ToPlantSequenceDiagramConverter {
             sb.appendLine()
         }
         linkIndex++
-        return sb
     }
 
     private class SequenceCompare : Comparator<IPresentation> {
