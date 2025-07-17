@@ -76,7 +76,7 @@ object AssociationConverter {
 
         if (!assocName.isNullOrEmpty()) {
             sb.append(" : ")
-            sb.append(assocName.toString())
+            sb.append(assocName)
 
             // 関連名の方向矢印を追加
             val directionArrow = DirectionConverter.getAssociationDirectionArrow(model)

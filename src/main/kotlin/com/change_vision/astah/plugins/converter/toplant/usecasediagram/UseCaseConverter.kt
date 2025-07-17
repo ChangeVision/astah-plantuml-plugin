@@ -21,12 +21,10 @@ object UseCaseConverter : IClassConverter {
 
         sb.append(ClassConverter.formatName(clazz))
 
-        var stereotypes : List<String> = listOf()
-
-        if(clazz is IUseCase){
-            stereotypes =  filterStereotypes(clazz,listOf(STEREOTYPE_BUSINESS))
-        }else if(firstStereotype == "actor"){
-            stereotypes =  filterStereotypesForClass(clazz,listOf(STEREOTYPE_BUSINESS))
+        val stereotypes: List<String> = when {
+            clazz is IUseCase -> filterStereotypes(clazz, listOf(STEREOTYPE_BUSINESS))
+            firstStereotype == "actor" -> filterStereotypesForClass(clazz, listOf(STEREOTYPE_BUSINESS))
+            else -> listOf()
         }
 
         sb.append(convertStereotype(stereotypes))
