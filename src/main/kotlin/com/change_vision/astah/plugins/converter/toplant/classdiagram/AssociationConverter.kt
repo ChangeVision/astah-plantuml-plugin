@@ -2,7 +2,8 @@ package com.change_vision.astah.plugins.converter.toplant.classdiagram
 
 import com.change_vision.jude.api.inf.model.IAssociation
 import com.change_vision.jude.api.inf.model.IAttribute
-import com.change_vision.jude.api.inf.model.IMultiplicityRange
+import com.change_vision.jude.api.inf.model.IClass
+import kotlin.collections.contains
 
 /**
  * クラス図の関連を変換するクラス
@@ -29,9 +30,14 @@ object AssociationConverter {
      * @param model 関連
      * @param sb 出力用のStringBuilder
      */
-    fun convert(model: IAssociation, sb: StringBuilder) {
+    fun convert(model: IAssociation, sb: StringBuilder, excludeTypes : Set<String> = setOf()) {
         val end1 = model.memberEnds[0]
         val end2 = model.memberEnds[1]
+
+        if(isInValidAssociation(end1.type, end2.type, excludeTypes)) {
+            return
+        }
+
         val assocName = model.name
 
         debug("関連の変換: ${end1.type.name} -- ${end2.type.name}, 関連名=${assocName}")
@@ -101,4 +107,9 @@ object AssociationConverter {
                 else -> ""
             }
         }
+
+    fun isInValidAssociation(end1 : IClass, end2 : IClass, excludeModels : Set<String>) : Boolean {
+        return end1.stereotypes?.firstOrNull() in excludeModels ||
+                end2.stereotypes?.firstOrNull() in excludeModels
+    }
 }

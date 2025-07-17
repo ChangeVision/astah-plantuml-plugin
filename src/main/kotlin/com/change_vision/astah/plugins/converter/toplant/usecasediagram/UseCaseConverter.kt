@@ -6,7 +6,7 @@ import com.change_vision.jude.api.inf.model.IClass
 import com.change_vision.jude.api.inf.model.IUseCase
 
 object UseCaseConverter : IClassConverter {
-    private val STEREOTYPE_BUSINESS = "business"
+    private const val STEREOTYPE_BUSINESS = "business"
 
     /**
      * クラスをPlantUML形式に変換する
@@ -14,13 +14,18 @@ object UseCaseConverter : IClassConverter {
      * @param sb 出力用のStringBuilder
      */
     override fun convert(clazz: IClass, sb: StringBuilder) {
+        val firstStereotype = clazz.stereotypes?.firstOrNull() ?: ""
+        if (firstStereotype in listOf("entity", "boundary", "control")) {
+            return
+        }
+
         sb.append(ClassConverter.formatName(clazz))
 
         var stereotypes : List<String> = listOf()
 
         if(clazz is IUseCase){
             stereotypes =  filterStereotypes(clazz,listOf(STEREOTYPE_BUSINESS))
-        }else if(clazz.hasStereotype("actor")){
+        }else if(firstStereotype == "actor"){
             stereotypes =  filterStereotypesForClass(clazz,listOf(STEREOTYPE_BUSINESS))
         }
 
