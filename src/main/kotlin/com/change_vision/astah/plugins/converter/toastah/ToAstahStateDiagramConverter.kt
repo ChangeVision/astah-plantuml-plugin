@@ -151,6 +151,10 @@ object ToAstahStateDiagramConverter {
             TransactionManager.endTransaction()
         } catch (e: BadTransactionException) {
             TransactionManager.abortTransaction()
+        } catch (e: Exception) {
+            if (TransactionManager.isInTransaction()) {
+                TransactionManager.abortTransaction()
+            }
         }
 
         astahDiagram?.let { api.viewManager.diagramViewManager.open(it) }

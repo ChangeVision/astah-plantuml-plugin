@@ -75,14 +75,14 @@ object ToAstahUseCaseDiagramConverter {
 
                         val rect = posMap.getOrDefault(leaf.name, DEFAULT_RECT)
                         val model = when (symbolStyle[0].name) {
-                                        "actor" -> modelEditor.createActor(project, leaf.name) // アクター
-                                        "business" -> { // ビジネスアクター
-                                            val actor = modelEditor.createActor(project, leaf.name)
-                                            actor.addStereotype("business")
-                                            actor
-                                        }
-                                        else -> null
-                                    }
+                            "actor" -> modelEditor.createActor(project, leaf.name) // アクター
+                            "business" -> { // ビジネスアクター
+                                val actor = modelEditor.createActor(project, leaf.name)
+                                actor.addStereotype("business")
+                                actor
+                            }
+                            else -> null
+                        }
                         val actorPresentation = diagramEditor.createNodePresentation(model, Point2D.Float(rect.x, rect.y))
                         Pair(leaf.name, actorPresentation)
                     }
@@ -175,6 +175,10 @@ object ToAstahUseCaseDiagramConverter {
             TransactionManager.endTransaction()
         } catch (e: BadTransactionException) {
             TransactionManager.abortTransaction()
+        } catch (e: Exception) {
+            if (TransactionManager.isInTransaction()) {
+                TransactionManager.abortTransaction()
+            }
         }
 
         astahDiagram?.let { api.viewManager.diagramViewManager.open(it) }
