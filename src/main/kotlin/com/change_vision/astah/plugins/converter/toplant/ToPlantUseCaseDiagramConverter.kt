@@ -3,11 +3,15 @@ package com.change_vision.astah.plugins.converter.toplant
 import com.change_vision.astah.plugins.converter.toplant.classdiagram.AssociationConverter
 import com.change_vision.astah.plugins.converter.toplant.classdiagram.ClassDiagramNoteConverter
 import com.change_vision.astah.plugins.converter.toplant.classdiagram.RelationshipConverter
+import com.change_vision.astah.plugins.converter.toplant.usecasediagram.ExtendConverter
+import com.change_vision.astah.plugins.converter.toplant.usecasediagram.IncludeConverter
 import com.change_vision.astah.plugins.converter.toplant.usecasediagram.UseCaseConverter
 import com.change_vision.jude.api.inf.model.IAssociation
 import com.change_vision.jude.api.inf.model.IClass
 import com.change_vision.jude.api.inf.model.IDependency
+import com.change_vision.jude.api.inf.model.IExtend
 import com.change_vision.jude.api.inf.model.IGeneralization
+import com.change_vision.jude.api.inf.model.IInclude
 import com.change_vision.jude.api.inf.model.IRealization
 import com.change_vision.jude.api.inf.model.IUseCaseDiagram
 import com.change_vision.jude.api.inf.presentation.ILinkPresentation
@@ -15,6 +19,7 @@ import com.change_vision.jude.api.inf.presentation.INodePresentation
 
 object ToPlantUseCaseDiagramConverter {
     private const val DEBUG = false
+    private val EXCLUDE_TYPES = setOf("entity", "boundary", "control")
 
     /**
      * デバッグログ出力
@@ -51,10 +56,12 @@ object ToPlantUseCaseDiagramConverter {
                 is ILinkPresentation -> {
                     allLinks.add(presentation)
                     when (val model = presentation.model) {
-                        is IAssociation    -> AssociationConverter.convert(model, sb)
-                        is IGeneralization -> RelationshipConverter.convertGeneralization(model, sb)
-                        is IRealization    -> RelationshipConverter.convertRealization(model, sb)
-                        is IDependency     -> RelationshipConverter.convertDependency(model, sb)
+                        is IAssociation    -> AssociationConverter.convert(model, sb, EXCLUDE_TYPES)
+                        is IGeneralization -> RelationshipConverter.convertGeneralization(model, sb, EXCLUDE_TYPES)
+                        is IRealization    -> RelationshipConverter.convertRealization(model, sb, EXCLUDE_TYPES)
+                        is IDependency     -> RelationshipConverter.convertDependency(model, sb, EXCLUDE_TYPES)
+                        is IInclude -> IncludeConverter.convert(model, sb)
+                        is IExtend -> ExtendConverter.convert(model, sb)
                     }
                 }
             }
