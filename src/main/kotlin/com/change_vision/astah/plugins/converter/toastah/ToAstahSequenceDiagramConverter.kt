@@ -5,13 +5,13 @@ import com.change_vision.astah.plugins.converter.toplant.createOrGetDiagram
 import com.change_vision.jude.api.inf.AstahAPI
 import com.change_vision.jude.api.inf.editor.TransactionManager
 import com.change_vision.jude.api.inf.model.IClass
-import com.change_vision.jude.api.inf.model.ICombinedFragment
+//import com.change_vision.jude.api.inf.model.ICombinedFragment
 import com.change_vision.jude.api.inf.model.IDiagram
 import com.change_vision.jude.api.inf.model.ILifeline
 import com.change_vision.jude.api.inf.model.IMessage
 import com.change_vision.jude.api.inf.presentation.ILinkPresentation
 import com.change_vision.jude.api.inf.presentation.INodePresentation
-import com.change_vision.jude.api.inf.presentation.PresentationPropertyUtil
+//import com.change_vision.jude.api.inf.presentation.PresentationPropertyUtil
 import net.sourceforge.plantuml.sequencediagram.AbstractMessage
 import net.sourceforge.plantuml.sequencediagram.Event
 import net.sourceforge.plantuml.sequencediagram.GroupingStart
@@ -100,17 +100,18 @@ object ToAstahSequenceDiagramConverter {
                             val rect =
                                 getCombinedFragmentRectangle(sequenceDiagram, eventIndex, groupingStart, events, participantMap)
                             val point2D = Point2D.Double(rect.x, rect.y)
-                            val fragmentPresentation =
-                                diagramEditor.createCombinedFragment(comment, title, point2D, rect.width, rect.height)
 
-                            if (elseDeque.isEmpty()) {
-                                return@forEachIndexed
-                            }
-                            val model = fragmentPresentation.model
-                            if (model is ICombinedFragment) {
-                                // 2個目以降のオペランドの高さを設定していく
-                                convertOperand(model, elseDeque, fragmentPresentation, groupingStart, events)
-                            }
+                            // TODO オペランドの高さを変更すると複合フラグメントが不正モデルとなるため、一旦オペランドの対応はしない
+//                            val fragmentPresentation =
+                                diagramEditor.createCombinedFragment(comment, title, point2D, rect.width, rect.height)
+//                            if (elseDeque.isEmpty()) {
+//                                return@forEachIndexed
+//                            }
+//                            val model = fragmentPresentation.model
+//                            if (model is ICombinedFragment) {
+//                                // 2個目以降のオペランドの高さを設定していく
+//                                convertOperand(model, elseDeque, fragmentPresentation, groupingStart, events)
+//                            }
                         }
                         ELSE -> {
                             elseDeque.add(event)
@@ -124,59 +125,60 @@ object ToAstahSequenceDiagramConverter {
         }
     }
 
-    private fun convertOperand(model: ICombinedFragment, elseDeque: ArrayDeque<GroupingLeaf>, fragmentPresentation: INodePresentation, groupingStart: GroupingStart, events: List<Event>) {
-        elseDeque.forEach { groupingElse ->
-            if (groupingElse.groupingStart != groupingStart) {
-                return@forEach
-            }
-            val elseTitle = groupingElse.title
-            var elseComment = groupingElse.comment
-            if (elseComment == null) {
-                elseComment = ""
-            }
-            model.addInteractionOperand(elseTitle, elseComment)
-        }
-        var operandPropertyIndex = 1
-        val processedElseDeque = ArrayDeque<GroupingLeaf>()
-        elseDeque.forEachIndexed { elseIndex, groupingElse ->
-            if (groupingElse.groupingStart != groupingStart) {
-                return@forEachIndexed
-            }
-            if (elseIndex == 0) {
-                // オペランドが追加された時点で GroupingStart で始まる1個目のオペランドの高さを設定する
-                adjustOperandHeight(events, groupingStart, fragmentPresentation, events.indexOf(groupingStart) + 1, operandPropertyIndex)
-                operandPropertyIndex++
-            }
-            adjustOperandHeight(events, groupingStart, fragmentPresentation, events.indexOf(groupingElse) + 1, operandPropertyIndex)
-            operandPropertyIndex++
-            processedElseDeque.add(groupingElse)
-        }
-        // elseDeque から処理が終わったものを削除
-        processedElseDeque.forEach{ processedItem ->
-            elseDeque.remove(processedItem)
-        }
-    }
-
-    private fun adjustOperandHeight(events: List<Event>, groupingStart: GroupingStart, fragmentPresentation: INodePresentation, messagePosition: Int, operandPropertyIndex: Int) {
-        val properties = fragmentPresentation.properties
-        var operandMessageCount = 0
-        var messageIndex = messagePosition
-
-        // オペランド内のメッセージをカウントして、メッセージ数に応じたオペランドの高さを計算して設定する
-        while (!(events[messageIndex] is GroupingLeaf
-                    && (events[messageIndex] as GroupingLeaf).groupingStart == groupingStart)
-        ) {
-            if (events[messageIndex] is Message || events[messageIndex] is MessageExo) {
-                operandMessageCount++
-            }
-            messageIndex++
-        }
-        val operandKey = PresentationPropertyUtil.createOperandLengthKey(operandPropertyIndex)
-        if (properties.keys.contains(operandKey)) {
-            val value = (Y_SPAN * operandMessageCount).toString()
-            fragmentPresentation.setProperty(operandKey, value)
-        }
-    }
+    // TODO オペランドの高さを変更すると複合フラグメントが不正モデルとなるため、一旦オペランドの対応はしない
+//    private fun convertOperand(model: ICombinedFragment, elseDeque: ArrayDeque<GroupingLeaf>, fragmentPresentation: INodePresentation, groupingStart: GroupingStart, events: List<Event>) {
+//        elseDeque.forEach { groupingElse ->
+//            if (groupingElse.groupingStart != groupingStart) {
+//                return@forEach
+//            }
+//            val elseTitle = groupingElse.title
+//            var elseComment = groupingElse.comment
+//            if (elseComment == null) {
+//                elseComment = ""
+//            }
+//            model.addInteractionOperand(elseTitle, elseComment)
+//        }
+//        var operandPropertyIndex = 1
+//        val processedElseDeque = ArrayDeque<GroupingLeaf>()
+//        elseDeque.forEachIndexed { elseIndex, groupingElse ->
+//            if (groupingElse.groupingStart != groupingStart) {
+//                return@forEachIndexed
+//            }
+//            if (elseIndex == 0) {
+//                // オペランドが追加された時点で GroupingStart で始まる1個目のオペランドの高さを設定する
+//                adjustOperandHeight(events, groupingStart, fragmentPresentation, events.indexOf(groupingStart) + 1, operandPropertyIndex)
+//                operandPropertyIndex++
+//            }
+//            adjustOperandHeight(events, groupingStart, fragmentPresentation, events.indexOf(groupingElse) + 1, operandPropertyIndex)
+//            operandPropertyIndex++
+//            processedElseDeque.add(groupingElse)
+//        }
+//        // elseDeque から処理が終わったものを削除
+//        processedElseDeque.forEach{ processedItem ->
+//            elseDeque.remove(processedItem)
+//        }
+//    }
+//
+//    private fun adjustOperandHeight(events: List<Event>, groupingStart: GroupingStart, fragmentPresentation: INodePresentation, messagePosition: Int, operandPropertyIndex: Int) {
+//        val properties = fragmentPresentation.properties
+//        var operandMessageCount = 0
+//        var messageIndex = messagePosition
+//
+//        // オペランド内のメッセージをカウントして、メッセージ数に応じたオペランドの高さを計算して設定する
+//        while (!(events[messageIndex] is GroupingLeaf
+//                    && (events[messageIndex] as GroupingLeaf).groupingStart == groupingStart)
+//        ) {
+//            if (events[messageIndex] is Message || events[messageIndex] is MessageExo) {
+//                operandMessageCount++
+//            }
+//            messageIndex++
+//        }
+//        val operandKey = PresentationPropertyUtil.createOperandLengthKey(operandPropertyIndex)
+//        if (properties.keys.contains(operandKey)) {
+//            val value = (Y_SPAN * operandMessageCount).toString()
+//            fragmentPresentation.setProperty(operandKey, value)
+//        }
+//    }
 
     private fun getCombinedFragmentPositionX(lifelines: MutableList<INodePresentation>): Double {
         var x = 0.0
