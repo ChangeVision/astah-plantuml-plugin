@@ -7,7 +7,7 @@
         <plugin.install>true</plugin.install>
         <astah.version>9.0.0</astah.version>
         <astah.depend.version>9.0.0</astah.depend.version>
-        <astah.edition>all</astah.edition>
+        <astah.edition>pro</astah.edition>
         <kotlin.version>1.9.25</kotlin.version>
         <serialization.version>1.1.0</serialization.version>
     </properties>
