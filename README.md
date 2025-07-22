@@ -63,23 +63,36 @@ After installing the plugin, the "PlantUML View" tab will appear with a PlantUML
 
 ## ✅ Supported diagrams and model elements
 
+- **Common**
+  - Notes(only some diagrams are supported)
+  - Styles(limited to some diagram element colors are supported)
 - **Class Diagram**
   - Class, Interface
+  - Stereotype
   - Attribute, Operation
   - Association, Inheritance, Dependency, Association label
+  - Multiplicity with labels
 - **Sequence Diagram**
   - Classifiers: participant, actor, boundary, control, entity  
     *(database, collections, and queue are displayed as participant)*
-  - Messages: synchronous, asynchronous, return, and labels
+  - Messages: synchronous, asynchronous, return, Create, Destroy
+  - Message labels
   - Load class from classifier
+  - Grouping: alt/else, opt, loop, par, break, critical, group
 - **Statemachine Diagram**
   - Initial state, Final state, State
+  - Trigger, Guard
+  - Nested states
+  - Fork, Join, Decision, Merge
   - Transition
 - **Activity Diagram (legacy)**
   - Initial node, Final node, Action
   - Control flow
   - Join Node, Fork Node
   - Decision Node
+- **Usecase Diagram**
+  - Usecase, Actor
+  - Association, Extend, Include
 
 ---
 
@@ -88,23 +101,17 @@ After installing the plugin, the "PlantUML View" tab will appear with a PlantUML
 These features are currently not supported but may be added in the future:
 
 - **Common**
-    - Notes
-    - Styles
+    - Notes(Sequence Diagram, State Machine Diagram)
+    - Styles(without color)
 - **Class Diagram**
     - Package, Namespace
-    - Stereotype
     - Entity
     - Nested Class
-    - Multiplicity with labels
 - **Sequence Diagram**
     - Message order (when exporting from Astah)
-    - Grouping: alt/else, opt, loop, par, break, critical, group
     - Activation bars
 - **Statemachine Diagram**
-    - Entry/Exit/Do actions, Trigger, Guard, Action
-    - Nested states
-    - Fork, Join, Decision, Merge
-    - Unstable order (when exporting from Astah)
+  - Entry/Exit/Do actions, Action
 - **Activity Diagram**
     - New syntax
     - Object node
