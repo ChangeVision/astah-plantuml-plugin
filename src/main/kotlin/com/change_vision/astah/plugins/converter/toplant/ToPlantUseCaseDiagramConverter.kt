@@ -1,10 +1,10 @@
 package com.change_vision.astah.plugins.converter.toplant
 
-import com.change_vision.astah.plugins.converter.toplant.classdiagram.AssociationConverter
 import com.change_vision.astah.plugins.converter.toplant.classdiagram.ClassDiagramNoteConverter
-import com.change_vision.astah.plugins.converter.toplant.classdiagram.RelationshipConverter
+import com.change_vision.astah.plugins.converter.toplant.usecasediagram.AssociationConverter
 import com.change_vision.astah.plugins.converter.toplant.usecasediagram.ExtendConverter
 import com.change_vision.astah.plugins.converter.toplant.usecasediagram.IncludeConverter
+import com.change_vision.astah.plugins.converter.toplant.usecasediagram.RelationshipConverter
 import com.change_vision.astah.plugins.converter.toplant.usecasediagram.UseCaseConverter
 import com.change_vision.jude.api.inf.model.IAssociation
 import com.change_vision.jude.api.inf.model.IClass

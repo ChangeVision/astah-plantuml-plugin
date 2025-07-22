@@ -4,7 +4,6 @@ import com.change_vision.astah.plugins.converter.pattern.ClassPattern
 import com.change_vision.jude.api.inf.model.IClass
 import com.change_vision.jude.api.inf.model.INamedElement
 import com.change_vision.jude.api.inf.model.IParameter
-import com.change_vision.jude.api.inf.model.IUseCase
 import com.change_vision.jude.api.inf.presentation.PresentationPropertyConstants
 
 interface IClassConverter {
@@ -102,18 +101,7 @@ interface IClassConverter {
      * @return フォーマットされた名前
      */
     fun formatName(clazz: IClass): String {
-        //前処理、後処理しながらformatNameに渡す。
-        if(clazz !is IUseCase && !clazz.hasStereotype("actor")) return formatName(clazz.name)
-        var result = when{
-            clazz is IUseCase -> "(${formatName(clazz.name)})"
-
-            clazz.hasStereotype("actor") -> ":${formatName(clazz.name)}:"
-            else -> formatName(clazz.name)
-        }
-
-        if(clazz.hasStereotype("business")) result += "/"
-
-        return result
+        return formatName(clazz.name)
     }
 
     /**
