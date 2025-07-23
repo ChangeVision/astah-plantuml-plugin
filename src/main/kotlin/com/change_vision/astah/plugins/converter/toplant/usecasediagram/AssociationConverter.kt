@@ -10,4 +10,13 @@ object AssociationConverter : IAssociationConverter {
     override fun formatName(clazz: IClass): String {
         return UseCaseConverter.formatName(clazz)
     }
+
+    override fun getNonNavigableHat(): String {
+        return ""
+    }
+
+    override fun isValidAssociation(end1: IClass, end2: IClass): Boolean {
+        return end1.stereotypes?.firstOrNull() !in UseCaseConverter.excludeStereotypes &&
+                end2.stereotypes?.firstOrNull() !in UseCaseConverter.excludeStereotypes
+    }
 }

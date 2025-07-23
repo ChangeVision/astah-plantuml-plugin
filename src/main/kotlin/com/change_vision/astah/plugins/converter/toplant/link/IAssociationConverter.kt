@@ -87,10 +87,14 @@ interface IAssociationConverter {
                     Direction.Left -> "<"
                     Direction.Right -> ">"
                 }
-                "Non_Navigabl" -> "x"
+                "Non_Navigable" -> getNonNavigableHat()
                 else -> ""
             }
         }
+
+    fun getNonNavigableHat() : String{
+        return "x"
+    }
 
     fun isInValidAssociation(end1 : IClass, end2 : IClass, excludeModels : Set<String>) : Boolean {
         return end1.stereotypes?.firstOrNull() in excludeModels ||
