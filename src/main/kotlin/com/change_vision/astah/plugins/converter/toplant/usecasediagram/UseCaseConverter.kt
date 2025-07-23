@@ -5,6 +5,7 @@ import com.change_vision.jude.api.inf.model.IClass
 import com.change_vision.jude.api.inf.model.IUseCase
 
 object UseCaseConverter : IClassConverter {
+    override val customIgnoredStereotypes : List<String> get() = listOf("actor")
     private const val STEREOTYPE_BUSINESS = "business"
 
     /**
