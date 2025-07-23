@@ -134,7 +134,7 @@ This plugin uses the following open-source libraries and is distributed under th
 This plugin internally uses temporary files when displaying and converting diagrams written in PlantUML within Astah.  
 However, it does not provide any functionality for users to directly save or export diagrams as image or text files.
 
-Additionally, according to the [PlantUML FAQ](https://plantuml.com/faq), the content of diagrams generated using PlantUML (whether textual or visual) is considered **the user's own work** and may be freely used without any license restrictions.
+Additionally, according to the [PlantUML FAQ](https://plantuml.com/faq), the content of diagrams generated using PlantUML (whether textual or visual) is considered **the user's own work**, and is **not subject to GPL or other license restrictions**, allowing free use.
 
 ---
 
