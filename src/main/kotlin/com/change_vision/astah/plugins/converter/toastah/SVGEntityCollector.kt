@@ -70,15 +70,15 @@ object SVGEntityCollector {
                 tempSvgFile = createTempSvgFile(index, reader)
                 val leafs = diagram.leafs()
                 val useCaseNames = leafs.filter {
-                    it.leafType == LeafType.USECASE || it.leafType == LeafType.USECASE_BUSINESS
-                }.map{
-                    it.display.get(0).toString()
-                }
-                val actorNames = leafs.filter { it.leafType == LeafType.DESCRIPTION
-                && it.uSymbol.sNames.isNotEmpty()
-                && (it.uSymbol.sNames[0].name == "actor"
-                   || it.uSymbol.sNames[0].name == "business")}
-                .map { it.name }
+                    (it.leafType == LeafType.USECASE || it.leafType == LeafType.USECASE_BUSINESS)
+                    && it.display.size() > 0
+                }.map{ it.display.first().toString() }
+                val actorNames = leafs.filter {
+                    it.leafType == LeafType.DESCRIPTION
+                    && it.uSymbol.sNames.isNotEmpty()
+                    && (it.uSymbol.sNames[0].name == "actor" || it.uSymbol.sNames[0].name == "business")
+                    && it.display.size() > 0
+                }.map { it.display.first().toString() }
                 collectUseCaseBoundary(tempSvgFile, useCaseNames, actorNames)
             }
             else -> emptyMap()

@@ -9,6 +9,7 @@ import com.change_vision.jude.api.inf.model.IAssociation
 import com.change_vision.jude.api.inf.model.IClass
 import com.change_vision.jude.api.inf.model.IUseCase
 import com.change_vision.jude.api.inf.model.IUseCaseDiagram
+import com.change_vision.jude.api.inf.model.INamedElement
 import net.sourceforge.plantuml.SourceStringReader
 import net.sourceforge.plantuml.abel.LeafType.USECASE
 import net.sourceforge.plantuml.abel.LeafType.USECASE_BUSINESS
@@ -47,46 +48,48 @@ object ToAstahUseCaseDiagramConverter {
         try {
             val project = projectAccessor.project
             val presentationMap = diagram.leafs().mapNotNull { leaf ->
-                when (leaf.leafType) {
+                val posKey = if (leaf.display.size() > 0) leaf.display.first()
+                             else ""
+                val rect = posMap.getOrDefault(posKey, DEFAULT_RECT)
+
+                val model: INamedElement? = when (leaf.leafType) {
+                    // ユースケース
                     USECASE -> {
-                        // ユースケース
-                        val display = leaf.display.get(0)
-                        val rect = posMap.getOrDefault(display, DEFAULT_RECT)
-                        val displayText = leaf.display.joinToString(separator = "\n") {it}
-                        val model = modelEditor.createUseCase(project, displayText)
-                        val useCasePresentation = diagramEditor.createNodePresentation(model, Point2D.Float(rect.x, rect.y))
-                        Pair(leaf.name, useCasePresentation)
+                        val modelName = leaf.display.joinToString(separator = "\n") { it }
+                        modelEditor.createUseCase(project, modelName)
                     }
                     USECASE_BUSINESS -> {
                         // ビジネスユースケース
-                        val display = leaf.display.get(0)
-                        val rect = posMap.getOrDefault(display, DEFAULT_RECT)
-                        val displayText = leaf.display.joinToString(separator = "\n") {it}
-                        val model = modelEditor.createUseCase(project, displayText)
+                        val modelName = leaf.display.joinToString(separator = "\n") { it }
+                        val model = modelEditor.createUseCase(project, modelName)
                         model.addStereotype("business")
-                        val useCasePresentation = diagramEditor.createNodePresentation(model, Point2D.Float(rect.x, rect.y))
-                        Pair(leaf.name, useCasePresentation)
+                        model
                     }
                     DESCRIPTION -> {
+                        val modelName = leaf.display.joinToString(separator = " ") { it }
                         val symbolStyle = leaf.uSymbol.sNames
-                        if (symbolStyle.isNullOrEmpty()) {
-                            Pair(leaf.name, null)
-                        }
-
-                        val rect = posMap.getOrDefault(leaf.name, DEFAULT_RECT)
-                        val model = when (symbolStyle[0].name) {
-                            "actor" -> modelEditor.createActor(project, leaf.name) // アクター
-                            "business" -> { // ビジネスアクター
-                                val actor = modelEditor.createActor(project, leaf.name)
-                                actor.addStereotype("business")
-                                actor
+                        if (!symbolStyle.isNullOrEmpty()) {
+                            when (leaf.uSymbol.sNames[0].name) {
+                                "actor" -> modelEditor.createActor(project, modelName) as INamedElement // アクター
+                                "business" -> { // ビジネスアクター
+                                    val actor = modelEditor.createActor(project, modelName)
+                                    actor.addStereotype("business")
+                                    actor
+                                }
+                                else -> null
                             }
-                            else -> null
+                        } else {
+                            null
                         }
-                        val actorPresentation = diagramEditor.createNodePresentation(model, Point2D.Float(rect.x, rect.y))
-                        Pair(leaf.name, actorPresentation)
                     }
                     else -> null
+                }
+
+                if (model == null) {
+                    Pair(leaf.name, null)
+                } else {
+                    val presentation = diagramEditor.createNodePresentation(model, Point2D.Float(rect.x, rect.y))
+                    Pair(leaf.name, presentation)
                 }
             }.toMap()
 
@@ -97,6 +100,9 @@ object ToAstahUseCaseDiagramConverter {
             diagram.links.filter { !it.type.style.isInvisible }.forEach { link ->
                 val entity1 = presentationMap[link.entity1.name]
                 val entity2 = presentationMap[link.entity2.name]
+                if (entity1 == null || entity2 == null) {
+                    return@forEach
+                }
 
                 val code = sources?.getOrNull(link.location.position)?.toString().orEmpty()
                 val matchResult = regex.find(code,0)
