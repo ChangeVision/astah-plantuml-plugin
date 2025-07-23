@@ -7,9 +7,9 @@ import com.change_vision.jude.api.inf.model.IParameter
 import com.change_vision.jude.api.inf.presentation.PresentationPropertyConstants
 
 interface IClassConverter {
-    private val defaultIgnoredStereotypes : List<String> get() = listOf("interface","enumeration")
+    private val defaultHiddenStereotypes : List<String> get() = listOf("interface","enumeration")
     // 追加で変換から除外したいステレオタイプがある場合、継承先でオーバーライドしてください。
-    val customIgnoredStereotypes : List<String> get() = listOf()
+    val customHiddenStereotypes : List<String> get() = listOf()
 
     /**
      * クラスをPlantUML形式に変換する
@@ -33,8 +33,12 @@ interface IClassConverter {
     // IClassの種類を設定するステレオタイプを除外する
     fun IClassConverter.filterStereotypesForClass(clazz : IClass , optionalBlackList : List<String> = emptyList()) : List<String>{
         return filterStereotypes(clazz.stereotypes
-            .filterIndexed { index, stereotype -> !(index == 0 && (stereotype in defaultIgnoredStereotypes + customIgnoredStereotypes)) } ,
+            .filterIndexed { index, stereotype -> !(index == 0 && (stereotype in defaultHiddenStereotypes + customHiddenStereotypes)) } ,
             optionalBlackList)
+    }
+
+    fun isValidClass(clazz : IClass) : Boolean{
+        return true
     }
 
     /**

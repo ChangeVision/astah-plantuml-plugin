@@ -5,7 +5,10 @@ import com.change_vision.jude.api.inf.model.IClass
 import com.change_vision.jude.api.inf.model.IUseCase
 
 object UseCaseConverter : IClassConverter {
-    override val customIgnoredStereotypes : List<String> get() = listOf("actor")
+    //toPlantの際、変換しないステレオタイプ
+    val excludeStereotypes = setOf("interface", "enumeration", "entity", "boundary", "control")
+    //変換はするが記載しないステレオタイプ
+    override val customHiddenStereotypes : List<String> get() = listOf("actor")
     private const val STEREOTYPE_BUSINESS = "business"
 
     /**
@@ -14,10 +17,11 @@ object UseCaseConverter : IClassConverter {
      * @param sb 出力用のStringBuilder
      */
     override fun convert(clazz: IClass, sb: StringBuilder) {
-        val firstStereotype = clazz.stereotypes?.firstOrNull() ?: ""
-        if (firstStereotype in listOf("entity", "boundary", "control")) {
+        if(!isValidClass(clazz)){
             return
         }
+
+        val firstStereotype = clazz.stereotypes?.firstOrNull() ?: ""
 
         sb.append(formatName(clazz))
 
@@ -30,6 +34,10 @@ object UseCaseConverter : IClassConverter {
         sb.append(convertStereotype(stereotypes))
 
         sb.appendLine()
+    }
+
+    override fun isValidClass(clazz: IClass): Boolean {
+        return clazz.stereotypes?.firstOrNull() !in excludeStereotypes
     }
 
     override fun formatName(clazz: IClass): String {

@@ -15,6 +15,10 @@ object ClassConverter : IClassConverter {
      * @param sb 出力用のStringBuilder
      */
     override fun convert(clazz: IClass, sb: StringBuilder) {
+        if(!isValidClass(clazz)){
+            return
+        }
+
         // 1) 型判定:enum / interface / abstract / class
         val type = when {
             clazz is IEnumeration -> "enum"

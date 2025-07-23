@@ -5,7 +5,6 @@ import com.change_vision.astah.plugins.converter.toplant.classdiagram.Multiplici
 import com.change_vision.jude.api.inf.model.IAssociation
 import com.change_vision.jude.api.inf.model.IAttribute
 import com.change_vision.jude.api.inf.model.IClass
-import kotlin.collections.contains
 
 interface IAssociationConverter {
     /**
@@ -18,11 +17,11 @@ interface IAssociationConverter {
      * @param model 関連
      * @param sb 出力用のStringBuilder
      */
-    fun convert(model: IAssociation, sb: StringBuilder, excludeTypes : Set<String> = setOf()) {
+    fun convert(model: IAssociation, sb: StringBuilder) {
         val end1 = model.memberEnds[0]
         val end2 = model.memberEnds[1]
 
-        if(isInValidAssociation(end1.type, end2.type, excludeTypes)) {
+        if(!isValidAssociation(end1.type, end2.type)) {
             return
         }
 
@@ -96,9 +95,8 @@ interface IAssociationConverter {
         return "x"
     }
 
-    fun isInValidAssociation(end1 : IClass, end2 : IClass, excludeModels : Set<String>) : Boolean {
-        return end1.stereotypes?.firstOrNull() in excludeModels ||
-                end2.stereotypes?.firstOrNull() in excludeModels
+    fun isValidAssociation(end1 : IClass, end2 : IClass) : Boolean{
+        return true
     }
 
     fun formatName(clazz : IClass) : String

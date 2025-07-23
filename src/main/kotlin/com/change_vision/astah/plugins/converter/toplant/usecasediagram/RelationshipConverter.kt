@@ -12,4 +12,9 @@ object RelationshipConverter : IRelationshipConverter {
     override fun formatName(clazz: IClass): String {
         return UseCaseConverter.formatName(clazz)
     }
+
+    override fun isValidRelationship(end1: INamedElement, end2: INamedElement): Boolean {
+        return end1.stereotypes?.firstOrNull() !in UseCaseConverter.excludeStereotypes &&
+                end2.stereotypes?.firstOrNull() !in UseCaseConverter.excludeStereotypes
+    }
 }

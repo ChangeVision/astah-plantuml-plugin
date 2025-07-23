@@ -5,7 +5,6 @@ import com.change_vision.jude.api.inf.model.IDependency
 import com.change_vision.jude.api.inf.model.IGeneralization
 import com.change_vision.jude.api.inf.model.INamedElement
 import com.change_vision.jude.api.inf.model.IRealization
-import kotlin.collections.contains
 
 interface IRelationshipConverter {
     /**
@@ -17,7 +16,8 @@ interface IRelationshipConverter {
     fun convertGeneralization(model: IGeneralization, sb: StringBuilder, excludeTypes : Set<String> = setOf()) {
         val from = model.subType
         val target = model.superType
-        if (shouldExclude(from, target, excludeTypes)) {
+
+        if(!isValidRelationship(from, target)){
             return
         }
 
@@ -40,7 +40,7 @@ interface IRelationshipConverter {
     fun convertRealization(model: IRealization, sb: StringBuilder, excludeTypes : Set<String> = setOf()) {
         val from = model.client
         val target = model.supplier
-        if (shouldExclude(from, target, excludeTypes)) {
+        if (!isValidRelationship(from, model.supplier)) {
             return
         }
 
@@ -63,7 +63,7 @@ interface IRelationshipConverter {
     fun convertDependency(model: IDependency, sb: StringBuilder, excludeTypes : Set<String> = setOf()) {
         val from = model.client
         val target = model.supplier
-        if (shouldExclude(from, model.supplier, excludeTypes)) {
+        if (!isValidRelationship(from, model.supplier)) {
             return
         }
 
@@ -77,9 +77,8 @@ interface IRelationshipConverter {
         sb.appendLine()
     }
 
-    private fun shouldExclude(from : INamedElement, target : INamedElement, excludeTypes : Set<String>) : Boolean {
-        return from.stereotypes?.firstOrNull() in excludeTypes ||
-                target.stereotypes?.firstOrNull() in excludeTypes
+    fun isValidRelationship(end1: INamedElement, end2: INamedElement): Boolean {
+        return true
     }
 
     fun formatName(element : INamedElement) : String
