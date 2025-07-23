@@ -17,7 +17,7 @@ object UseCaseConverter : IClassConverter {
      * @param sb 出力用のStringBuilder
      */
     override fun convert(clazz: IClass, sb: StringBuilder) {
-        if(!isValidClass(clazz)){
+        if (!isValidClass(clazz)) {
             return
         }
 
@@ -42,15 +42,18 @@ object UseCaseConverter : IClassConverter {
 
     override fun formatName(clazz: IClass): String {
         //前処理、後処理しながらformatNameに渡す。
-        if(clazz !is IUseCase && !clazz.hasStereotype("actor")) return formatName(clazz.name)
-        var result = when{
+        if (clazz !is IUseCase && !clazz.hasStereotype("actor")){
+            return formatName(clazz.name)
+        }
+
+        var result = when {
             clazz is IUseCase -> "(${formatName(clazz.name)})"
 
             clazz.hasStereotype("actor") -> ":${formatName(clazz.name)}:"
             else -> formatName(clazz.name)
         }
 
-        if(clazz.hasStereotype("business")) result += "/"
+        if (clazz.hasStereotype("business")) result += "/"
 
         return result
     }

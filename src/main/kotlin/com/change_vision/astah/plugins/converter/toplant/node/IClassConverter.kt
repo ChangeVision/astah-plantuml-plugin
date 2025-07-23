@@ -6,8 +6,9 @@ import com.change_vision.jude.api.inf.model.INamedElement
 import com.change_vision.jude.api.inf.model.IParameter
 import com.change_vision.jude.api.inf.presentation.PresentationPropertyConstants
 
+private val defaultHiddenStereotypes : List<String> get() = listOf("interface","enumeration")
+
 interface IClassConverter {
-    private val defaultHiddenStereotypes : List<String> get() = listOf("interface","enumeration")
     // 追加で変換から除外したいステレオタイプがある場合、継承先でオーバーライドしてください。
     val customHiddenStereotypes : List<String> get() = listOf()
 

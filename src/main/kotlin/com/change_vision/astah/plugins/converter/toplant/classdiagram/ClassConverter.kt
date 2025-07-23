@@ -15,7 +15,7 @@ object ClassConverter : IClassConverter {
      * @param sb 出力用のStringBuilder
      */
     override fun convert(clazz: IClass, sb: StringBuilder) {
-        if(!isValidClass(clazz)){
+        if (!isValidClass(clazz)) {
             return
         }
 

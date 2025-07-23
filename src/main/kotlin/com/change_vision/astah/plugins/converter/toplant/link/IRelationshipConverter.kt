@@ -17,7 +17,7 @@ interface IRelationshipConverter {
         val from = model.subType
         val target = model.superType
 
-        if(!isValidRelationship(from, target)){
+        if (!isValidRelationship(from, target)) {
             return
         }
 

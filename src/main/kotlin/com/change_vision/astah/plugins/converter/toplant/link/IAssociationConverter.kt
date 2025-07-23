@@ -6,12 +6,12 @@ import com.change_vision.jude.api.inf.model.IAssociation
 import com.change_vision.jude.api.inf.model.IAttribute
 import com.change_vision.jude.api.inf.model.IClass
 
-interface IAssociationConverter {
-    /**
-     * 方向を表す列挙型
-     */
-    private enum class Direction { Left, Right }
+/**
+ * 方向を表す列挙型
+ */
+private enum class Direction { Left, Right }
 
+interface IAssociationConverter {
     /**
      * 関連をPlantUML形式に変換する
      * @param model 関連
@@ -21,7 +21,7 @@ interface IAssociationConverter {
         val end1 = model.memberEnds[0]
         val end2 = model.memberEnds[1]
 
-        if(!isValidAssociation(end1.type, end2.type)) {
+        if (!isValidAssociation(end1.type, end2.type)) {
             return
         }
 
