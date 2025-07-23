@@ -45,6 +45,10 @@ object ToAstahSequenceDiagramConverter {
     private val diagramEditor = projectAccessor.diagramEditorFactory.sequenceDiagramEditor
     private var groupingOffset = 0.0
 
+    // astah で利用できる複合フラグメントのリスト
+    private val combinedFragmentTypes: List<String> = listOf("alt", "opt", "par", "loop",
+        "critical", "neg", "assert", "strict", "ignore", "consider", "seq", "ref", "break")
+
     fun convert(diagram: SequenceDiagram, index: Int) {
         // create diagram
         val sequenceDiagram = createOrGetDiagram(index, DiagramKind.SequenceDiagram)
@@ -96,6 +100,10 @@ object ToAstahSequenceDiagramConverter {
 
                             val comment = groupingStart.comment
                             val title = groupingStart.title
+
+                            if (title !in combinedFragmentTypes) {
+                                return@forEachIndexed
+                            }
 
                             val rect =
                                 getCombinedFragmentRectangle(sequenceDiagram, eventIndex, groupingStart, events, participantMap)
