@@ -104,15 +104,25 @@ astahからPlantUMLへの変換はすべて再生成され、マージは行い�
     - パーティション
     - astahからplantへ生成時の順序が不定
 
-## 📄 License
+## 📄 ライセンス
 
-本プラグインには、以下のオープンソースライブラリが含まれています：
+本プラグインは、以下のオープンソースライブラリを使用しており、**GPLv3 ライセンス**のもとで配布されています。
 
 - [PlantUML](https://plantuml.com/)（[GPLv3 ライセンス](https://www.gnu.org/licenses/gpl-3.0.html)）
 - [RSyntaxTextArea](https://github.com/bobbylight/RSyntaxTextArea)（[BSD ライセンス](https://github.com/bobbylight/RSyntaxTextArea/blob/master/LICENSE.txt)）
 
-このため、本プラグインは GPLv3 ライセンスを継承しています。
+---
 
-MIT ライセンスでの利用をご希望の場合は、PlantUML の [商用ライセンス](https://plantuml.com/purchase) を取得いただくか、別途ご相談ください。
+### プラグインの動作と生成物について
 
-> PlantUML のライセンスに関する詳細は、[https://plantuml.com/license](https://plantuml.com/license) をご参照ください。
+本プラグインでは、PlantUMLで記述された図をAstah上で表示・変換する際に、一時ファイルを内部的に使用します。  
+ただし、図の画像やテキストファイルをユーザーが直接保存・エクスポートする機能は提供していません。
+
+また、PlantUMLを用いて生成される図の内容（テキストや視覚的表現）は [PlantUML FAQ](https://plantuml.com/faq) に基づき、**ユーザーの所有物**とされ、ライセンスの制約なくご利用いただけます。
+
+---
+
+### PlantUMLのライセンス選択について
+
+GPLライセンス以外（MIT、LGPLなど）でPlantUMLをご利用されたい場合は、[PlantUML のライセンス案内](https://plantuml.com/license)をご参照ください。
+

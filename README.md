@@ -122,13 +122,23 @@ These features are currently not supported but may be added in the future:
 
 ## 📄 License
 
-This plugin includes the following open-source libraries:
+This plugin uses the following open-source libraries and is distributed under the **GPLv3 license**:
 
 - [PlantUML](https://plantuml.com/) ([GPLv3 License](https://www.gnu.org/licenses/gpl-3.0.html))
 - [RSyntaxTextArea](https://github.com/bobbylight/RSyntaxTextArea) ([BSD License](https://github.com/bobbylight/RSyntaxTextArea/blob/master/LICENSE.txt))
 
-Therefore, this plugin inherits the GPLv3 license.
+---
 
-If you would like to use this plugin under the MIT license, please consider obtaining a [PlantUML commercial license](https://plantuml.com/purchase), or contact us for more details.
+### About Plugin Behavior and Generated Content
 
-> For more on PlantUML's licensing, see [https://plantuml.com/license](https://plantuml.com/license)
+This plugin internally uses temporary files when displaying and converting diagrams written in PlantUML within Astah.  
+However, it does not provide any functionality for users to directly save or export diagrams as image or text files.
+
+Additionally, according to the [PlantUML FAQ](https://plantuml.com/faq), the content of diagrams generated using PlantUML (whether textual or visual) is considered **the user's own work** and may be freely used without any license restrictions.
+
+---
+
+### About PlantUML Licensing Options
+
+If you wish to use PlantUML under a license other than GPL (e.g., MIT, LGPL), please refer to the [PlantUML License Information](https://plantuml.com/license).
+
