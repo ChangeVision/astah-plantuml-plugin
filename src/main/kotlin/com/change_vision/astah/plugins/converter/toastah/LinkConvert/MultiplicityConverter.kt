@@ -175,7 +175,7 @@ object MultiplicityConverter {
             
             // 無制限 "*"
             if (MultiplicityPatterns.UNBOUNDED_PATTERN.matches(token)) {
-                val ranges = arrayOf(intArrayOf(0, IMultiplicityRange.UNLIMITED))
+                val ranges = arrayOf(intArrayOf(IMultiplicityRange.UNLIMITED))
                 
                 // 残りの文字列を構築
                 val remainingTokens = tokens.toMutableList()
