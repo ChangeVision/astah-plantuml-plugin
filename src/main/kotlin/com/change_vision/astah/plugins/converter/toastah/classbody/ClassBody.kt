@@ -1,17 +1,12 @@
 package com.change_vision.astah.plugins.converter.toastah.classbody
 
 import com.change_vision.astah.plugins.converter.pattern.ClassPattern
-import com.change_vision.jude.api.inf.AstahAPI
 import com.change_vision.jude.api.inf.model.IClass
 
 /**
  * クラス本体の変換を行うクラス
  */
 object ClassBody {
-
-    private val api = AstahAPI.getAstahAPI()
-    private val modelEditor = api.projectAccessor.modelEditorFactory.basicModelEditor
-
     /**
      * クラス本体を解析して属性と操作を生成する
      * @param aClass 対象のクラス

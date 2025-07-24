@@ -238,13 +238,4 @@ object MultiplicityConverter {
         
         return null
     }
-    
-    /**
-     * 多重度を抽出する（下位互換性のため維持）
-     * @param label ラベル
-     * @return 多重度の配列 [[下限,上限],[下限,上限]...]
-     */
-    private fun extractMultiplicity(label: String): Array<IntArray>? {
-        return extractMultiplicityWithRemainder(label)?.first
-    }
 }
