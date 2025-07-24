@@ -48,6 +48,6 @@ object ClassBody {
      * @return 中括弧を除去したテキスト
      */
     private fun removeCurlyBraces(line: String): String {
-        return ClassPattern.curlyBraceRegex.replace(line, "")
+        return ClassPattern.curlyBraceRegex.replace(line, "").trimStart()
     }
 }
