@@ -4,6 +4,8 @@ import com.change_vision.astah.plugins.converter.toplant.activitydiagram.Activit
 import com.change_vision.astah.plugins.converter.toplant.activitydiagram.syntax.LegacyActivityDiagramSyntax
 import com.change_vision.astah.plugins.converter.toplant.node.NodeIdAssigner
 import com.change_vision.astah.plugins.converter.toplant.node.NodeNameFormatter
+import com.change_vision.jude.api.inf.model.IInputPin
+import com.change_vision.jude.api.inf.model.IOutputPin
 import com.change_vision.jude.api.inf.presentation.ILinkPresentation
 import com.change_vision.jude.api.inf.presentation.INodePresentation
 
@@ -51,12 +53,24 @@ object ActivityConverter {
                 }
             }
 
-            val target = outgoing.target
+            var target = outgoing.target
             if (!DECISION_NODE(target)) {
+                if (target.model is IInputPin) {
+                    val targetPresentations = target.model.owner.presentations
+                    target = if (targetPresentations.isNullOrEmpty()) continue
+                             else targetPresentations.first() as INodePresentation
+                }
                 val source =
-                    if ((neededSourceLabel || firstOutgoing != outgoing) && !isDecisionNode)
-                        nodeLabelFormatter.format(presentation)
-                    else null
+                    if ((neededSourceLabel || firstOutgoing != outgoing) && !isDecisionNode) {
+                        if (presentation.model is IOutputPin) {
+                            val sourcePresentations = presentation.model.owner.presentations
+                            val sourcePresentation = if (sourcePresentations.isNullOrEmpty()) continue
+                                                     else sourcePresentations.first() as INodePresentation
+                            nodeLabelFormatter.format(sourcePresentation)
+                        } else {
+                            nodeLabelFormatter.format(presentation)
+                        }
+                    } else null
                 val targetLabel = nodeLabelFormatter.format(target)
                 val guard = getLinkLabel(outgoing).takeIf { it.isNotBlank() }
                 lines += LegacyActivityDiagramSyntax.flow(source = source, target = targetLabel, guard = guard)
