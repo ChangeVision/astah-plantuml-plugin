@@ -63,7 +63,7 @@ object RealizationCreator {
      * @return インターフェースの場合true
      */
     private fun isInterface(entity: Entity): Boolean {
-        return entity.leafType == LeafType.INTERFACE
+        return entity.leafType == LeafType.INTERFACE || entity.leafType == LeafType.CIRCLE
     }
 
     /**
