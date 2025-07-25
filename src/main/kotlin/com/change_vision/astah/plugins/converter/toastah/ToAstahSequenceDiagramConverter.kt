@@ -27,6 +27,7 @@ import net.sourceforge.plantuml.sequencediagram.MessageExoType.TO_LEFT
 import net.sourceforge.plantuml.sequencediagram.Participant
 import net.sourceforge.plantuml.sequencediagram.ParticipantType
 import net.sourceforge.plantuml.sequencediagram.SequenceDiagram
+import net.sourceforge.plantuml.skin.ArrowDecoration
 import java.awt.geom.Point2D
 import java.awt.geom.Rectangle2D
 
@@ -34,6 +35,8 @@ import java.awt.geom.Rectangle2D
 object ToAstahSequenceDiagramConverter {
     private const val X_SPAN = 20.0
     private const val Y_SPAN = 80.0
+    private const val FOUND_POINT_SPAN = 100.0
+    private const val LOST_POINT_SPAN = 100.0
     private const val INIT_Y = 50.0
     private const val LIFELINE_LENGTH_PROPERTY = 40.0
     private const val GROUP_OFFSET = 10.0
@@ -388,27 +391,75 @@ object ToAstahSequenceDiagramConverter {
                 prevMessage = messagePresentation
                 messageCount++
             } else if (event is MessageExo) {
-                // Frame と接続するメッセージ
+                // Frame と接続するメッセージまたは Found メッセージか Lost メッセージ
+
+                // Found メッセージか Lost メッセージか判定する
+                val isFound = event.arrowConfiguration.decoration1 == ArrowDecoration.CIRCLE
+                val isLost = event.arrowConfiguration.decoration2 == ArrowDecoration.CIRCLE
+
                 // シーケンス図の Frame の Presentation を取得する
                 val framePresentation = getFramePresentation(sequenceDiagram)
                 val label = getMessageLabel(event)
 
-                val lifeline1 = participantMap[event.participant1]
-                val lifeline2 = participantMap[event.participant2]
+                val lifeline = participantMap[event.participant]
 
-                if (lifeline2?.model is ILifeline) {
-                    convertOperation(label, lifeline2.model as ILifeline)
-                }
+                convertOperation(label, lifeline?.model as ILifeline)
 
                 val arrowConfig = event.arrowConfiguration
                 val isReturn = arrowConfig.isDotted && prevMessage != null && !(prevMessage!!.model as IMessage).isAsynchronous
-                val messagePresentation =
-                    when (event.type) {
-                        FROM_RIGHT -> createMessagePresentation(event, label, prevMessage, framePresentation, lifeline2, locY, isReturn)
-                        FROM_LEFT -> createMessagePresentation(event, label, prevMessage, framePresentation, lifeline2, locY, isReturn)
-                        TO_RIGHT -> createMessagePresentation(event, label, prevMessage, lifeline1, framePresentation, locY, isReturn)
-                        TO_LEFT -> createMessagePresentation(event, label, prevMessage, lifeline1, framePresentation, locY, isReturn)
-                        else -> null
+                val messagePresentation = if (isFound && isLost) {
+                        // どちらの条件にも当てはまる場合は type で判断する
+                        val x = when (event.type) {
+                            FROM_RIGHT -> lifeline.location.x + lifeline.width + FOUND_POINT_SPAN
+                            FROM_LEFT -> lifeline.location.x - FOUND_POINT_SPAN
+                            TO_RIGHT -> lifeline.location.x + lifeline.width + LOST_POINT_SPAN
+                            TO_LEFT -> lifeline.location.x - LOST_POINT_SPAN
+                            else -> Double.NaN
+                        }
+                        if (x.isNaN()) {
+                            null
+                        } else {
+                            val point = Point2D.Double(x, locY)
+                            when (event.type) {
+                                FROM_RIGHT, FROM_LEFT -> diagramEditor.createFoundMessage(label, point, lifeline)
+                                TO_RIGHT, TO_LEFT -> diagramEditor.createLostMessage(label, lifeline, point)
+                                else -> null
+                            }
+                        }
+                    } else if (isFound) {
+                        // Found メッセージ
+                        val x = when (event.type) {
+                            FROM_RIGHT -> lifeline.location.x + lifeline.width + FOUND_POINT_SPAN
+                            FROM_LEFT -> lifeline.location.x - FOUND_POINT_SPAN
+                            else -> Double.NaN
+                        }
+                        if (x.isNaN()) {
+                            null
+                        } else {
+                            val point = Point2D.Double(x, locY)
+                            diagramEditor.createFoundMessage(label, point, lifeline)
+                        }
+                    } else if (isLost) {
+                        // Lost メッセージ
+                        val x = when (event.type) {
+                            TO_RIGHT -> lifeline.location.x + lifeline.width + LOST_POINT_SPAN
+                            TO_LEFT -> lifeline.location.x - LOST_POINT_SPAN
+                            else -> Double.NaN
+                        }
+                        if (x.isNaN()) {
+                            null
+                        } else {
+                            val point = Point2D.Double(x, locY)
+                            diagramEditor.createLostMessage(label, lifeline, point)
+                        }
+                    } else {
+                        when (event.type) {
+                            FROM_RIGHT -> createMessagePresentation(event, label, prevMessage, framePresentation, lifeline, locY, isReturn)
+                            FROM_LEFT -> createMessagePresentation(event, label, prevMessage, framePresentation, lifeline, locY, isReturn)
+                            TO_RIGHT -> createMessagePresentation(event, label, prevMessage, lifeline, framePresentation, locY, isReturn)
+                            TO_LEFT -> createMessagePresentation(event, label, prevMessage, lifeline, framePresentation, locY, isReturn)
+                            else -> null
+                        }
                     }
                 if (messagePresentation != null) {
                     if (arrowConfig.isAsync1 || arrowConfig.isAsync2) {
