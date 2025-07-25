@@ -3,6 +3,7 @@ package com.change_vision.astah.plugins.converter.toastah
 import com.change_vision.jude.api.inf.AstahAPI
 import com.change_vision.jude.api.inf.editor.TransactionManager
 import com.change_vision.jude.api.inf.model.IClass
+import com.change_vision.jude.api.inf.model.ICombinedFragment
 //import com.change_vision.jude.api.inf.model.ICombinedFragment
 import com.change_vision.jude.api.inf.model.IDiagram
 import com.change_vision.jude.api.inf.model.ILifeline
@@ -111,8 +112,23 @@ object ToAstahSequenceDiagramConverter {
                             val point2D = Point2D.Double(rect.x, rect.y)
 
                             // TODO オペランドの高さを変更すると複合フラグメントが不正モデルとなるため、一旦オペランドの対応はしない
-//                            val fragmentPresentation =
-                                diagramEditor.createCombinedFragment(comment, title, point2D, rect.width, rect.height)
+                            val fragmentPresentation =
+                                diagramEditor.createCombinedFragment(title, title, point2D, rect.width, rect.height)
+                            val fragmentModel = fragmentPresentation.model as ICombinedFragment
+                            // TODO 複合フラグメントの名前は作成時に便宜上設定し、作成後改めてクリアする
+                            // TODO PlantUML で複合フラグメントの名前をつけられる記法への対応は今後実施する
+                            fragmentModel.name = ""
+
+                            // ガードがある場合は、ガードを設定する
+                            if (comment.isNullOrEmpty()) {
+                                return@forEachIndexed
+                            }
+
+                            val operands = fragmentModel.interactionOperands
+                            if (!operands.isNullOrEmpty()) {
+                                // TODO 複数オペランド対応を見送っているため、最初のオペランドのガードのみ設定する
+                                operands[0].guard = comment
+                            }
 //                            if (elseDeque.isEmpty()) {
 //                                return@forEachIndexed
 //                            }
