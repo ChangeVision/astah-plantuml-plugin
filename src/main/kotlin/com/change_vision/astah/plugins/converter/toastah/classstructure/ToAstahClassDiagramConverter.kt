@@ -1,7 +1,7 @@
 package com.change_vision.astah.plugins.converter.toastah.classstructure
 
-import com.change_vision.astah.plugins.converter.toplant.DiagramKind
-import com.change_vision.astah.plugins.converter.toplant.createOrGetDiagram
+import com.change_vision.astah.plugins.converter.toastah.DiagramKind
+import com.change_vision.astah.plugins.converter.toastah.createOrGetDiagram
 import com.change_vision.astah.plugins.converter.toastah.SVGEntityCollector
 import com.change_vision.astah.plugins.converter.toastah.classstructure.ClassConverter.createAstahModelElements
 import com.change_vision.astah.plugins.converter.toastah.classstructure.LinkConverter.createAstahLinkElements
@@ -10,30 +10,18 @@ import com.change_vision.astah.plugins.converter.toastah.presentations.note.Note
 import com.change_vision.astah.plugins.converter.toastah.classstructure.ConvertResult.Success
 import com.change_vision.astah.plugins.converter.toastah.classstructure.ConvertResult.Failure
 import com.change_vision.jude.api.inf.AstahAPI
-import com.change_vision.jude.api.inf.editor.TransactionManager
-import com.change_vision.jude.api.inf.exception.BadTransactionException
 import com.change_vision.jude.api.inf.model.IClass
 import com.change_vision.jude.api.inf.model.INamedElement
-import com.change_vision.jude.api.inf.model.IAssociation
-import com.change_vision.jude.api.inf.presentation.INodePresentation
-import com.change_vision.jude.api.inf.presentation.ILinkPresentation
-import com.change_vision.jude.api.inf.presentation.PresentationPropertyConstants
 import net.sourceforge.plantuml.SourceStringReader
 import net.sourceforge.plantuml.classdiagram.ClassDiagram
 import net.sourceforge.plantuml.abel.Entity
-import net.sourceforge.plantuml.abel.LeafType
 import net.sourceforge.plantuml.abel.Link
-import java.awt.geom.Point2D
-import java.awt.geom.Rectangle2D
 
 /**
  * PlantUMLのクラス図をAstahのクラス図に変換するクラス
  */
 object ToAstahClassDiagramConverter {
     private val api = AstahAPI.getAstahAPI()
-    private val projectAccessor = api.projectAccessor
-    private val diagramEditor = projectAccessor.diagramEditorFactory.classDiagramEditor
-    private val basicDiagramEditor = diagramEditor as com.change_vision.jude.api.inf.editor.BasicDiagramEditor
 
     // デバッグログの出力制御フラグ
     private const val DEBUG = false
@@ -64,13 +52,14 @@ object ToAstahClassDiagramConverter {
         // 成功した結果のみを抽出
         val successfulResults = leafConvertResults.filterIsInstance<Success<Pair<Entity, IClass>>>()
         
-        val entityMap = successfulResults.map { it.convertPair }.toMap()
+        val entityMap = successfulResults.associate { it.convertPair }
 
         // リンク要素の変換
         val linkConvertResults = createAstahLinkElements(diagram.links, entityMap)
                 
-        val linkMap = linkConvertResults.filterIsInstance<Success<Pair<Link, INamedElement>>>()
-            .map { it.convertPair }.toMap()
+        val linkMap = linkConvertResults.
+            filterIsInstance<Success<Pair<Link, INamedElement>>>()
+            .associate { it.convertPair }
 
         // 図の作成
         val classDiagram = createOrGetDiagram(index, DiagramKind.ClassDiagram)

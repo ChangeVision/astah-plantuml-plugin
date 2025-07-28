@@ -1,13 +1,10 @@
 package com.change_vision.astah.plugins.converter.toastah
 
-import com.change_vision.astah.plugins.converter.toplant.DiagramKind
-import com.change_vision.astah.plugins.converter.toplant.createOrGetDiagram
 import com.change_vision.jude.api.inf.AstahAPI
 import com.change_vision.jude.api.inf.editor.TransactionManager
 import com.change_vision.jude.api.inf.exception.BadTransactionException
 import com.change_vision.jude.api.inf.model.IActivityDiagram
 import com.change_vision.jude.api.inf.model.IFlow
-import com.change_vision.jude.api.inf.model.INamedElement
 import com.change_vision.jude.api.inf.presentation.INodePresentation
 import net.sourceforge.plantuml.SourceStringReader
 import net.sourceforge.plantuml.activitydiagram.ActivityDiagram
@@ -139,8 +136,10 @@ object ToAstahActivityDiagramConverter {
             }
             TransactionManager.endTransaction()
         } catch (e: BadTransactionException) {
+            e.printStackTrace()
             TransactionManager.abortTransaction()
         } catch (e: Exception) {
+            e.printStackTrace()
             if (TransactionManager.isInTransaction()) {
                 TransactionManager.abortTransaction()
             }

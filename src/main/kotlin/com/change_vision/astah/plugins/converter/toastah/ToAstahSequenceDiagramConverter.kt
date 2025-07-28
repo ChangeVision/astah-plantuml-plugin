@@ -1,7 +1,5 @@
 package com.change_vision.astah.plugins.converter.toastah
 
-import com.change_vision.astah.plugins.converter.toplant.DiagramKind
-import com.change_vision.astah.plugins.converter.toplant.createOrGetDiagram
 import com.change_vision.jude.api.inf.AstahAPI
 import com.change_vision.jude.api.inf.editor.TransactionManager
 import com.change_vision.jude.api.inf.model.IClass

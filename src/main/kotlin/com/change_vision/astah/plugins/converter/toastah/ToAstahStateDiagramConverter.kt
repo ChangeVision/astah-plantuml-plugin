@@ -1,7 +1,5 @@
 package com.change_vision.astah.plugins.converter.toastah
 
-import com.change_vision.astah.plugins.converter.toplant.DiagramKind
-import com.change_vision.astah.plugins.converter.toplant.createOrGetDiagram
 import com.change_vision.jude.api.inf.AstahAPI
 import com.change_vision.jude.api.inf.editor.TransactionManager
 import com.change_vision.jude.api.inf.exception.BadTransactionException
@@ -150,8 +148,10 @@ object ToAstahStateDiagramConverter {
             }
             TransactionManager.endTransaction()
         } catch (e: BadTransactionException) {
+            e.printStackTrace()
             TransactionManager.abortTransaction()
         } catch (e: Exception) {
+            e.printStackTrace()
             if (TransactionManager.isInTransaction()) {
                 TransactionManager.abortTransaction()
             }
