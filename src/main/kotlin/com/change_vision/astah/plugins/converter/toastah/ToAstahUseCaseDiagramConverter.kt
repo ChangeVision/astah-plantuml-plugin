@@ -6,7 +6,6 @@ import com.change_vision.jude.api.inf.exception.BadTransactionException
 import com.change_vision.jude.api.inf.model.IAssociation
 import com.change_vision.jude.api.inf.model.IClass
 import com.change_vision.jude.api.inf.model.IUseCase
-import com.change_vision.jude.api.inf.model.IUseCaseDiagram
 import com.change_vision.jude.api.inf.model.INamedElement
 import net.sourceforge.plantuml.SourceStringReader
 import net.sourceforge.plantuml.abel.LeafType.USECASE
@@ -28,15 +27,6 @@ object ToAstahUseCaseDiagramConverter {
     private val basicModelEditor = projectAccessor.modelEditorFactory.basicModelEditor
 
     fun convert(diagram: DescriptionDiagram, reader: SourceStringReader, index: Int) {
-        // 作成予定の図と同名の図を探して削除する(繰り返し実行する場合は図を削除して作り直す)
-        projectAccessor.findElements(IUseCaseDiagram::class.java, "UseCaseDiagram_$index").let {
-            if (it.isNotEmpty()) {
-                TransactionManager.beginTransaction()
-                projectAccessor.modelEditorFactory.basicModelEditor.delete(it.first())
-                TransactionManager.endTransaction()
-            }
-        }
-
         // ユースケース図の作成
         val astahDiagram = createOrGetDiagram(index, DiagramKind.UseCaseDiagram)
         // PlantUML 上での各図要素の位置と大きさを取得
@@ -122,8 +112,8 @@ object ToAstahUseCaseDiagramConverter {
 
                 val linkPresentation = if (link.label.isWhite) {
                     val model = basicModelEditor.createAssociation(
-                        (source?.model as IClass),
-                        (target?.model as IClass),
+                        (source.model as IClass),
+                        (target.model as IClass),
                         null,
                         null,
                         null)
@@ -132,16 +122,16 @@ object ToAstahUseCaseDiagramConverter {
                     when (val linkLabel = link.label.get(0)) {
                         "include" -> {
                             val model = modelEditor.createInclude(
-                                (target?.model as IUseCase),
-                                (source?.model as IUseCase),
+                                (target.model as IUseCase),
+                                (source.model as IUseCase),
                                 ""
                             )
                             diagramEditor.createLinkPresentation(model, target, source)
                         }
                         "extends" -> {
                             val model = modelEditor.createExtend(
-                                (target?.model as IUseCase),
-                                (source?.model as IUseCase),
+                                (target.model as IUseCase),
+                                (source.model as IUseCase),
                                 ""
                             )
                             diagramEditor.createLinkPresentation(model, target, source)
@@ -149,15 +139,15 @@ object ToAstahUseCaseDiagramConverter {
                         else -> {
                             if (link.linkArrow == LinkArrow.NONE_OR_SEVERAL && link.type.decor1 == LinkDecor.EXTENDS) {
                                 val model = basicModelEditor.createGeneralization(
-                                    (source?.model as IClass),
-                                    (target?.model as IClass),
+                                    (source.model as IClass),
+                                    (target.model as IClass),
                                     linkLabel?.toString()
                                 )
                                 diagramEditor.createLinkPresentation(model, source, target)
                             } else {
                                 val model = basicModelEditor.createAssociation(
-                                    (source?.model as IClass),
-                                    (target?.model as IClass),
+                                    (source.model as IClass),
+                                    (target.model as IClass),
                                     linkLabel?.toString(),
                                     null,
                                     null

@@ -4,7 +4,6 @@ import com.change_vision.jude.api.inf.AstahAPI
 import com.change_vision.jude.api.inf.editor.TransactionManager
 import com.change_vision.jude.api.inf.exception.BadTransactionException
 import com.change_vision.jude.api.inf.model.INamedElement
-import com.change_vision.jude.api.inf.model.IStateMachineDiagram
 import com.change_vision.jude.api.inf.model.ITransition
 import com.change_vision.jude.api.inf.presentation.INodePresentation
 import net.sourceforge.plantuml.SourceStringReader
@@ -27,15 +26,6 @@ object ToAstahStateDiagramConverter {
     private val diagramEditor = projectAccessor.diagramEditorFactory.stateMachineDiagramEditor
 
     fun convert(diagram: StateDiagram, reader: SourceStringReader, index: Int) {
-        // 作成予定の図と同名の図("StateDiagram_$index")があれば削除して、常に新規作成するようにする
-        projectAccessor.findElements(IStateMachineDiagram::class.java, "StateDiagram_$index").let {
-            if (it.isNotEmpty()) {
-                TransactionManager.beginTransaction()
-                projectAccessor.modelEditorFactory.basicModelEditor.delete(it.first())
-                TransactionManager.endTransaction()
-            }
-        }
-
         // create diagram
         val astahDiagram = createOrGetDiagram(index, DiagramKind.StateDiagram)
         val posMap = SVGEntityCollector.collectSvgPosition(reader, index)

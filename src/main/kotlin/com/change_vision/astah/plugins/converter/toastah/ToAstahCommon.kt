@@ -10,6 +10,7 @@ import com.change_vision.jude.api.inf.model.IDiagram
 import com.change_vision.jude.api.inf.model.ISequenceDiagram
 import com.change_vision.jude.api.inf.model.IStateMachineDiagram
 import com.change_vision.jude.api.inf.model.IUseCaseDiagram
+import com.change_vision.jude.api.inf.project.ProjectAccessor
 
 enum class DiagramKind {
     ClassDiagram, SequenceDiagram, StateDiagram, ActivityDiagram, UseCaseDiagram
@@ -29,22 +30,23 @@ fun createOrGetDiagram(index: Int, diagramType: DiagramKind) : IDiagram?{
 
     var counter = 0
 
-    var diagramName = "${diagramType.name}_$index${0}"
+    var diagramName = "${diagramType.name}_${index}_${String.format("%03d",counter)}"
+
+    val diagramsCache = getDiagramForType(diagramType, projectAccessor).associateBy { it.name }
 
     while(true){
-        // TODO findElementsの結果をキャッシュする
-        val foundDiagramList = projectAccessor.findElements(IDiagram::class.java, diagramName)
-            .map { it as IDiagram }.filter { isTypeMatch(it , diagramType) }
+        val foundDiagrams = diagramsCache[diagramName]
 
-        if(foundDiagramList.isEmpty()){
+        if(foundDiagrams == null){
             break
         }
 
-        if(isEditableDiagram(foundDiagramList.first(), diagramType)){
-            return foundDiagramList.first()
-        }
+        diagramName = "${diagramType.name}_${index}_${String.format("%03d",++counter)}"
 
-        diagramName = "${diagramType.name}_$index${++counter}"
+        //ループ数が際限なく増加しないようにリミッターを設ける
+        if(counter > 99){
+            break
+        }
     }
 
     TransactionManager.beginTransaction()
@@ -73,25 +75,47 @@ fun createOrGetDiagram(index: Int, diagramType: DiagramKind) : IDiagram?{
     return null
 }
 
-private fun setDiagramForEditor(diagram: IDiagram, diagramType: DiagramKind, factory: IDiagramEditorFactory){
-    when(diagramType.name){
-        "ClassDiagram" -> factory.classDiagramEditor.diagram = diagram
-        "SequenceDiagram" -> factory.sequenceDiagramEditor.diagram = diagram
-        "StateDiagram" -> factory.stateMachineDiagramEditor.diagram = diagram
-        "ActivityDiagram" -> factory.activityDiagramEditor.diagram = diagram
-        "UseCaseDiagram" -> factory.useCaseDiagramEditor.diagram = diagram
-        else -> false
+private fun getDiagramForType(diagramType: DiagramKind, projectAccessor: ProjectAccessor) : List<IDiagram>{
+    return when(diagramType){
+        DiagramKind.ClassDiagram -> {
+            projectAccessor.findElements(IClassDiagram::class.java)
+                .filterIsInstance<IClassDiagram>()
+        }
+        DiagramKind.SequenceDiagram -> {
+            projectAccessor.findElements(ISequenceDiagram::class.java)
+                .filterIsInstance<ISequenceDiagram>()
+        }
+        DiagramKind.StateDiagram -> {
+            projectAccessor.findElements(IStateMachineDiagram::class.java)
+                .filterIsInstance<IStateMachineDiagram>()
+        }
+        DiagramKind.ActivityDiagram -> {
+            projectAccessor.findElements(IActivityDiagram::class.java)
+                .filterIsInstance<IActivityDiagram>()
+        }
+        DiagramKind.UseCaseDiagram -> {
+            projectAccessor.findElements(IUseCaseDiagram::class.java)
+                .filterIsInstance<IUseCaseDiagram>()
+        }
     }
 }
 
+private fun setDiagramForEditor(diagram: IDiagram, diagramType: DiagramKind, factory: IDiagramEditorFactory){
+    when(diagramType){
+        DiagramKind.ClassDiagram -> factory.classDiagramEditor.diagram = diagram
+        DiagramKind.SequenceDiagram -> factory.sequenceDiagramEditor.diagram = diagram
+        DiagramKind.StateDiagram -> factory.stateMachineDiagramEditor.diagram = diagram
+        DiagramKind.ActivityDiagram -> factory.activityDiagramEditor.diagram = diagram
+        DiagramKind.UseCaseDiagram -> factory.useCaseDiagramEditor.diagram = diagram
+    }
+}
 fun isTypeMatch(diagram: IDiagram, diagramType: DiagramKind) : Boolean{
-    return when(diagramType.name){
-        "ClassDiagram" -> diagram is IClassDiagram
-        "SequenceDiagram" -> diagram is ISequenceDiagram
-        "StateDiagram" -> diagram is IStateMachineDiagram
-        "ActivityDiagram" -> diagram is IActivityDiagram
-        "UseCaseDiagram" -> diagram is IUseCaseDiagram
-        else -> false
+    return when(diagramType){
+        DiagramKind.ClassDiagram -> diagram is IClassDiagram
+        DiagramKind.SequenceDiagram -> diagram is ISequenceDiagram
+        DiagramKind.StateDiagram -> diagram is IStateMachineDiagram
+        DiagramKind.ActivityDiagram -> diagram is IActivityDiagram
+        DiagramKind.UseCaseDiagram -> diagram is IUseCaseDiagram
     }
 }
 

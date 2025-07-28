@@ -3,7 +3,6 @@ package com.change_vision.astah.plugins.converter.toastah
 import com.change_vision.jude.api.inf.AstahAPI
 import com.change_vision.jude.api.inf.editor.TransactionManager
 import com.change_vision.jude.api.inf.exception.BadTransactionException
-import com.change_vision.jude.api.inf.model.IActivityDiagram
 import com.change_vision.jude.api.inf.model.IFlow
 import com.change_vision.jude.api.inf.presentation.INodePresentation
 import net.sourceforge.plantuml.SourceStringReader
@@ -18,15 +17,6 @@ object ToAstahActivityDiagramConverter {
     private val projectAccessor = api.projectAccessor
     private val diagramEditor = projectAccessor.diagramEditorFactory.activityDiagramEditor
     fun convert(diagram: ActivityDiagram, reader: SourceStringReader, index: Int) {
-        // delete diagram if exists //TODO
-        projectAccessor.findElements(IActivityDiagram::class.java, "Activity_$index").let {
-            if (it.isNotEmpty()) {
-                TransactionManager.beginTransaction()
-                projectAccessor.modelEditorFactory.basicModelEditor.delete(it.first())
-                TransactionManager.endTransaction()
-            }
-        }
-
         // create diagram
         val astahDiagram = createOrGetDiagram(index, DiagramKind.ActivityDiagram)
         val posMap = SVGEntityCollector.collectSvgPosition(reader, index)
