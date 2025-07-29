@@ -64,7 +64,7 @@ object ToAstahConverter {
                 is DescriptionDiagram -> { // UseCase, Component, Deployment
                     // TODO コンポーネント図に対応する際にユースケース図かコンポーネント図かの判定も実装すること
                     // TODO 現状ではとりあえず全てユースケース図に変換するようにする(コンポーネントは無視する)
-                    ToAstahUseCaseDiagramConverter.convert(diagram, reader, index)
+                    ToAstahUseCaseDiagramConverter.convert(diagram, reader, index, stereotypeMapping)
                 }
                 is StateDiagram -> ToAstahStateDiagramConverter.convert(diagram, reader, index)
                 is ActivityDiagram -> ToAstahActivityDiagramConverter.convert(diagram, reader, index)

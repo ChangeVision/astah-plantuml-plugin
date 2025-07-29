@@ -1,21 +1,23 @@
 package com.change_vision.astah.plugins.converter.toastah
 
+import com.change_vision.astah.plugins.converter.toastah.classstructure.ClassConverter
+import com.change_vision.astah.plugins.converter.toastah.classstructure.ConvertResult
+import com.change_vision.astah.plugins.converter.toastah.classstructure.ConvertResult.Failure
 import com.change_vision.jude.api.inf.AstahAPI
 import com.change_vision.jude.api.inf.editor.TransactionManager
 import com.change_vision.jude.api.inf.exception.BadTransactionException
 import com.change_vision.jude.api.inf.model.IAssociation
 import com.change_vision.jude.api.inf.model.IClass
 import com.change_vision.jude.api.inf.model.IUseCase
-import com.change_vision.jude.api.inf.model.INamedElement
+import com.change_vision.jude.api.inf.model.IUseCaseDiagram
 import net.sourceforge.plantuml.SourceStringReader
-import net.sourceforge.plantuml.abel.LeafType.USECASE
-import net.sourceforge.plantuml.abel.LeafType.USECASE_BUSINESS
-import net.sourceforge.plantuml.abel.LeafType.DESCRIPTION
+import net.sourceforge.plantuml.abel.Entity
 import net.sourceforge.plantuml.abel.LinkArrow
 import net.sourceforge.plantuml.decoration.LinkDecor
 import net.sourceforge.plantuml.descdiagram.DescriptionDiagram
 import java.awt.geom.Point2D
 import java.awt.geom.Rectangle2D
+import kotlin.collections.forEach
 
 object ToAstahUseCaseDiagramConverter {
     private val DEFAULT_RECT = Rectangle2D.Float(30f, 30f, 30f, 30f)
@@ -26,7 +28,26 @@ object ToAstahUseCaseDiagramConverter {
     private val modelEditor = projectAccessor.modelEditorFactory.useCaseModelEditor
     private val basicModelEditor = projectAccessor.modelEditorFactory.basicModelEditor
 
-    fun convert(diagram: DescriptionDiagram, reader: SourceStringReader, index: Int) {
+    fun convert(diagram: DescriptionDiagram, reader: SourceStringReader, index: Int, stereotypeMapping: Map<String, List<String>>) {
+        // 作成予定の図と同名の図を探して削除する(繰り返し実行する場合は図を削除して作り直す)
+        projectAccessor.findElements(IUseCaseDiagram::class.java, "UseCaseDiagram_$index").let {
+            if (it.isNotEmpty()) {
+                TransactionManager.beginTransaction()
+                projectAccessor.modelEditorFactory.basicModelEditor.delete(it.first())
+                TransactionManager.endTransaction()
+            }
+        }
+
+        val leafConvertResults = ClassConverter.createAstahModelElements(diagram.leafs() ,stereotypeMapping)
+
+        leafConvertResults.filterIsInstance<Failure>().forEach { failure ->
+            println("モデル要素の変換に失敗: ${failure.message}")
+        }
+
+        // 成功した結果のみを抽出
+        val successfulResults = leafConvertResults.filterIsInstance<ConvertResult.Success<Pair<Entity, IClass>>>()
+        val entityMap = successfulResults.associate { it.convertPair }
+
         // ユースケース図の作成
         val astahDiagram = createOrGetDiagram(index, DiagramKind.UseCaseDiagram)
         // PlantUML 上での各図要素の位置と大きさを取得
@@ -34,49 +55,18 @@ object ToAstahUseCaseDiagramConverter {
 
         TransactionManager.beginTransaction()
         try {
-            val project = projectAccessor.project
             val presentationMap = diagram.leafs().mapNotNull { leaf ->
                 val posKey = if (leaf.display.size() > 0) leaf.display.first()
                              else ""
                 val rect = posMap.getOrDefault(posKey, DEFAULT_RECT)
 
-                val model: INamedElement? = when (leaf.leafType) {
-                    // ユースケース
-                    USECASE -> {
-                        val modelName = leaf.display.joinToString(separator = "\n") { it }
-                        modelEditor.createUseCase(project, modelName)
-                    }
-                    USECASE_BUSINESS -> {
-                        // ビジネスユースケース
-                        val modelName = leaf.display.joinToString(separator = "\n") { it }
-                        val model = modelEditor.createUseCase(project, modelName)
-                        model.addStereotype("business")
-                        model
-                    }
-                    DESCRIPTION -> {
-                        val modelName = leaf.display.joinToString(separator = " ") { it }
-                        val symbolStyle = leaf.uSymbol.sNames
-                        if (!symbolStyle.isNullOrEmpty()) {
-                            when (leaf.uSymbol.sNames[0].name) {
-                                "actor" -> modelEditor.createActor(project, modelName) as INamedElement // アクター
-                                "business" -> { // ビジネスアクター
-                                    val actor = modelEditor.createActor(project, modelName)
-                                    actor.addStereotype("business")
-                                    actor
-                                }
-                                else -> null
-                            }
-                        } else {
-                            null
-                        }
-                    }
-                    else -> null
-                }
+                val model = entityMap[leaf]
 
                 if (model == null) {
                     Pair(leaf.name, null)
                 } else {
-                    val presentation = diagramEditor.createNodePresentation(model, Point2D.Float(rect.x, rect.y))
+                    val presentation = diagramEditor.createNodePresentation(model,
+                        Point2D.Float(rect.x, rect.y))
                     Pair(leaf.name, presentation)
                 }
             }.toMap()
@@ -167,11 +157,9 @@ object ToAstahUseCaseDiagramConverter {
                 }
             }
             TransactionManager.endTransaction()
-        } catch (e: BadTransactionException) {
-            e.printStackTrace()
+        } catch (_: BadTransactionException) {
             TransactionManager.abortTransaction()
-        } catch (e: Exception) {
-            e.printStackTrace()
+        } catch (_: Exception) {
             if (TransactionManager.isInTransaction()) {
                 TransactionManager.abortTransaction()
             }

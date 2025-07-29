@@ -1,6 +1,5 @@
 package com.change_vision.astah.plugins.converter.toastah.classstructure
 
-import com.change_vision.astah.plugins.converter.toastah.classstructure.ConvertResult
 import com.change_vision.astah.plugins.converter.toastah.classstructure.ConvertResult.Success
 import com.change_vision.astah.plugins.converter.toastah.classstructure.ConvertResult.Failure
 import com.change_vision.astah.plugins.converter.toastah.classbody.ClassBody
@@ -8,6 +7,7 @@ import com.change_vision.astah.plugins.converter.toastah.classstructure.PackageC
 import com.change_vision.jude.api.inf.AstahAPI
 import com.change_vision.jude.api.inf.model.IClass
 import com.change_vision.jude.api.inf.model.IEnumeration
+import com.change_vision.jude.api.inf.model.INamedElement
 import net.sourceforge.plantuml.abel.Entity
 import net.sourceforge.plantuml.abel.LeafType
 
@@ -21,6 +21,7 @@ object ClassElement {
 
     private val api = AstahAPI.getAstahAPI()
     private val modelEditor = api.projectAccessor.modelEditorFactory.basicModelEditor
+    private val useCaseModelEditor = api.projectAccessor.modelEditorFactory.useCaseModelEditor
 
     // PlantUML側とAstah側の要素対応を保持するマッピング（仮要素を含む）
     private val elementMapping = mutableMapOf<String, Any>()
@@ -36,13 +37,22 @@ object ClassElement {
      * 第一段階: 仮要素の基本情報を作成して登録する。
      *
      * @param entity PlantUMLの要素
-     * @param stereotypeMapping クラス名と適用すべきステレオタイプのマッピング
      *
      * 指定された要素について、最低限の型情報（クラス、抽象クラス、インターフェース、enum）を生成し、
      * elementMappingに登録する。
      */
     fun createBasicElement(entity: Entity) {
+        //elementMappingのKey用
         val className = entity.name
+        //モデルを操作する際の名前
+        val displayName = if(entity.uSymbol?.sNames?.firstOrNull()?.name == "actor"){
+            entity.display.joinToString(separator = " ") { it }
+        }else if(entity.leafType in listOf(LeafType.USECASE, LeafType.USECASE_BUSINESS)){
+            entity.display.joinToString(separator = "\n") { it }
+        }else{
+            entity.name
+        }
+
         if (elementMapping.containsKey(className)) return
 
         when (entity.leafType) {
@@ -51,19 +61,19 @@ object ClassElement {
                 elementMapping[className] = entity
             }
             LeafType.ENUM -> {
-                val foundEnums = api.projectAccessor.findElements(IEnumeration::class.java, className)
+                val foundEnums = api.projectAccessor.findElements(IEnumeration::class.java, displayName)
                     .filterIsInstance<IEnumeration>()
                 if (foundEnums.isNotEmpty()) {
                     elementMapping[className] = foundEnums.first()
                 } else {
                     // 同名のIClassが存在していれば削除
-                    val foundClasses = api.projectAccessor.findElements(IClass::class.java, className)
+                    val foundClasses = api.projectAccessor.findElements(IClass::class.java, displayName)
                         .filterIsInstance<IClass>()
                     if (foundClasses.isNotEmpty()) {
                         modelEditor.delete(foundClasses.first())
                     }
                     val owner = createPackageIfNeeded(entity)
-                    val enumeration = modelEditor.createEnumeration(owner, className)
+                    val enumeration = modelEditor.createEnumeration(owner, displayName)
                     elementMapping[className] = enumeration
                 }
             }
@@ -73,27 +83,54 @@ object ClassElement {
             LeafType.CIRCLE, 
             LeafType.DESCRIPTION 
             -> {
-                val foundClasses = api.projectAccessor.findElements(IClass::class.java, className)
+                val foundClasses = api.projectAccessor.findElements(IClass::class.java, displayName)
                     .filterIsInstance<IClass>()
                 if (foundClasses.isNotEmpty()) {
                     elementMapping[className] = foundClasses.first()
                 } else {
                     val owner = createPackageIfNeeded(entity)
                     val element = when (entity.leafType) {
-                        LeafType.CLASS -> modelEditor.createClass(owner, className)
+                        LeafType.CLASS -> modelEditor.createClass(owner, displayName)
                         LeafType.ABSTRACT_CLASS -> {
-                            val cls = modelEditor.createClass(owner, className)
+                            val cls = modelEditor.createClass(owner, displayName)
                             cls.isAbstract = true
                             cls
                         }
-                        LeafType.INTERFACE -> modelEditor.createInterface(owner, className)
-                        LeafType.CIRCLE -> modelEditor.createInterface(owner, className)
-                        LeafType.DESCRIPTION -> modelEditor.createInterface(owner, className)
+                        LeafType.INTERFACE -> modelEditor.createInterface(owner, displayName)
+                        LeafType.CIRCLE -> modelEditor.createInterface(owner, displayName)
+                        LeafType.DESCRIPTION ->{
+                            when (entity.uSymbol.sNames[0].name) {
+                                "actor" -> {
+                                    useCaseModelEditor.createActor(owner, displayName) as INamedElement
+                                }
+                                "business" -> {
+                                    val actor = useCaseModelEditor.createActor(owner, displayName)
+                                    actor.addStereotype("business")
+                                    actor
+                                }
+                                else -> modelEditor.createInterface(owner, displayName)
+                            }
+                        }
                         else -> throw IllegalArgumentException("unsupported type: ${entity.leafType.name}")
                     }
                     elementMapping[className] = element
                 }
             }
+            LeafType.USECASE, LeafType.USECASE_BUSINESS -> {
+                val foundClasses = api.projectAccessor.findElements(IClass::class.java, displayName)
+                    .filterIsInstance<IClass>()
+                if (foundClasses.isNotEmpty()) {
+                    elementMapping[className] = foundClasses.first()
+                } else {
+                    val owner = createPackageIfNeeded(entity)
+                    val model = useCaseModelEditor.createUseCase(owner, displayName)
+                    if(entity.leafType == LeafType.USECASE_BUSINESS){
+                        model.addStereotype("business")
+                    }
+                    elementMapping[className] = model
+                }
+            }
+
             else -> {
             }
         }
@@ -141,7 +178,13 @@ object ClassElement {
                     Failure("要素がクラスではありません: $className")
                 }
             }
-            else -> Failure("未対応の型 ${entity.leafType.name} (行: ${entity.location.toString()})")
+            LeafType.USECASE -> {
+                Success(entity to element)
+            }
+            LeafType.USECASE_BUSINESS -> {
+                Success(entity to element)
+            }
+            else -> Failure("未対応の型 ${entity.leafType.name} (行: ${entity.location})")
         }
     }
 
@@ -153,13 +196,15 @@ object ClassElement {
      */
     private fun updateEnum(enumeration: IEnumeration, entity: Entity) {
         val body = entity.bodier?.rawBody?.joinToString("\n")
-        if (body != null) {
-            // 行ごとにリテラルを生成する
-            body.split("\n").forEach { line ->
-                val trimmedLine = line.trim()
-                if (trimmedLine.isNotEmpty()) {
-                    modelEditor.createEnumerationLiteral(enumeration, trimmedLine)
-                }
+        if (body == null) {
+            return
+        }
+
+        // 行ごとにリテラルを生成する
+        body.split("\n").forEach { line ->
+            val trimmedLine = line.trim()
+            if (trimmedLine.isNotEmpty()) {
+                modelEditor.createEnumerationLiteral(enumeration, trimmedLine)
             }
         }
     }
