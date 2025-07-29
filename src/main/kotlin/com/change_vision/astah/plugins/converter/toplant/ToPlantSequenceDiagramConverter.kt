@@ -71,10 +71,10 @@ object ToPlantSequenceDiagramConverter {
 
     private fun getLifelineName(model: ILifeline): String? {
         val base = model.base
-        if (!model.name.isNullOrEmpty()) {
+        if (base != null && !base.name.isNullOrEmpty()) {
+            return ClassConverter.formatName(base.name)
+        } else if (!model.name.isNullOrEmpty()) {
             return ClassConverter.formatName(model.name)
-        } else if (base != null && !base.name.isNullOrEmpty()) {
-            return ClassConverter.formatName(base.name )
         }
         return null
     }
