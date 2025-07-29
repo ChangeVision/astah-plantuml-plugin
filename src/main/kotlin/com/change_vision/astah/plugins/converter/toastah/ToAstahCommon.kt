@@ -28,25 +28,18 @@ fun createOrGetDiagram(index: Int, diagramType: DiagramKind) : IDiagram?{
         return currentDiagram
     }
 
-    var counter = 0
-
-    var diagramName = "${diagramType.name}_${index}_${String.format("%03d",counter)}"
-
     val diagramsCache = getDiagramForType(diagramType, projectAccessor).associateBy { it.name }
 
-    while(true){
-        val foundDiagrams = diagramsCache[diagramName]
+    var diagramName = ""
 
-        if(foundDiagrams == null){
-            break
-        }
+    for (counter in 0..100) {
+        diagramName = "${diagramType.name}_${index}_${String.format("%03d",counter)}"
+        diagramsCache[diagramName] ?: break
+    }
 
-        diagramName = "${diagramType.name}_${index}_${String.format("%03d",++counter)}"
-
-        //ループ数が際限なく増加しないようにリミッターを設ける
-        if(counter > 99){
-            break
-        }
+    // counterが上限の場合、既に図が存在する可能性があるため、新規作成前に存在確認が必要（重複作成でエラーになる）
+    if(diagramsCache[diagramName] != null){
+        return diagramsCache[diagramName]
     }
 
     TransactionManager.beginTransaction()
