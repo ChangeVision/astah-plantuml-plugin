@@ -25,9 +25,14 @@ object ToAstahStateDiagramConverter {
     private val projectAccessor = api.projectAccessor
     private val diagramEditor = projectAccessor.diagramEditorFactory.stateMachineDiagramEditor
 
-    fun convert(diagram: StateDiagram, reader: SourceStringReader, index: Int) {
+    fun convert(
+        diagram: StateDiagram,
+        reader: SourceStringReader,
+        index: Int,
+        isMultiDiagrams: Boolean
+    ) {
         // create diagram
-        val astahDiagram = createOrGetDiagram(index, DiagramKind.StateDiagram)
+        val astahDiagram = createOrGetDiagram(index, DiagramKind.StateDiagram, isMultiDiagrams)
         val posMap = SVGEntityCollector.collectSvgPosition(reader, index)
 
         TransactionManager.beginTransaction()

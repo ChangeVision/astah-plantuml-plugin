@@ -16,7 +16,7 @@ enum class DiagramKind {
     ClassDiagram, SequenceDiagram, StateDiagram, ActivityDiagram, UseCaseDiagram
 }
 
-fun createOrGetDiagram(index: Int, diagramType: DiagramKind) : IDiagram?{
+fun createOrGetDiagram(index: Int, diagramType: DiagramKind, isMultiDiagrams: Boolean) : IDiagram?{
     val api = AstahAPI.getAstahAPI()
     val projectAccessor = api.projectAccessor
     val diagramEditorFactory = projectAccessor.diagramEditorFactory
@@ -30,10 +30,11 @@ fun createOrGetDiagram(index: Int, diagramType: DiagramKind) : IDiagram?{
 
     val diagramsCache = getDiagramForType(diagramType, projectAccessor).associateBy { it.name }
 
+    val indexPart = if (isMultiDiagrams) "_${index}" else ""
     var diagramName = ""
 
     for (counter in 0..100) {
-        diagramName = "${diagramType.name}_${index}_${String.format("%03d",counter)}"
+        diagramName = "${diagramType.name}${indexPart}_${String.format("%03d", counter)}"
         diagramsCache[diagramName] ?: break
     }
 

@@ -51,9 +51,9 @@ object ToAstahSequenceDiagramConverter {
     private val combinedFragmentTypes: List<String> = listOf("alt", "opt", "par", "loop",
         "critical", "neg", "assert", "strict", "ignore", "consider", "seq", "ref", "break")
 
-    fun convert(diagram: SequenceDiagram, index: Int) {
+    fun convert(diagram: SequenceDiagram, index: Int, isMultiDiagrams: Boolean) {
         // create diagram
-        val sequenceDiagram = createOrGetDiagram(index, DiagramKind.SequenceDiagram)
+        val sequenceDiagram = createOrGetDiagram(index, DiagramKind.SequenceDiagram, isMultiDiagrams)
 
         // convert lifeline
         TransactionManager.beginTransaction()

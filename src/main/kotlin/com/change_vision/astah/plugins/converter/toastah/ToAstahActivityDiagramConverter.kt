@@ -16,9 +16,14 @@ object ToAstahActivityDiagramConverter {
     private val api = AstahAPI.getAstahAPI()
     private val projectAccessor = api.projectAccessor
     private val diagramEditor = projectAccessor.diagramEditorFactory.activityDiagramEditor
-    fun convert(diagram: ActivityDiagram, reader: SourceStringReader, index: Int) {
+    fun convert(
+        diagram: ActivityDiagram,
+            reader: SourceStringReader,
+            index: Int,
+            isMultiDiagrams: Boolean
+    ) {
         // create diagram
-        val astahDiagram = createOrGetDiagram(index, DiagramKind.ActivityDiagram)
+        val astahDiagram = createOrGetDiagram(index, DiagramKind.ActivityDiagram, isMultiDiagrams)
         val posMap = SVGEntityCollector.collectSvgPosition(reader, index)
 
         TransactionManager.beginTransaction()
