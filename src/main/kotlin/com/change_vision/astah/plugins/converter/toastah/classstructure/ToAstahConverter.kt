@@ -55,19 +55,22 @@ object ToAstahConverter {
         val stereotypeMapping = StereotypeExtractor.extract(processedText).getOrNull() ?: emptyMap()
 
         val reader = SourceStringReader(processedText)
-        reader.blocks.map { it.diagram }.forEachIndexed { index, diagram ->
+
+        val diagramMap = reader.blocks.map { it.diagram }
+        val isMultiDiagrams = diagramMap.size != 1
+        diagramMap.forEachIndexed { index, diagram ->
             when (diagram) {
                 is ClassDiagram -> {
-                    ToAstahClassDiagramConverter.convert(diagram, reader, index, stereotypeMapping, processedText)
+                    ToAstahClassDiagramConverter.convert(diagram, reader, index, stereotypeMapping, processedText, isMultiDiagrams)
                 }
-                is SequenceDiagram -> ToAstahSequenceDiagramConverter.convert(diagram, index)
+                is SequenceDiagram -> ToAstahSequenceDiagramConverter.convert(diagram, index, isMultiDiagrams)
                 is DescriptionDiagram -> { // UseCase, Component, Deployment
                     // TODO コンポーネント図に対応する際にユースケース図かコンポーネント図かの判定も実装すること
                     // TODO 現状ではとりあえず全てユースケース図に変換するようにする(コンポーネントは無視する)
-                    ToAstahUseCaseDiagramConverter.convert(diagram, reader, index, stereotypeMapping)
+                    ToAstahUseCaseDiagramConverter.convert(diagram, reader, index, stereotypeMapping, isMultiDiagrams)
                 }
-                is StateDiagram -> ToAstahStateDiagramConverter.convert(diagram, reader, index)
-                is ActivityDiagram -> ToAstahActivityDiagramConverter.convert(diagram, reader, index)
+                is StateDiagram -> ToAstahStateDiagramConverter.convert(diagram, reader, index, isMultiDiagrams)
+                is ActivityDiagram -> ToAstahActivityDiagramConverter.convert(diagram, reader, index, isMultiDiagrams)
                 is PSystemError -> throw IllegalArgumentException(diagram.description.toString())
                 is MindMapDiagram -> throw IllegalArgumentException("unsupported diagram type")
                 else -> throw IllegalArgumentException("unknown diagram type")

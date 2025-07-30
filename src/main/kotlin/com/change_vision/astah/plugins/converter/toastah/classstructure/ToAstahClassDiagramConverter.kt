@@ -40,7 +40,14 @@ object ToAstahClassDiagramConverter {
      * @param index 図のインデックス
      * @param stereotypeMapping クラス名とステレオタイプのマッピング
      */
-    fun convert(diagram: ClassDiagram, reader: SourceStringReader, index: Int, stereotypeMapping: Map<String, List<String>>, rawSource: String) {
+    fun convert(
+        diagram: ClassDiagram,
+        reader: SourceStringReader,
+        index: Int,
+        stereotypeMapping: Map<String, List<String>>,
+        rawSource: String,
+        isMultiDiagrams: Boolean
+    ) {
         
         // モデル要素の変換
         val leafConvertResults = createAstahModelElements(diagram.leafs(), stereotypeMapping)
@@ -62,7 +69,7 @@ object ToAstahClassDiagramConverter {
             .associate { it.convertPair }
 
         // 図の作成
-        val classDiagram = createOrGetDiagram(index, DiagramKind.ClassDiagram)
+        val classDiagram = createOrGetDiagram(index, DiagramKind.ClassDiagram, isMultiDiagrams)
         
         // 表示要素の変換
         val positionMap = SVGEntityCollector.collectSvgPosition(reader, index)

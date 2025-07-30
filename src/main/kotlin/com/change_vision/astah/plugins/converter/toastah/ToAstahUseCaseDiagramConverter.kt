@@ -28,7 +28,13 @@ object ToAstahUseCaseDiagramConverter {
     private val modelEditor = projectAccessor.modelEditorFactory.useCaseModelEditor
     private val basicModelEditor = projectAccessor.modelEditorFactory.basicModelEditor
 
-    fun convert(diagram: DescriptionDiagram, reader: SourceStringReader, index: Int, stereotypeMapping: Map<String, List<String>>) {
+    fun convert(
+        diagram: DescriptionDiagram,
+        reader: SourceStringReader,
+        index: Int,
+        stereotypeMapping: Map<String, List<String>>,
+        isMultiDiagrams: Boolean
+    ) {
         // 作成予定の図と同名の図を探して削除する(繰り返し実行する場合は図を削除して作り直す)
         projectAccessor.findElements(IUseCaseDiagram::class.java, "UseCaseDiagram_$index").let {
             if (it.isNotEmpty()) {
@@ -49,7 +55,7 @@ object ToAstahUseCaseDiagramConverter {
         val entityMap = successfulResults.associate { it.convertPair }
 
         // ユースケース図の作成
-        val astahDiagram = createOrGetDiagram(index, DiagramKind.UseCaseDiagram)
+        val astahDiagram = createOrGetDiagram(index, DiagramKind.UseCaseDiagram, isMultiDiagrams)
         // PlantUML 上での各図要素の位置と大きさを取得
         val posMap = SVGEntityCollector.collectSvgPosition(reader, index)
 
