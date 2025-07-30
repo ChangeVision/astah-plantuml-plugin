@@ -9,36 +9,27 @@ import net.sourceforge.plantuml.abel.Entity
  */
 object PackageCreator {
 
-    private val api = AstahAPI.getAstahAPI()
-    private val modelEditor = api.projectAccessor.modelEditorFactory.basicModelEditor
-    private val project = api.projectAccessor.project
-
-    /**
-     * パッケージを必要に応じて作成し返す
-     */
-    private val packageMap = mutableMapOf<String, IPackage>()
+    private val projectAccessor = AstahAPI.getAstahAPI().projectAccessor
+    private val modelEditor = projectAccessor.modelEditorFactory.basicModelEditor
 
     fun createPackageIfNeeded(entity: Entity): IPackage {
         val qualifiers = getQualifiersList(entity)
-        if (qualifiers.isEmpty()) return project
+        return createPackageHierarchyFromEntities(qualifiers)
+    }
 
-        for (index in 0 until qualifiers.size) {
-            val fqn = qualifiers[index].name
+    private fun createPackageHierarchyFromEntities(entities: List<Entity>): IPackage {
+        var current = projectAccessor.project as IPackage
 
-            if (!packageMap.containsKey(fqn)) {
-                val astahPackage = if (index==0) {
-                    modelEditor.createPackage(project, qualifiers[index].name)
-                }else {
-                    val parent = packageMap[qualifiers[index - 1].name]
-                    modelEditor.createPackage(parent, qualifiers[index].name)
-                }
+        for (entity in entities) {
+            val name = entity.name
+            val found = current.ownedElements
+                .filterIsInstance<IPackage>()
+                .firstOrNull { it.name == name }
 
-                if (astahPackage != null) {
-                    packageMap[fqn] = astahPackage
-                }
-            }
+            current = found ?: modelEditor.createPackage(current, name)
         }
-        return packageMap[qualifiers[qualifiers.size - 1].name]!!
+
+        return current
     }
 
     private fun getQualifiersList(entity: Entity): MutableList<Entity> {
