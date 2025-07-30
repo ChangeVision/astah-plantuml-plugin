@@ -107,17 +107,17 @@ object ToAstahSequenceDiagramConverter {
                                 return@forEachIndexed
                             }
 
+                            // TODO PlantUML で複合フラグメントの名前をつけられる記法への対応は今後実施する
+                            val combinedFragmentName = ""
+
                             val rect =
                                 getCombinedFragmentRectangle(sequenceDiagram, eventIndex, groupingStart, events, participantMap)
                             val point2D = Point2D.Double(rect.x, rect.y)
 
                             // TODO オペランドの高さを変更すると複合フラグメントが不正モデルとなるため、一旦オペランドの対応はしない
                             val fragmentPresentation =
-                                diagramEditor.createCombinedFragment(title, title, point2D, rect.width, rect.height)
+                                diagramEditor.createCombinedFragment(combinedFragmentName, title, point2D, rect.width, rect.height)
                             val fragmentModel = fragmentPresentation.model as ICombinedFragment
-                            // TODO 複合フラグメントの名前は作成時に便宜上設定し、作成後改めてクリアする
-                            // TODO PlantUML で複合フラグメントの名前をつけられる記法への対応は今後実施する
-                            fragmentModel.name = ""
 
                             // ガードがある場合は、ガードを設定する
                             if (comment.isNullOrEmpty()) {
