@@ -3,41 +3,94 @@ package com.change_vision.astah.plugins.converter.toastah
 import net.sourceforge.plantuml.FileFormat
 import net.sourceforge.plantuml.FileFormatOption
 import net.sourceforge.plantuml.SourceStringReader
+import net.sourceforge.plantuml.abel.GroupType
+import net.sourceforge.plantuml.abel.LeafType
 import net.sourceforge.plantuml.activitydiagram.ActivityDiagram
 import net.sourceforge.plantuml.classdiagram.ClassDiagram
-import net.sourceforge.plantuml.abel.LeafType
+import net.sourceforge.plantuml.abel.Entity as Entity
+import net.sourceforge.plantuml.descdiagram.DescriptionDiagram
 import net.sourceforge.plantuml.statediagram.StateDiagram
+import org.w3c.dom.Document
+import org.w3c.dom.Element
 import org.w3c.dom.Node
 import org.w3c.dom.NodeList
+import java.awt.geom.Point2D
 import java.awt.geom.Rectangle2D
 import java.io.File
+import java.math.BigDecimal
 import java.nio.file.Files
-import java.util.regex.Pattern
 import javax.xml.parsers.DocumentBuilderFactory
+import javax.xml.xpath.XPath
 import javax.xml.xpath.XPathConstants
 import javax.xml.xpath.XPathFactory
+import kotlin.collections.HashMap
 
 object SVGEntityCollector {
+    //ジョイン/フォークノードがリンクの始点終点どちらかを調べる
+    private const val LINK_END_FROM = "from"
+    private const val LINK_END_TO = "to"
+    private const val LINK_END_NONE = "none"
+
+    private const val SYNCHRO_BAR_NODE_TYPE_FORK = "fork node"
+    private const val SYNCHRO_BAR_NODE_TYPE_JOIN = "join node"
+
+    private const val RECTANGLE_MARGIN = 0.5f
+    private const val RECTANGLE_EXPANSION = 2f
+
+    const val START_NODE_NAME = "start"
+    const val END_NODE_NAME = "end"
+
+    private var synchroBarTypeMap = mutableMapOf<Entity,String>()
+
     fun collectSvgPosition(reader: SourceStringReader, index: Int): Map<String, Rectangle2D.Float> {
-        val tempSvgFile = Files.createTempFile("plantsvg_${index}_", ".svg").toFile()
-        tempSvgFile.outputStream().use { os ->
-            reader.outputImage(os, index, FileFormatOption(FileFormat.SVG))
-        }
+        var tempSvgFile : File? = null
         val result = when (val diagram = reader.blocks[index].diagram) {
-            is ClassDiagram -> collectClassEntityBoundary(tempSvgFile)
+            is ClassDiagram -> {
+                tempSvgFile = createTempSvgFile(index, reader)
+                val classBoundaries = collectClassEntityBoundary(tempSvgFile)
+                val circleBoundaries = collectClassCircleElements(tempSvgFile, diagram)
+                classBoundaries + circleBoundaries
+            }
             is StateDiagram -> {
-                val stateNames = diagram.leafs().filter { it.leafType == LeafType.STATE }.map { it.name }
-                collectEntityBoundary(tempSvgFile, stateNames)
+                val stateNames = ArrayList<String>()
+                stateNames.addAll(diagram.groupsAndRoot().filter { it.groupType == GroupType.STATE }.map { it.name })
+                stateNames.addAll(diagram.leafs().filter { it.leafType == LeafType.STATE }.map { it.name })
+                tempSvgFile = createTempSvgFile(index, reader)
+                collectStateEntityBoundary(tempSvgFile, stateNames)
             }
             is ActivityDiagram -> {
-                val activityNames =
-                    diagram.leafs().filter { it.leafType == LeafType.ACTIVITY }.map { it.name }
-                collectEntityBoundary(tempSvgFile, activityNames)
+                val activities =
+                    diagram.leafs().filter {
+                        it.leafType in setOf(LeafType.ACTIVITY, LeafType.SYNCHRO_BAR, LeafType.BRANCH, LeafType.NOTE)
+                    }
+                tempSvgFile = createTempSvgFile(index, reader)
+                collectActivityEntityBoundary(tempSvgFile, activities)
+            }
+            is DescriptionDiagram -> {
+                tempSvgFile = createTempSvgFile(index, reader)
+                val leafs = diagram.leafs()
+                val useCaseNames = leafs.filter {
+                    (it.leafType == LeafType.USECASE || it.leafType == LeafType.USECASE_BUSINESS)
+                    && it.display.size() > 0
+                }.map{ it.display.first().toString() }
+                val actorNames = leafs.filter {
+                    it.leafType == LeafType.DESCRIPTION
+                    && it.uSymbol.sNames.isNotEmpty()
+                    && (it.uSymbol.sNames[0].name == "actor" || it.uSymbol.sNames[0].name == "business")
+                    && it.display.size() > 0
+                }.map { it.display.first().toString() }
+                collectUseCaseBoundary(tempSvgFile, useCaseNames, actorNames)
             }
             else -> emptyMap()
         }
-        tempSvgFile.delete()
+        tempSvgFile?.delete()
         return result
+    }
+
+    private fun createTempSvgFile(index: Int, reader: SourceStringReader): File {
+        val tempSvgFile = Files.createTempFile("plantsvg_${index}_", ".svg").toFile()
+        tempSvgFile.outputStream().use { os -> reader.outputImage(os, index, FileFormatOption(FileFormat.SVG)) }
+        return tempSvgFile
     }
 
     private fun collectClassEntityBoundary(svgFile: File): Map<String, Rectangle2D.Float> {
@@ -55,19 +108,71 @@ object SVGEntityCollector {
                 .map { g.childNodes.item(it) }
                 .firstOrNull { it.nodeName == "rect" } ?: continue
             // 以前は抽出したキーの接頭辞にclassがついていたため、付けておく
-            result["class " + nameAttr] = extractRectangle(rect)
+            result["class $nameAttr"] = extractRectangle(rect)
         }
 
         return result
     }
 
-    private fun collectEntityBoundary(svgFile: File, stateNames: List<String>): Map<String, Rectangle2D.Float> {
+    /**
+     * クラス図内のcircle/楕円要素を検出する
+     * @param svgFile SVGファイル
+     * @param diagram ClassDiagram
+     * @return 要素コードと位置情報のマップ
+     */
+    private fun collectClassCircleElements(svgFile: File, diagram: ClassDiagram): Map<String, Rectangle2D.Float> {
+        val builder = DocumentBuilderFactory.newInstance().newDocumentBuilder()
+        val doc = builder.parse(svgFile)
+        val entityBoundaryMap = mutableMapOf<String, Rectangle2D.Float>()
+
+        // サークル/楕円要素を検索
+        val ellipses = XPathFactory.newInstance().newXPath()
+            .compile("//ellipse | //circle")
+            .evaluate(doc, XPathConstants.NODESET) as NodeList
+
+
+        // Circleタイプの要素をモデルから抽出
+        val circleElements = diagram.leafs().filter {
+            it.leafType == LeafType.CIRCLE ||
+                    it.leafType == LeafType.DESCRIPTION
+        }
+
+        val circleNames = circleElements.map { it.name }
+
+        // SVG内の各ellipse/circle要素を調査
+        for (i in 0 until ellipses.length) {
+            val ellipseNode = ellipses.item(i)
+
+            // 次の兄弟ノードがtext要素かチェック
+            var nextSibling = ellipseNode.nextSibling
+            while (nextSibling != null) {
+                if (nextSibling.nodeName == "text") {
+                    // textノードの内容からインターフェース名を抽出
+                    val textContent = nextSibling.textContent.trim()
+
+                    // インターフェース名と一致するか確認
+                    for (circleName in circleNames) {
+                        if (textContent.contains(circleName)) {
+                            entityBoundaryMap[circleName] = extractRectangle(ellipseNode)
+                            break
+                        }
+                    }
+                    break
+                }
+                nextSibling = nextSibling.nextSibling
+            }
+        }
+
+        return entityBoundaryMap
+    }
+
+    private fun collectStateEntityBoundary(svgFile: File, stateNames: List<String>): Map<String, Rectangle2D.Float> {
         val doc = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(svgFile)
 
         val stateMap = stateNames.mapNotNull { state ->
             val stateRect =
                 XPathFactory.newInstance().newXPath()
-                    .compile("//text[contains(text(),'$state')]/preceding-sibling::rect")
+                    .compile("//text[text() = '$state']/preceding-sibling::rect")
                     .evaluate(doc, XPathConstants.NODESET) as NodeList
             if (stateRect.length == 0) {
                 null
@@ -76,8 +181,183 @@ object SVGEntityCollector {
                 Pair(state, rect)
             }
         }.toMap()
-
         val ellipses = XPathFactory.newInstance().newXPath()
+            .compile("//ellipse[not(@fill='none')]")
+            .evaluate(doc, XPathConstants.NODESET) as NodeList
+
+        /*
+         * ellipseから初期状態・終了状態・ヒストリを拾う
+         * 位置については PlantUML 上での位置をなるべく再現するようにした
+         */
+        val otherNodeMap = HashMap<String, Rectangle2D.Float>()
+        for (ellipseIndex in 0 until ellipses.length) {
+            val ellipse = ellipses.item(ellipseIndex)?: continue
+            val nextEllipse = ellipses.item(ellipseIndex + 1)
+            val prevNode = ellipse.previousSibling
+            val nextNode = ellipse.nextSibling
+            var parentState = getEllipseParent(stateMap, ellipse)
+            if (parentState.isNotEmpty()) {
+                parentState = "${parentState}."
+            }
+            when {
+                isHistory(ellipse) -> "${parentState}history"
+                isDeepHistory(ellipse) -> "${parentState}deepHistory"
+                prevNode?.nodeName == "ellipse" && isFinalState(prevNode, ellipse) -> "${parentState}final"
+                nextNode.let {it.nodeName == "ellipse" && it.equals(nextEllipse) && isFinalState(ellipse, it)} -> "" // 終了疑似状態の最初の楕円なので次のループで変換する
+                else -> "${parentState}initial"
+            }.also {
+                if (it.isNotEmpty()) otherNodeMap[it] = extractRectangle(ellipse)
+            }
+        }
+
+        return stateMap.plus(otherNodeMap)
+    }
+
+    private fun isHistory(ellipse : Node) : Boolean {
+        return ellipse.nextSibling.let { it.nodeName == "text" && it.firstChild?.nodeValue == "H" }
+    }
+
+    private fun isDeepHistory(ellipse : Node) : Boolean {
+        return ellipse.nextSibling.let { it.nodeName == "text" && it.firstChild?.nodeValue == "H*" }
+    }
+
+    private fun isFinalState(prevNode : Node, node : Node) : Boolean {
+        val cx = BigDecimal(node.attributes?.getNamedItem("cx")?.nodeValue)
+        val cy = BigDecimal(node.attributes?.getNamedItem("cy")?.nodeValue)
+        val prevCx = BigDecimal(prevNode.attributes?.getNamedItem("cx")?.nodeValue)
+        val prevCy = BigDecimal(prevNode.attributes?.getNamedItem("cy")?.nodeValue)
+        val rx = BigDecimal(node.attributes?.getNamedItem("rx")?.nodeValue)
+        val ry = BigDecimal(node.attributes?.getNamedItem("ry")?.nodeValue)
+        val prevRx = BigDecimal(prevNode.attributes?.getNamedItem("rx")?.nodeValue)
+        val prevRy = BigDecimal(prevNode.attributes?.getNamedItem("ry")?.nodeValue)
+        return cx.compareTo(prevCx) == 0
+                && cy.compareTo(prevCy) == 0
+                && ((rx - prevRx).abs().compareTo(BigDecimal(5.0)) == 0)
+                && ((ry - prevRy).abs().compareTo(BigDecimal(5.0)) == 0)
+    }
+
+    private fun collectActivityEntityBoundary(svgFile: File, activities: List<Entity>):
+            Map<String, Rectangle2D.Float> {
+        val doc = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(svgFile)
+        val xpath = XPathFactory.newInstance().newXPath()
+
+        //アクションの座標取得
+        val actionMap = activities.filter { it.leafType == LeafType.ACTIVITY }.mapNotNull { activity ->
+            val action = activity.name
+            val display = activity.display.firstOrNull()?.removeSuffix(" ")
+            val actionRectangles = xpath
+                .compile("//text[contains(text(),'$display')]/preceding-sibling::rect")
+                .evaluate(doc, XPathConstants.NODESET) as NodeList
+
+            if (actionRectangles.length == 0) return@mapNotNull null
+
+            val rect = extractRectangle(actionRectangles.item(actionRectangles.length - 1))
+            action to rect
+        }.toMap()
+
+        //デシジョンノード
+        val decisionMergeNodeMap = activities.filter { it.leafType == LeafType.BRANCH }.mapNotNull { decisionMergeNode ->
+            val uid = decisionMergeNode.uid
+            val nodeRectangles = xpath
+                .compile("//g[@class='entity' and @data-uid='$uid']")
+                .evaluate(doc, XPathConstants.NODESET) as NodeList
+
+            if (nodeRectangles.length == 0) return@mapNotNull null
+
+            val polygonNode =nodeRectangles.item(0).childNodes.item(0)
+            if(polygonNode.nodeName != "polygon" || polygonNode !is Element)return@mapNotNull null
+            val points = getPolygonPoints(polygonNode)
+
+            val minPoints = Point2D.Float(points.minOf { it.x }, points.minOf { it.y })
+            val maxPoints = Point2D.Float(points.maxOf { it.x }, points.maxOf { it.y })
+
+            decisionMergeNode.name to Rectangle2D.Float(
+                minPoints.x,
+                minPoints.y,
+                maxPoints.x - minPoints.x,
+                maxPoints.y - minPoints.y
+            )
+
+        }.toMap()
+
+        //ノート
+        val noteMap = activities.filter { it.leafType == LeafType.NOTE }.mapNotNull { note ->
+            val uid = note.uid
+            val nodeRectangles = xpath
+                .compile("//g[@class='entity' and @data-uid='$uid']")
+                .evaluate(doc, XPathConstants.NODESET) as NodeList
+
+            if (nodeRectangles.length == 0) return@mapNotNull null
+
+            val pathNode = nodeRectangles.item(0).childNodes.item(0)
+            if(pathNode.nodeName != "path" || pathNode !is Element)return@mapNotNull null
+
+            val points = extractPathPoints(pathNode.getAttribute("d"))
+            val minPoints = Point2D.Float (points.minOf { it.x },points.minOf { it.y })
+
+            note.name to Rectangle2D.Float( minPoints.x,minPoints.y,0f,0f)
+        }.toMap()
+
+        //ジョイン/フォークノード
+        val syncBarNodes = mutableMapOf<String, Rectangle2D.Float>()
+        val lineEndPoints = mutableMapOf<String, List<Point2D>>()
+
+        val synchroBars = activities.filter { it.leafType == LeafType.SYNCHRO_BAR }
+
+        for (leaf in synchroBars) {
+            val name = leaf.name
+            val lineNumber = leaf.location.position
+            val barLink = getLinksFromLineNumber(lineNumber, xpath, doc)
+
+            if (barLink.length ==  0 ) continue
+            val barNode = barLink.item(0)
+
+            synchroBarTypeMap[leaf] = checkSynchroBarType(name, xpath, doc)
+
+            val barPos = checkLinkEnd(barNode, name)
+
+            val points = (0 until barNode.childNodes.length)
+                .mapNotNull { index ->
+                    val element = barNode.childNodes.item(index)
+                    if (element !is Element) return@mapNotNull null
+
+                    when (barPos) {
+                        LINK_END_FROM -> if (element.nodeName == "path") {
+                            extractPathPoints(element.getAttribute("d"))
+                        } else null
+                        LINK_END_TO -> if (element.nodeName == "polygon") {
+                            getPolygonPoints(element)
+                        } else null
+                        else -> null
+                    }
+                }
+                .flatten()
+
+            if (points.isNotEmpty()) {
+                lineEndPoints[name] = points
+            }
+        }
+
+        val rectList = (xpath.compile("//rect[not(following-sibling::*[1][self::text])]")
+            .evaluate(doc, XPathConstants.NODESET) as NodeList).let { nodeList ->
+            (0 until nodeList.length).map { extractRectangle(nodeList.item(it)) }
+        }
+
+        for ((name, points) in lineEndPoints) {
+            for (rect in rectList) {
+                val expandedRect = Rectangle2D.Float(rect.x - RECTANGLE_MARGIN, rect.y - RECTANGLE_MARGIN,
+                    rect.width + RECTANGLE_EXPANSION, rect.height + RECTANGLE_EXPANSION)
+                if (points.any { expandedRect.contains(it) }) {
+                    syncBarNodes[name] = rect
+                }
+            }
+        }
+
+        return actionMap + decisionMergeNodeMap + syncBarNodes + getEllipseRectangles(xpath , doc) + noteMap
+    }
+
+    private fun getEllipseRectangles(xpath : XPath, doc : Document): Map<String, Rectangle2D.Float> {
+        val ellipseNodes = xpath
             .compile("//ellipse[not(@fill='none')]")
             .evaluate(doc, XPathConstants.NODESET) as NodeList
 
@@ -86,28 +366,82 @@ object SVGEntityCollector {
          * TODO 現状は、ellipseで拾える初期状態・終了状態・ヒストリのみ。他は追々対応する。
          * Pathを追って接続関係を元に調べれなくもないが、一旦保留。
          */
-        val otherNodeMap = (0 until ellipses.length).map { ellipses.item(it) }
-            .mapNotNull { ellipse ->
+        return (0 until ellipseNodes.length)
+            .mapNotNull { i ->
+                val ellipse = ellipseNodes.item(i)
                 val prevNode = ellipse.previousSibling
-                val elementName = when {
-                    prevNode?.nodeName == "ellipse" -> "final"
-                    ellipse.nextSibling?.nextSibling?.let { it.nodeName == "text" && it.nodeValue == "H" }!! -> "history"
-                    else -> "initial"
-                }
-                Pair(elementName, extractRectangle(ellipse))
-            }.toMap()
+                val nextTextNode = ellipse.nextSibling?.nextSibling
 
-        return stateMap.plus(otherNodeMap)
+                val elementName = when {
+                    prevNode?.nodeName == "ellipse" -> END_NODE_NAME
+                    nextTextNode?.nodeName == "text" && nextTextNode.nodeValue == "H" -> "history"
+                    else -> START_NODE_NAME
+                }
+
+                elementName to extractRectangle(ellipse)
+            }.toMap()
+    }
+
+    private fun getEllipseParent(stateMap: Map<String, Rectangle2D.Float>, ellipse: Node): String {
+        var parentStateName = ""
+        val ellipseRect = extractRectangle(ellipse)
+        var parentStateRect : Rectangle2D.Float? = null
+        stateMap.forEach {
+            if (it.value.contains(ellipseRect)) {
+                // 初めて楕円の親を見つけた時
+                val isFirstParent = parentStateName.isEmpty()
+                // 既に見つけている親候補より大きさが小さい親を見つけた時
+                val isMoreSmallParent = parentStateRect?.contains(it.value) == true
+
+                if (isFirstParent || isMoreSmallParent) {
+                    parentStateName = it.key
+                    parentStateRect = it.value
+                }
+            }
+        }
+        return parentStateName
+    }
+
+    private fun collectUseCaseBoundary(svgFile: File, useCaseNames: List<String>, actorNames: List<String>): Map<String, Rectangle2D.Float> {
+        val doc = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(svgFile)
+
+        val useCaseMap = useCaseNames.mapNotNull { useCase ->
+            val useCaseRect =
+                XPathFactory.newInstance().newXPath()
+                    .compile("//text[contains(text(),'$useCase')]/preceding-sibling::ellipse")
+                    .evaluate(doc, XPathConstants.NODESET) as NodeList
+            if (useCaseRect.length == 0) {
+                null
+            } else {
+                val rect = extractRectangle(useCaseRect.item(useCaseRect.length - 1))
+                Pair(useCase, rect)
+            }
+        }.toMap()
+        val actorMap = actorNames.mapNotNull { actor ->
+            val actorRect =
+                XPathFactory.newInstance().newXPath()
+                    .compile("//text[contains(text(),'$actor')]/preceding-sibling::path/preceding-sibling::ellipse")
+                    .evaluate(doc, XPathConstants.NODESET) as NodeList
+            if (actorRect.length == 0) {
+                null
+            } else {
+                val rect = extractRectangle(actorRect.item(actorRect.length - 1))
+                Pair(actor, rect)
+            }
+        }
+        return useCaseMap.plus(actorMap)
     }
 
     private fun extractRectangle(node: Node): Rectangle2D.Float {
         val attrs = node.attributes
         return when (node.nodeName) {
-            "ellipse" -> {
+            "ellipse", "circle" -> {
                 val cx = attrs.getNamedItem("cx").nodeValue.toFloat()
                 val cy = attrs.getNamedItem("cy").nodeValue.toFloat()
-                val rx = attrs.getNamedItem("rx").nodeValue.toFloat()
-                val ry = attrs.getNamedItem("ry").nodeValue.toFloat()
+                val rx = attrs.getNamedItem("rx")?.nodeValue?.toFloat() ?:
+                       attrs.getNamedItem("r")?.nodeValue?.toFloat() ?: 10f
+                val ry = attrs.getNamedItem("ry")?.nodeValue?.toFloat() ?:
+                       attrs.getNamedItem("r")?.nodeValue?.toFloat() ?: 10f
                 Rectangle2D.Float(cx - rx, cy - ry, rx * 2, ry * 2)
             }
             else -> {
@@ -118,5 +452,94 @@ object SVGEntityCollector {
                 Rectangle2D.Float(x, y, w, h)
             }
         }
+    }
+
+    private fun extractPathPoints(d: String): List<Point2D.Float> {
+        val commands = Regex("[A-Za-z]").findAll(d).map { it.value }.toList()
+        val parts = d.split(Regex("[A-Za-z]")).map { it.trim() }.filter { it.isNotEmpty() }
+
+        val result = mutableListOf<Point2D.Float>()
+
+        for ((i, cmd) in commands.withIndex()) {
+            val nums = parts.getOrNull(i)?.split(",", " ")?.filter { it.isNotBlank() } ?: continue
+            val floats = nums.mapNotNull { it.toFloatOrNull() }
+
+            when (cmd) {
+                "M", "L" -> {
+                    for (j in floats.indices step 2) {
+                        if (j + 1 < floats.size) {
+                            result.add(Point2D.Float(floats[j], floats[j + 1]))
+                        }
+                    }
+                }
+                "C" -> {
+                    for (j in floats.indices step 6) {
+                        if (j + 5 < floats.size) {
+                            result.add(Point2D.Float(floats[j+4], floats[j + 5]))
+                        }
+                    }
+                }
+            }
+        }
+
+        return result
+    }
+
+    private fun checkLinkEnd(linkNode : Node, nodeName : String):String{
+        if(linkNode !is Element) return LINK_END_NONE
+
+        val from = linkNode.getAttribute("data-entity-1")
+        val to = linkNode.getAttribute("data-entity-2")
+
+        return when (nodeName) {
+            from -> LINK_END_FROM
+            to -> LINK_END_TO
+            else -> LINK_END_NONE
+        }
+    }
+
+    private fun checkSynchroBarType(name : String, xpath: XPath, doc : Document):String{
+        val linkList = getLinkNodeList(xpath,doc)
+        var countFrom = 0
+        var countTo = 0
+        for(index in 0 until linkList.length){
+            val link = linkList.item(index)
+            if(link !is Element) continue
+            when(checkLinkEnd(link,name)){
+                LINK_END_FROM -> countFrom++
+                LINK_END_TO -> countTo++
+            }
+        }
+
+        return if(countFrom <= countTo) SYNCHRO_BAR_NODE_TYPE_JOIN
+        else SYNCHRO_BAR_NODE_TYPE_FORK
+    }
+
+    private fun getLinkNodeList(xpath: XPath, doc : Document):NodeList{
+        return xpath.compile("//g[@class='link']")
+            .evaluate(doc, XPathConstants.NODESET) as NodeList
+    }
+
+    private fun getLinksFromLineNumber(lineNumber:Int, xpath: XPath, doc : Document):NodeList{
+        return xpath.compile("//g[@class='link' and @data-source-line='$lineNumber']")
+            .evaluate(doc, XPathConstants.NODESET) as NodeList
+    }
+
+    private fun getPolygonPoints(element : Element) : List<Point2D.Float> {
+         return element.getAttribute("points")
+            .split(',')
+            .map { it.trim() }
+            .chunked(2)
+            .mapNotNull { chunk ->
+                if (chunk.size == 2) {
+                    val x = chunk[0].toFloatOrNull()
+                    val y = chunk[1].toFloatOrNull()
+                    if (x != null && y != null) Point2D.Float(x, y) else null
+                } else null
+            }
+    }
+
+    fun isFork(entity: Entity): Boolean{
+        return synchroBarTypeMap[entity] == SYNCHRO_BAR_NODE_TYPE_FORK
     }
 }

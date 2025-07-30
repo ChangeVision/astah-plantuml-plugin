@@ -3,102 +3,88 @@ package com.change_vision.astah.plugins.converter.toplant
 import com.change_vision.jude.api.inf.model.*
 import com.change_vision.jude.api.inf.presentation.ILinkPresentation
 import com.change_vision.jude.api.inf.presentation.INodePresentation
+import com.change_vision.astah.plugins.converter.toplant.classdiagram.ClassConverter
+import com.change_vision.astah.plugins.converter.toplant.classdiagram.AssociationConverter
+import com.change_vision.astah.plugins.converter.toplant.classdiagram.ClassDiagramNoteConverter
+import com.change_vision.astah.plugins.converter.toplant.classdiagram.RelationshipConverter
+import com.change_vision.astah.plugins.converter.toplant.node.NodeType
 
+/**
+ * クラス図をPlantUML形式に変換するコンバーター
+ */
 object ToPlantClassDiagramConverter {
+    private const val DEBUG = false
+
+    /**
+     * デバッグログ出力
+     */
+    private fun debug(message: String) {
+        if (DEBUG) {
+            println("[ToPlantClassDiagramConverter] $message")
+        }
+    }
+
+    /**
+     * クラス図をPlantUML形式に変換する
+     * @param diagram クラス図
+     * @param sb 出力用のStringBuilder
+     */
     fun convert(diagram: IClassDiagram, sb: StringBuilder) {
-        diagram.presentations.forEach {
-            when (it) {
-                is INodePresentation -> when (val model = it.model) {
-                    is IClass -> classConvert(model, sb)
-                    else -> {
+        debug("クラス図変換開始: ${diagram.name}")
+
+        // ノート・パッケージ・リンクの収集用リスト
+        val noteNodes = mutableListOf<INodePresentation>()
+        val allLinks = mutableListOf<ILinkPresentation>()
+
+        try {
+            // プレゼンテーションごとに処理を一元化
+            diagram.presentations.forEach { pres ->
+                when (pres) {
+                    is INodePresentation -> {
+                        when (val model = pres.model) {
+                            is IClass -> {
+                                // クラス変換
+                                ClassConverter.convert(model, sb)
+                            }
+                            is IPackage -> {
+                                debug("package")
+                            }
+                            else -> {
+                                // ノート判定
+                                if (NodeType.NOTE(pres)) {
+                                    noteNodes.add(pres)
+                                    debug("ノート要素を検出: ID=${pres.id}, ラベル='${pres.label}'")
+                                }
+                            }
+                        }
                     }
-                }
-                is ILinkPresentation -> when (val model = it.model) {
-                    is IAssociation -> association(model, sb)
-                    is IGeneralization -> generalization(model, sb)
-                    is IDependency -> dependency(model, sb)
-                    else -> {
+                    is ILinkPresentation -> {
+                        allLinks.add(pres)
+                        when (val model = pres.model) {
+                            is IAssociation    -> AssociationConverter.convert(model, sb)
+                            is IGeneralization -> RelationshipConverter.convertGeneralization(model, sb)
+                            is IRealization    -> RelationshipConverter.convertRealization(model, sb)
+                            is IDependency     -> RelationshipConverter.convertDependency(model, sb)
+                            else               -> { /* no-op */ }
+                        }
                     }
+                    else -> { /* no-op */ }
                 }
-                else -> {
-                }
             }
-        }
-    }
 
-    private fun classConvert(clazz: IClass, sb: StringBuilder) {
-        val type = when {
-            clazz.hasStereotype("interface") -> "interface"
-            clazz.isAbstract -> "abstract"
-            else -> "class"
-        }
-        sb.append(type + " " + clazz.name)
-        val fields = clazz.attributes.filter { it.association == null }
-        if (fields.isNotEmpty() || clazz.operations.isNotEmpty()) {
-            sb.appendLine("{")
-            fields.forEach { field ->
-                sb.append("  ")
-                sb.appendLine(visibility(field) + field.name + " : " + field.type.name)
+            debug("ノート要素検出数: ${noteNodes.size}")
+
+
+            // ノート変換
+            if (noteNodes.isNotEmpty()) {
+                sb.appendLine()
+                ClassDiagramNoteConverter.convert(noteNodes, allLinks, sb)
             }
-            clazz.operations.forEach { op ->
-                sb.append("  ")
-                sb.appendLine(visibility(op) + op.name + "(" + params(op.parameters) + ") : " + op.returnType.name)
-            }
-            sb.append("}")
-        }
-        sb.appendLine()
-    }
-
-    private fun visibility(element: INamedElement) =
-        when {
-            element.isPrivateVisibility -> "-"
-            element.isProtectedVisibility -> "#"
-            element.isPackageVisibility -> "~"
-            element.isPublicVisibility -> "+"
-            else -> ""
+        } catch (e: Exception) {
+            debug("変換処理中にエラーが発生しました: ${e.message}")
+            e.printStackTrace()
         }
 
-    private fun params(params: Array<IParameter>) =
-        params.map { it.name + ":" + it.type.name }.joinToString { "," }
-    
-    private enum class Direction { Left, Right }
-
-    private fun association(model: IAssociation, sb: StringBuilder) {
-        val end1 = model.memberEnds[0]
-        val end2 = model.memberEnds[1]
-        sb.append(end1.type.name)
-        sb.append(" ")
-        sb.append(hatConvert(end1, Direction.Left))
-        sb.append("--")
-        sb.append(hatConvert(end2, Direction.Right))
-        sb.append(" ")
-        sb.append(end2.type.name)
-        sb.appendLine()
-    }
-
-    private fun hatConvert(end: IAttribute, direction: Direction) =
-        when {
-            end.isComposite -> "*"
-            end.isAggregate -> "o"
-            else -> when (end.navigability) {
-                "Navigable" -> when (direction) {
-                    Direction.Left -> "<"
-                    Direction.Right -> ">"
-                }
-                "Non_Navigabl" -> "x"
-                else -> ""
-            }
-        }
-
-    private fun generalization(model: IGeneralization, sb: StringBuilder) {
-        sb.append(model.subType.name)
-        sb.append(" --|> ")
-        sb.appendLine(model.superType.name)
-    }
-
-    private fun dependency(model: IDependency, sb: StringBuilder) {
-        sb.append(model.client.name)
-        sb.append(" ..> ")
-        sb.appendLine(model.supplier.name)
+        debug("クラス図変換完了: ${diagram.name}")
     }
 }

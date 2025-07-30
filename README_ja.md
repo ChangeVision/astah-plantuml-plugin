@@ -54,57 +54,75 @@ astahからPlantUMLへの変換はすべて再生成され、マージは行い�
 - PlantUML プレビュー
   - 逐次プレビュー表示
   - 拡大、縮小
+- 共通
+  - ノート(一部の図のみ)
+  - スタイル(一部の図の図要素の色のみ)
 - クラス図
   - クラス、インタフェース
+  - ステレオタイプ
   - 属性、操作
   - 関連、継承、依存、関連ラベル
+  - 多重度とラベルの同時記述
 - シーケンス図
   - 分類子：participant, actor, boundary, control, entity
     (database, collections, queueはparticipantとして表示)
-  - メッセージ：同期、非同期、リターン。メッセージラベル
-  - 分類子のクラス読み込み 
+  - メッセージ：同期、非同期、リターン、Create、Destroy
+  - メッセージラベル
+  - 分類子のクラス読み込み
+  - グループ化：alt/else, opt, loop, par, break, critical, group
 - ステートマシン図
   - 初期状態、終了状態、状態
+  - トリガー、ガード
+  - 状態のネスト
+  - フォーク、ジョイン、デシジョン、マージ
   - 遷移
 - アクティビティ図(レガシー版)
   - 開始、終了、アクション
   - コントロールフロー
+  - ジョインノード、フォークノード
+  - デシジョンノード
+- ユースケース図
+  - ユースケース、アクター
+  - 関連、拡張、包含
 
 ### 🚧 未対応項目
 
 - 共通
-    - ノート
-    - スタイル
+    - ノート(シーケンス図、ステートマシン図)
+    - スタイル(色以外)
 - クラス図
     - パッケージ、ネームスペース
-    - ステレオタイプ
     - エンティティ
     - ネストクラス
-    - 多重度とラベルの同時記述
 - シーケンス図
-    - astahからplantへ生成時のメッセージ順序が不定（追加順）
-    - グループ化：alt/else, opt, loop, par, break, critical, group
     - 活性区間
 - ステートマシン図
-    - action : entry, do, exit. trigger, guard, action
-    - 状態のネスト
-    - フォーク、ジョイン、デシジョン、マージ
-    - astahからplantへ生成時の順序が不定
+    - アクション : entry, do, exit
 - アクティビティ図
     - 新しい構文
     - オブジェクトノード
     - パーティション
     - astahからplantへ生成時の順序が不定
 
-## 📄 License
+## 📄 ライセンス
 
-本プラグインには、以下のオープンソースライブラリが含まれています：
+本プラグインは、以下のオープンソースライブラリを使用しており、**GPLv3 ライセンス**のもとで配布されています。
 
 - [PlantUML](https://plantuml.com/)（[GPLv3 ライセンス](https://www.gnu.org/licenses/gpl-3.0.html)）
 - [RSyntaxTextArea](https://github.com/bobbylight/RSyntaxTextArea)（[BSD ライセンス](https://github.com/bobbylight/RSyntaxTextArea/blob/master/LICENSE.txt)）
 
-このため、本プラグインは GPLv3 ライセンスを継承しています。
+---
 
-MIT ライセンスでの利用をご希望の場合は、PlantUML の [商用ライセンス](https://plantuml.com/purchase) を取得いただくか、別途ご相談ください。
+### プラグインの動作と生成物について
 
-> PlantUML のライセンスに関する詳細は、[https://plantuml.com/license](https://plantuml.com/license) をご参照ください。
+本プラグインでは、PlantUMLで記述された図をAstah上で表示・変換する際に、一時ファイルを内部的に使用します。  
+ただし、図の画像やテキストファイルをユーザーが直接保存・エクスポートする機能は提供していません。
+
+また、PlantUMLを用いて生成される図の内容（テキストや視覚的表現）は [PlantUML FAQ](https://plantuml.com/faq) に基づき、 **ユーザー自身の成果物** と見なされ、 **GPLやその他のライセンス制約の対象とはならず、自由に利用できます** 。
+
+---
+
+### PlantUMLのライセンス選択について
+
+GPLライセンス以外（MIT、LGPLなど）でPlantUMLをご利用されたい場合は、[PlantUML のライセンス案内](https://plantuml.com/license)をご参照ください。
+
