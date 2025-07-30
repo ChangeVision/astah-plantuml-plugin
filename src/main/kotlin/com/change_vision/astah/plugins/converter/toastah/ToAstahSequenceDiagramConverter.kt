@@ -100,7 +100,7 @@ object ToAstahSequenceDiagramConverter {
                             }
                             val groupingStart = groupingDeque.removeLast()
 
-                            val comment = groupingStart.comment
+                            val comment = groupingStart.comment ?: ""
                             val title = groupingStart.title
 
                             if (title !in combinedFragmentTypes) {
@@ -118,11 +118,6 @@ object ToAstahSequenceDiagramConverter {
                             val fragmentPresentation =
                                 diagramEditor.createCombinedFragment(combinedFragmentName, title, point2D, rect.width, rect.height)
                             val fragmentModel = fragmentPresentation.model as ICombinedFragment
-
-                            // ガードがある場合は、ガードを設定する
-                            if (comment.isNullOrEmpty()) {
-                                return@forEachIndexed
-                            }
 
                             val operands = fragmentModel.interactionOperands
                             if (!operands.isNullOrEmpty()) {
