@@ -21,9 +21,9 @@ interface IRelationshipConverter {
             return
         }
 
-        sb.append(formatName(from))
-        sb.append(" --|> ")
         sb.append(formatName(target))
+        sb.append(" <|-- ")
+        sb.append(formatName(from))
         if (!model.name.isNullOrEmpty()) {
             sb.append(" : ")
             sb.append(model.name)
