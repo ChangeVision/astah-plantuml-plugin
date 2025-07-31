@@ -339,13 +339,12 @@ object ToAstahSequenceDiagramConverter {
         val participantMap = diagram.participants().mapNotNull { participant ->
             val editorFactory = projectAccessor.modelEditorFactory
             val project = projectAccessor.project
-            val elements = projectAccessor.findElements(IClass::class.java, participant.code).filterIsInstance<IClass>()
+            val isAlias = !participant.code.equals(participant.getDisplay(false).toTooltipText())
+            val baseClassName = if (isAlias) participant.getDisplay(false).toTooltipText()
+                                else participant.code
+            val elements = projectAccessor.findElements(IClass::class.java, baseClassName).filterIsInstance<IClass>()
             val baseClass: IClass
             if (elements.isEmpty()) {
-                val isAlias = !participant.code.equals(participant.getDisplay(false).toTooltipText())
-                val baseClassName = if (isAlias) participant.getDisplay(false).toTooltipText()
-                                    else participant.code
-
                 baseClass = when (participant.type) {
                     ParticipantType.ACTOR -> editorFactory.useCaseModelEditor.createActor(project, baseClassName)
                     ParticipantType.BOUNDARY -> editorFactory.basicModelEditor.createClass(project, baseClassName)
