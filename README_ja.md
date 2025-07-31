@@ -15,7 +15,7 @@
 
 ## 💻 対象環境
 
-- [astah* professional](https://astah.change-vision.com/ja/product/astah-professional.html) 9.0以上
+- [astah* professional](https://astah.change-vision.com/ja/product/astah-professional.html), [astah* UML](https://astah.change-vision.com/ja/product/astah-uml.html) 9.0以上
 - [PlantUML動作環境](https://plantuml.com/starting)
    - Windowsは、PlantUMLのライブラリにGraphvizも同梱されるようになったためPlantUML及びGraphvizインストールは不要です。 うまく動作しない場合は、 PlantUMLの[インストール](https://plantuml.com/starting)を試してください。
    - Windows以外の方は、クラス図、ステートマシン図の変換には、[Graphviz](https://plantuml.com/graphviz-dot)のインストールが必要です。
@@ -33,14 +33,22 @@
 左側がPlantUMLのエディタ、右側がプレビュー、「▲toAstah」ボタンでPlantUMLからastahに変換、「▼toPlant」ボタンでastahからPlantUMLに変換できます。
 エディタの内容は随時評価され、右側のプレビューに自動反映されます。下部には構文チェックの結果が表示されます。 エディタもプレビューもCtrl+マウスホイールで拡大・縮小できます。
 
+---
+
 ### 🔄 変換の仕様と注意事項
 
-PlantUMLからastahに変換する際、初回は新しく図が作成されます。 2回目以降の変換では、既存の図にマージされます。既存の要素は変更されず、新しく追加された要素のみが反映されます。削除は反映されずスキップされます。
-現状は追加はクラス単位なので、属性や操作を追記しても反映されません。
+#### PlantUMLからastahへの変換(▲toAstah)
 
-複数のPlantUMLの図(@startumlから@enduml)あった場合は、それぞれ別のastahの図として生成されますが、 2回目以降に順序や図の種類が変わった場合は、正しく動作しません。
+PlantUMLからastahに変換する際、図が毎回新しく生成されます。
+エディタで開かれている図と、PlantUMLコードから生成される図の種類が一致しており、かつ図要素が存在しない場合には、その図に要素を追加します。
+
+複数のPlantUMLの図(@startumlから@enduml)がコード内にあった場合は、それぞれ別のastahの図として生成されます。
+
+#### astahからPlantUMLへの変換(▼toPlant)
 
 astahからPlantUMLへの変換はすべて再生成され、マージは行いません。
+
+---
 
 ## ✅ 対応状況
 
@@ -85,8 +93,11 @@ astahからPlantUMLへの変換はすべて再生成され、マージは行い�
   - ユースケース、アクター
   - 関連、拡張、包含
 
+---
+
 ### 🚧 未対応項目
 
+以下は主な未対応要素(一部)です
 - 共通
     - ノート(シーケンス図、ステートマシン図)
     - スタイル(色以外)
@@ -95,14 +106,25 @@ astahからPlantUMLへの変換はすべて再生成され、マージは行い�
     - エンティティ
     - ネストクラス
 - シーケンス図
+    - メッセージ番号
     - 活性区間
+    - 出現・消失メッセージ
+    - 時間制約・持続時間制約
+    - 相互作用の利用(ToPlant)
+    - 複合フラグメント(ToAstah)(一部対応)
 - ステートマシン図
+    - 疑似状態(一部対応)
     - アクション : entry, do, exit
+    - 領域
+    - 入れ子が関係する遷移(toAstah)
 - アクティビティ図
     - 新しい構文
     - オブジェクトノード
     - パーティション
     - astahからplantへ生成時の順序が不定
+- ユースケース図
+    - システム境界
+    - パッケージ
 
 ## 📄 ライセンス
 

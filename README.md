@@ -18,7 +18,7 @@ This plugin allows you to convert [PlantUML diagrams](https://plantuml.com/) int
 
 ## 💻 Requirements
 
-- [Astah Professional](https://astah.net/products/astah-professional/) v9.0 or later
+- [Astah Professional](https://astah.net/products/astah-professional/), [Astah UML](https://astah.net/products/astah-uml/) v9.0 or later
 - [PlantUML](https://plantuml.com/) runtime environment
   - On **Windows**, no separate installation of PlantUML or Graphviz is needed because Graphviz is bundled with PlantUML.
   - On **non-Windows OS**, to generate class diagrams or statemachine diagrams, [Graphviz](https://plantuml.com/graphviz-dot) must be installed manually.
@@ -48,16 +48,18 @@ After installing the plugin, the "PlantUML View" tab will appear with a PlantUML
 
 ### 🔄 Conversion Specifications
 
-#### 📥 From PlantUML to Astah
+#### 📥 From PlantUML to Astah (`▲toAstah`)
 
-- On the first conversion, a new diagram will be created in Astah.
-- From the second time onward, new elements will be **merged** into the existing diagram. Existing elements will be **left unchanged**, and deleted items in the PlantUML text will be **ignored**.
-- Only **new classes** are added; updating attributes or operations in existing classes will not be reflected.
-- If multiple diagrams are described (multiple `@startuml` ~ `@enduml` blocks), each one will be imported as a separate diagram. However, if the order or type of diagrams is changed afterward, updates may not work correctly.
+When importing PlantUML diagrams into Astah, a new diagram is always created.
 
-#### 📤 From Astah to PlantUML
+However, if a blank diagram is already open in the Diagram Editor and its type matches the PlantUML diagram being imported, the elements will be added to the existing open diagram instead of creating a new one.
 
-- The output will be **fully regenerated** every time; no merge is performed.
+If the PlantUML code includes multiple diagrams (defined between @startuml and @enduml), each will be imported as a separate diagram in Astah.
+
+#### 📤 From Astah to PlantUML (`▼toPlant`)
+
+When exporting diagrams from Astah to PlantUML, the output is **fully regenerated** every time.
+The export does not merge with or update any previously generated PlantUML code.
 
 ---
 
@@ -98,8 +100,7 @@ After installing the plugin, the "PlantUML View" tab will appear with a PlantUML
 
 ## 🚧 Unsupported elements
 
-These features are currently not supported but may be added in the future:
-
+The following are the main unsupported elements (partial list):
 - **Common**
     - Notes(Sequence Diagram, State Machine Diagram)
     - Styles(without color)
@@ -108,15 +109,25 @@ These features are currently not supported but may be added in the future:
     - Entity
     - Nested Class
 - **Sequence Diagram**
-    - Message order (when exporting from Astah)
+    - Message number
     - Activation bars
+    - Found and Lost Messages
+    - Time Constraint, Duration Constraint
+    - InteractionUse (ToPlant)
+    - CombinedFragment (ToAstah) (partially supported)
 - **Statemachine Diagram**
-  - Entry/Exit/Do actions, Action
+    - Pseudostates (partially supported)
+    - Entry/Exit/Do actions, Action
+    - Region
+    - Nested Transition State (ToAstah)
 - **Activity Diagram**
     - New syntax
     - Object node
     - Partition
-    - Unstable order (when exporting from Astah)
+    - Unstable order (toPlant)
+- **Usecase Diagram**
+    - System Boundary
+    - Package
 
 ---
 
