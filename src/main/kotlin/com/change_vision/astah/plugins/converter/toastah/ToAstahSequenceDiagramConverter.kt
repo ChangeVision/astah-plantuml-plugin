@@ -29,7 +29,6 @@ import net.sourceforge.plantuml.sequencediagram.SequenceDiagram
 import net.sourceforge.plantuml.skin.ArrowDecoration
 import java.awt.geom.Point2D
 import java.awt.geom.Rectangle2D
-import java.util.*
 import kotlin.Comparator
 import kotlin.collections.ArrayDeque
 import kotlin.collections.HashMap
@@ -345,7 +344,7 @@ object ToAstahSequenceDiagramConverter {
         val lifelineLength = INIT_Y + Y_SPAN * totalMessageCount + LIFELINE_LENGTH_PROPERTY
 
         val participantMap = diagram.participants().mapNotNull { participant ->
-            val isAlias = !participant.code.equals(participant.getDisplay(false).toTooltipText())
+            val isAlias = participant.code != participant.getDisplay(false).toTooltipText()
 
             // PlantUML 上で定義されている名前を一旦ベースクラス名候補として取得する
             var baseClassName = if (isAlias) participant.getDisplay(false).toTooltipText()
@@ -353,14 +352,13 @@ object ToAstahSequenceDiagramConverter {
 
             // 取得したベースクラス名候補を ":" でパースし、":" 以前をライフライン名、 ":" 以降をベースクラス名とする
             val coronIndex = baseClassName.lastIndexOf(":")
-            var lifelineName = if (coronIndex == baseClassName.length - 1) baseClassName
-                               else if (coronIndex > 0) baseClassName.substring(0, coronIndex)
-                               else ""
+            val lifelineName: String
             if (coronIndex == baseClassName.length - 1) {
                 // 末尾に ":" がつけられている場合は全てライフライン名として扱う
                 lifelineName = baseClassName
                 baseClassName = ""
             } else if (coronIndex > 0) {
+                lifelineName = baseClassName.substring(0, coronIndex)
                 baseClassName = baseClassName.substring(coronIndex + 1)
             } else  {
                 // ":" が無い場合は、ライフライン名として扱う
@@ -430,7 +428,13 @@ object ToAstahSequenceDiagramConverter {
                 convertOperation(label, lifeline2?.model as ILifeline)
 
                 val arrowConfig = event.arrowConfiguration
-                val isReturn = arrowConfig.isDotted && prevMessage != null && !(prevMessage!!.model as IMessage).isAsynchronous
+                val prevMessageModel = (prevMessage?.model as? IMessage)
+                val isReturn = arrowConfig.isDotted
+                                && prevMessage != null
+                                && prevMessageModel?.isAsynchronous != true
+                                && prevMessageModel?.isReturnMessage != true
+                                && prevMessageModel?.source  == lifeline2.model
+                                && prevMessageModel?.target  == lifeline1?.model
                 val messagePresentation = createMessagePresentation(event, label, prevMessage, lifeline1, lifeline2, locY, isReturn)
                 if (arrowConfig.isAsync1 || arrowConfig.isAsync2) {
                     val message = messagePresentation.model as IMessage
@@ -533,7 +537,11 @@ object ToAstahSequenceDiagramConverter {
                                           isReturn: Boolean): ILinkPresentation {
         val isTargetFrame = target?.type.equals(FRAME_TYPE)
         return when {
-            isReturn -> diagramEditor.createReturnMessage(label, prevMessage)
+            isReturn -> try {
+                diagramEditor.createReturnMessage(label, prevMessage)
+            } catch (e: Exception) {
+                diagramEditor.createMessage(label, source, target, locY)
+            }
             message.isCreate && !isTargetFrame -> diagramEditor.createCreateMessage(label, source, target, locY)
             message.isDestroy && !isTargetFrame -> diagramEditor.createDestroyMessage(label, source, target, locY)
             else -> diagramEditor.createMessage(label, source, target, locY)
@@ -550,7 +558,7 @@ object ToAstahSequenceDiagramConverter {
     }
 
     private fun convertOperation(label: String, lifeLine: ILifeline) {
-        if (lifeLine.base != null && lifeLine.base.operations.all { it.name != label }) {
+        if (lifeLine.base?.operations?.all { it.name != label } == true) {
             modelEditor.createOperation(lifeLine.base, label, "void")
         }
     }
