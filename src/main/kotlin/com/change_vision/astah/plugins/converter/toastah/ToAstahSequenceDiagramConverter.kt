@@ -29,6 +29,9 @@ import net.sourceforge.plantuml.sequencediagram.SequenceDiagram
 import net.sourceforge.plantuml.skin.ArrowDecoration
 import java.awt.geom.Point2D
 import java.awt.geom.Rectangle2D
+import kotlin.Comparator
+import kotlin.collections.ArrayDeque
+import kotlin.collections.HashMap
 
 
 object ToAstahSequenceDiagramConverter {
@@ -40,6 +43,10 @@ object ToAstahSequenceDiagramConverter {
     private const val LIFELINE_LENGTH_PROPERTY = 40.0
     private const val GROUP_OFFSET = 10.0
     private const val FRAME_TYPE = "Frame"
+    private const val DEFAULT_ACTOR_NAME = "Actor"
+    private const val DEFAULT_BOUNDARY_NAME = "Boundary"
+    private const val DEFAULT_ENTITY_NAME = "Entity"
+    private const val DEFAULT_CONTROL_NAME = "Control"
 
     private val api = AstahAPI.getAstahAPI()
     private val projectAccessor = api.projectAccessor
@@ -337,41 +344,74 @@ object ToAstahSequenceDiagramConverter {
         val lifelineLength = INIT_Y + Y_SPAN * totalMessageCount + LIFELINE_LENGTH_PROPERTY
 
         val participantMap = diagram.participants().mapNotNull { participant ->
-            val editorFactory = projectAccessor.modelEditorFactory
-            val project = projectAccessor.project
-            val elements = projectAccessor.findElements(IClass::class.java, participant.code).filterIsInstance<IClass>()
-            val baseClass: IClass
-            if (elements.isEmpty()) {
-                val isAlias = !participant.code.equals(participant.getDisplay(false).toTooltipText())
-                val baseClassName = if (isAlias) participant.getDisplay(false).toTooltipText()
-                                    else participant.code
+            val isAlias = participant.code != participant.getDisplay(false).toTooltipText()
 
-                baseClass = when (participant.type) {
-                    ParticipantType.ACTOR -> editorFactory.useCaseModelEditor.createActor(project, baseClassName)
-                    ParticipantType.BOUNDARY -> editorFactory.basicModelEditor.createClass(project, baseClassName)
-                                                    .also { it.addStereotype("boundary") }
-                    ParticipantType.ENTITY -> editorFactory.basicModelEditor.createClass(project, baseClassName)
-                                                    .also { it.addStereotype("entity") }
-                    ParticipantType.CONTROL -> editorFactory.basicModelEditor.createClass(project, baseClassName)
-                                                    .also { it.addStereotype("control") }
-                    else -> editorFactory.basicModelEditor.createClass(project, baseClassName)
-                }
-                if (isAlias) {
-                    baseClass.alias1 = participant.code
-                }
-            } else {
-                baseClass = elements.first()
+            // PlantUML 上で定義されている名前を一旦ベースクラス名候補として取得する
+            var baseClassName = if (isAlias) participant.getDisplay(false).toTooltipText()
+                                else participant.code
+
+            // 取得したベースクラス名候補を ":" でパースし、":" 以前をライフライン名、 ":" 以降をベースクラス名とする
+            val coronIndex = baseClassName.lastIndexOf(":")
+            val lifelineName: String
+            if (coronIndex == baseClassName.length - 1) {
+                // 末尾に ":" がつけられている場合は全てライフライン名として扱う
+                lifelineName = baseClassName
+                baseClassName = ""
+            } else if (coronIndex > 0) {
+                lifelineName = baseClassName.substring(0, coronIndex)
+                baseClassName = baseClassName.substring(coronIndex + 1)
+            } else  {
+                // ":" が無い場合は、ライフライン名として扱う
+                lifelineName = baseClassName
+                baseClassName = ""
             }
+
+            // ベースクラス名としてデフォルト名を使用する
+            if (baseClassName.isEmpty()) {
+                baseClassName = when (participant.type) {
+                    ParticipantType.ACTOR -> DEFAULT_ACTOR_NAME
+                    ParticipantType.BOUNDARY -> DEFAULT_BOUNDARY_NAME
+                    ParticipantType.ENTITY -> DEFAULT_ENTITY_NAME
+                    ParticipantType.CONTROL -> DEFAULT_CONTROL_NAME
+                    else -> ""
+                }
+            }
+            val baseClass = if (baseClassName.isNotEmpty()) createBaseClassInstance(baseClassName.trim(), participant, isAlias)
+                            else null
+
             // メッセージの合計数に応じてライフラインを伸ばす
-            val lifeline = diagramEditor.createLifeline("", prevX)
+            val lifeline = diagramEditor.createLifeline(lifelineName.trim(), prevX)
             if (lifeline.properties.contains("lifeline_length")) {
                 lifeline.setProperty("lifeline_length", lifelineLength.toString())
             }
-            (lifeline.model as ILifeline).base = baseClass
+            if (baseClass != null) {
+                (lifeline.model as ILifeline).base = baseClass
+            }
             prevX += lifeline.width + X_SPAN
             Pair(participant, lifeline)
         }.toMap()
         return participantMap
+    }
+
+    private fun createBaseClassInstance(name: String, participant: Participant, isAlias: Boolean) : IClass? {
+        val editorFactory = projectAccessor.modelEditorFactory
+        val project = projectAccessor.project
+        val elements = projectAccessor.findElements(IClass::class.java, name).filterIsInstance<IClass>()
+        if (elements.isNotEmpty()) {
+            return elements.first()
+        }
+        val baseClass = when (participant.type) {
+            ParticipantType.ACTOR -> editorFactory.useCaseModelEditor.createActor(project, name)
+            ParticipantType.BOUNDARY -> editorFactory.basicModelEditor.createClass(project, name).also { it.addStereotype("boundary") }
+            ParticipantType.ENTITY -> editorFactory.basicModelEditor.createClass(project, name).also { it.addStereotype("entity") }
+            ParticipantType.CONTROL -> editorFactory.basicModelEditor.createClass(project, name).also { it.addStereotype("control") }
+            else -> if (name.isNotEmpty()) editorFactory.basicModelEditor.createClass(project, name)
+                    else null
+        }
+        if (isAlias) {
+            baseClass?.alias1 = participant.code
+        }
+        return baseClass
     }
 
     private fun convertMessage(sequenceDiagram: IDiagram?, events: List<Event>, participantMap: Map<Participant, INodePresentation>) {
@@ -388,7 +428,13 @@ object ToAstahSequenceDiagramConverter {
                 convertOperation(label, lifeline2?.model as ILifeline)
 
                 val arrowConfig = event.arrowConfiguration
-                val isReturn = arrowConfig.isDotted && prevMessage != null && !(prevMessage!!.model as IMessage).isAsynchronous
+                val prevMessageModel = (prevMessage?.model as? IMessage)
+                val isReturn = arrowConfig.isDotted
+                                && prevMessage != null
+                                && prevMessageModel?.isAsynchronous != true
+                                && prevMessageModel?.isReturnMessage != true
+                                && prevMessageModel?.source  == lifeline2.model
+                                && prevMessageModel?.target  == lifeline1?.model
                 val messagePresentation = createMessagePresentation(event, label, prevMessage, lifeline1, lifeline2, locY, isReturn)
                 if (arrowConfig.isAsync1 || arrowConfig.isAsync2) {
                     val message = messagePresentation.model as IMessage
@@ -491,7 +537,11 @@ object ToAstahSequenceDiagramConverter {
                                           isReturn: Boolean): ILinkPresentation {
         val isTargetFrame = target?.type.equals(FRAME_TYPE)
         return when {
-            isReturn -> diagramEditor.createReturnMessage(label, prevMessage)
+            isReturn -> try {
+                diagramEditor.createReturnMessage(label, prevMessage)
+            } catch (e: Exception) {
+                diagramEditor.createMessage(label, source, target, locY)
+            }
             message.isCreate && !isTargetFrame -> diagramEditor.createCreateMessage(label, source, target, locY)
             message.isDestroy && !isTargetFrame -> diagramEditor.createDestroyMessage(label, source, target, locY)
             else -> diagramEditor.createMessage(label, source, target, locY)
@@ -508,7 +558,7 @@ object ToAstahSequenceDiagramConverter {
     }
 
     private fun convertOperation(label: String, lifeLine: ILifeline) {
-        if (lifeLine.base.operations.all { it.name != label }) {
+        if (lifeLine.base?.operations?.all { it.name != label } == true) {
             modelEditor.createOperation(lifeLine.base, label, "void")
         }
     }

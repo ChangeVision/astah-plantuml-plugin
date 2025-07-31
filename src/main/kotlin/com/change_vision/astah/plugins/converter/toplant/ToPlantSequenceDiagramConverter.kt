@@ -70,13 +70,15 @@ object ToPlantSequenceDiagramConverter {
     }
 
     private fun getLifelineName(model: ILifeline): String? {
-        val base = model.base
-        if (base != null && !base.name.isNullOrEmpty()) {
-            return ClassConverter.formatName(base.name)
-        } else if (!model.name.isNullOrEmpty()) {
-            return ClassConverter.formatName(model.name)
+        val lifelineName = model.name?.takeIf { it.isNotEmpty() }
+        val baseName = model.base?.name?.takeIf { it.isNotEmpty() }
+        val rawName = when {
+            lifelineName != null && baseName != null -> "$lifelineName : $baseName"
+            lifelineName != null -> lifelineName
+            baseName != null -> ": $baseName"
+            else -> null
         }
-        return null
+        return rawName?.let { ClassConverter.formatName(it) }
     }
 
     private fun getStereotypes(base: IClass) : String {
@@ -216,8 +218,9 @@ object ToPlantSequenceDiagramConverter {
             return
         }
 
-        val convertColor = if (color.isNullOrEmpty()) ""
-                           else "[$color]"
+        // 黒色以外であればメッセージの色を反映する
+        val convertColor = if (!color.isNullOrEmpty() && color != "#000000") "[$color]"
+                           else ""
 
         when {
             model.isAsynchronous -> sb.append("$src -$convertColor>> $trg")
