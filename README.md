@@ -18,7 +18,7 @@ This plugin allows you to convert [PlantUML diagrams](https://plantuml.com/) int
 
 ## 💻 Requirements
 
-- [Astah Professional](https://astah.net/products/astah-professional/), [Astah UML](https://astah.net/products/astah-uml/) v9.0 or later
+- [Astah Professional](https://astah.net/products/astah-professional/), [Astah UML](https://astah.net/products/astah-uml/) v10.0 or later
 - [PlantUML](https://plantuml.com/) runtime environment
   - On **Windows**, no separate installation of PlantUML or Graphviz is needed because Graphviz is bundled with PlantUML.
   - On **non-Windows OS**, to generate class diagrams or statemachine diagrams, [Graphviz](https://plantuml.com/graphviz-dot) must be installed manually.
