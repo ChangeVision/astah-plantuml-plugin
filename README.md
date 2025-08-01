@@ -80,12 +80,11 @@ The export does not merge with or update any previously generated PlantUML code.
   - Messages: synchronous, asynchronous, return, Create, Destroy
   - Message labels
   - Load class from classifier
-  - Grouping: alt/else, opt, loop, par, break, critical, group
+  - Grouping: alt/else, opt, loop, par, break, critical
 - **Statemachine Diagram**
   - Initial state, Final state, State
   - Trigger, Guard
   - Nested states
-  - Fork, Join, Decision, Merge
   - Transition
 - **Activity Diagram (legacy)**
   - Initial node, Final node, Action

@@ -77,12 +77,11 @@ astahからPlantUMLへの変換はすべて再生成され、マージは行い�
   - メッセージ：同期、非同期、リターン、Create、Destroy
   - メッセージラベル
   - 分類子のクラス読み込み
-  - グループ化：alt/else, opt, loop, par, break, critical, group
+  - グループ化：alt/else, opt, loop, par, break, critical
 - ステートマシン図
   - 初期状態、終了状態、状態
   - トリガー、ガード
   - 状態のネスト
-  - フォーク、ジョイン、デシジョン、マージ
   - 遷移
 - アクティビティ図(レガシー版)
   - 開始、終了、アクション
