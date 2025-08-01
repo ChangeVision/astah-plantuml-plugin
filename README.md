@@ -80,11 +80,12 @@ The export does not merge with or update any previously generated PlantUML code.
   - Messages: synchronous, asynchronous, return, Create, Destroy
   - Message labels
   - Load class from classifier
-  - Grouping: alt/else, opt, loop, par, break, critical
+  - CombinedFragment (partially supported)
 - **Statemachine Diagram**
   - Initial state, Final state, State
   - Trigger, Guard
   - Nested states
+  - Pseudostates (partially supported)
   - Transition
 - **Activity Diagram (legacy)**
   - Initial node, Final node, Action
@@ -101,32 +102,30 @@ The export does not merge with or update any previously generated PlantUML code.
 
 The following are the main unsupported elements (partial list):
 - **Common**
-    - Notes(Sequence Diagram, State Machine Diagram)
-    - Styles(without color)
+  - Notes(Sequence Diagram, State Machine Diagram)
+  - Styles(without color)
 - **Class Diagram**
-    - Package, Namespace
-    - Entity
-    - Nested Class
+  - Package
+  - Namespace (ToPlant)
+  - Entity
+  - Nested Class
 - **Sequence Diagram**
-    - Message number
-    - Activation bars
-    - Found and Lost Messages
-    - Time Constraint, Duration Constraint
-    - InteractionUse (ToPlant)
-    - CombinedFragment (ToAstah) (partially supported)
+  - Message number
+  - Activation bars
+  - Found and Lost Messages
+  - Time Constraint, Duration Constraint
+  - InteractionUse
 - **Statemachine Diagram**
-    - Pseudostates (partially supported)
-    - Entry/Exit/Do actions, Action
-    - Region
-    - Nested Transition State (ToAstah)
+  - Entry/Exit/Do actions, Action
+  - Region
+  - Nested Transition State (ToAstah)
 - **Activity Diagram**
-    - New syntax
-    - Object node
-    - Partition
-    - Unstable order (toPlant)
+  - New syntax
+  - Object node
+  - Partition
 - **Usecase Diagram**
-    - System Boundary
-    - Package
+  - System Boundary
+  - Package
 
 ---
 
