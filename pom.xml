@@ -5,8 +5,8 @@
         <bundle.symbolicName>com.change_vision.astah.plugins.plantuml-plugin</bundle.symbolicName>
         <bundle.namespace>com.change_vision.astah.plugins</bundle.namespace>
         <plugin.install>true</plugin.install>
-        <astah.version>9.0.0</astah.version>
-        <astah.depend.version>9.0.0</astah.depend.version>
+        <astah.version>10.0.0</astah.version>
+        <astah.depend.version>10.0.0</astah.depend.version>
         <astah.edition>pro,uml</astah.edition>
         <kotlin.version>1.9.25</kotlin.version>
         <serialization.version>1.1.0</serialization.version>
