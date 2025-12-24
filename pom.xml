@@ -8,8 +8,9 @@
         <astah.version>10.0.0</astah.version>
         <astah.depend.version>10.0.0</astah.depend.version>
         <astah.edition>pro,uml</astah.edition>
-        <kotlin.version>1.9.25</kotlin.version>
+        <kotlin.version>2.2.0</kotlin.version>
         <serialization.version>1.1.0</serialization.version>
+        <plantUmlPath>{plantUmlPath}\target</plantUmlPath>
     </properties>
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.change_vision.astah.plugins</groupId>
@@ -374,6 +375,13 @@
             <groupId>org.jetbrains.kotlinx</groupId>
             <artifactId>kotlinx-serialization-cbor</artifactId>
             <version>${serialization.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.change_vision.astah.plugins.converter</groupId>
+            <artifactId>astah-plantuml-converter</artifactId>
+            <version>1.0.1</version>
+            <scope>system</scope>
+            <systemPath>${plantUmlPath}/astah-plantuml-converter-1.0.1-SNAPSHOT.jar</systemPath>
         </dependency>
     </dependencies>
 </project>
