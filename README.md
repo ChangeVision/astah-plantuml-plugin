@@ -1,4 +1,4 @@
-# 🌿 Astah PlantUML Plugin
+# 🌿 astah* PlantUML Plugin
 
 📘 This README is also available in [日本語](./README_ja.md).
 
@@ -11,44 +11,33 @@
 
 ## 📝 Overview
 
-This plugin allows you to convert [PlantUML diagrams](https://plantuml.com/) into [Astah](https://astah.net/products/astah-professional/), and vice versa:
-
-- Import PlantUML diagrams into Astah Professional
-- Export Astah diagrams as PlantUML text
+This plugin converts models between [Astah](https://astah.net/products/astah-professional/) and [PlantUML](https://plantuml.com/).
 
 ## 💻 Requirements
 
 - [Astah Professional](https://astah.net/products/astah-professional/), [Astah UML](https://astah.net/products/astah-uml/) v10.0 or later
 - [PlantUML](https://plantuml.com/) runtime environment
-  - On **Windows**, no separate installation of PlantUML or Graphviz is needed because Graphviz is bundled with PlantUML.
+  - On **Windows**, no separate installation of PlantUML or Graphviz is needed because Graphviz is bundled with PlantUML. If the plugin doesn't work, try [installing PlantUML manually](https://plantuml.com/starting).
   - On **non-Windows OS**, to generate class diagrams or statemachine diagrams, [Graphviz](https://plantuml.com/graphviz-dot) must be installed manually.
-
-If the plugin doesn't work, try [installing PlantUML manually](https://plantuml.com/starting).
 
 ## 📦 How to install
 
 1. Download the latest `.jar` file from [Releases](https://github.com/ChangeVision/astah-plantuml-plugin/releases)
 2. Launch Astah and drag & drop the `.jar` file into Astah's window
-3. Restart Astah and create a new project. If you see a "PlantUML View" tab in the bottom-right pane, installation is complete.
-
-<img src="https://github.com/ChangeVision/astah-plantuml-plugin/blob/images/img/PlantUML-plugin-for-Astah.png?raw=true" width="600">
+3. Restart Astah and create a new project. If you see a "PlantUML View" tab in the extension view (bottom-right pane), installation is complete.
 
 ## ▶️ How to use
 
-After installing the plugin, the "PlantUML View" tab will appear with a PlantUML editor on the left and a preview pane on the right.
-
-<img src="https://github.com/ChangeVision/astah-plantuml-plugin/blob/images/img/PlantUML-View-Pane-Closeup.png?raw=true" width="600">
-
-- `▲toAstah` generates diagrams and models in Astah from PlantUML text
-- `▼toPlant` exports the current Astah diagram to PlantUML format with preview
-- Syntax checking runs continuously and displays errors at the bottom
-- Ctrl + scroll zooms both the editor and the preview
+A "PlantUML View" tab will be added to the extension view.
+![PlantUML View screenshot](https://github.com/ChangeVision/astah-plantuml-plugin/blob/images/img/snapshot.png?raw=true)
+The left side is the PlantUML editor, and the right side is the preview. The `▲toAstah` button converts PlantUML to Astah, and the `▼toPlant` button converts Astah to PlantUML.
+The editor content is continuously validated, and the preview on the right is automatically updated. Syntax check results are displayed at the bottom. Both the editor and preview support zoom in/out with Ctrl + mouse wheel.
 
 ---
 
 ### 🔄 Conversion Specifications
 
-#### 📥 From PlantUML to Astah (`▲toAstah`)
+#### From PlantUML to Astah (`▲toAstah`)
 
 When importing PlantUML diagrams into Astah, a new diagram is always created.
 
@@ -56,56 +45,69 @@ However, if a blank diagram is already open in the Diagram Editor and its type m
 
 If the PlantUML code includes multiple diagrams (defined between @startuml and @enduml), each will be imported as a separate diagram in Astah.
 
-#### 📤 From Astah to PlantUML (`▼toPlant`)
+#### From Astah to PlantUML (`▼toPlant`)
 
 When exporting diagrams from Astah to PlantUML, the output is **fully regenerated** every time.
 The export does not merge with or update any previously generated PlantUML code.
 
 ---
 
-## ✅ Supported diagrams and model elements
+## ✅ Support Status
 
+### 📌 Supported Items
+
+- PlantUML → Astah conversion
+- Astah → PlantUML conversion
+- PlantUML Editor
+  - Continuous validation, error display
+  - Zoom in/out
+- PlantUML Preview
+  - Continuous preview display
+  - Zoom in/out
 - **Common**
-  - Notes(only some diagrams are supported)
-  - Styles(limited to some diagram element colors are supported)
-- **Class Diagram**
+  - Notes (only some diagrams are supported)
+  - Styles (limited to element colors in some diagrams)
+- **Class Diagram (Object Diagram)**
   - Class, Interface
   - Stereotype
   - Attribute, Operation
   - Association, Inheritance, Dependency, Association label
   - Multiplicity with labels
+  - Package
+  - Object, Link
 - **Sequence Diagram**
   - Classifiers: participant, actor, boundary, control, entity  
-    *(database, collections, and queue are displayed as participant)*
+    *(database, collections, and queue are displayed as participants)*
   - Messages: synchronous, asynchronous, return, Create, Destroy
   - Message labels
   - Load class from classifier
-  - CombinedFragment (partially supported)
+  - Combined Fragment (partially supported)
 - **Statemachine Diagram**
   - Initial state, Final state, State
   - Trigger, Guard
   - Nested states
+  - Actions: entry, do, exit
   - Pseudostates (partially supported)
   - Transition
-- **Activity Diagram (legacy)**
+- **Activity Diagram**
   - Initial node, Final node, Action
   - Control flow
   - Join Node, Fork Node
   - Decision Node
+  - Object Node
+  - Partition (simple cases only)
 - **Usecase Diagram**
   - Usecase, Actor
   - Association, Extend, Include
 
 ---
 
-## 🚧 Unsupported elements
+### 🚧 Unsupported elements
 
 The following are the main unsupported elements (partial list):
 - **Common**
-  - Notes(Sequence Diagram, State Machine Diagram)
-  - Styles(without color)
+  - Styles (except for colors)
 - **Class Diagram**
-  - Package
   - Namespace (ToPlant)
   - Entity
   - Nested Class
@@ -116,16 +118,15 @@ The following are the main unsupported elements (partial list):
   - Time Constraint, Duration Constraint
   - InteractionUse
 - **Statemachine Diagram**
-  - Entry/Exit/Do actions, Action
   - Region
-  - Nested Transition State (ToAstah)
 - **Activity Diagram**
-  - New syntax
-  - Object node
-  - Partition
+  - Legacy syntax
+  - Complex partitions
+  - Pin
 - **Usecase Diagram**
   - System Boundary
   - Package
+- **Composite Structure Diagram**
 
 ---
 
