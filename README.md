@@ -1,4 +1,4 @@
-# 🌿 astah* PlantUML Plugin
+# 🌿 Astah PlantUML Plugin
 
 📘 This README is also available in [日本語](./README_ja.md).
 
@@ -11,33 +11,44 @@
 
 ## 📝 Overview
 
-This plugin converts models between [Astah](https://astah.net/products/astah-professional/) and [PlantUML](https://plantuml.com/).
+This plugin allows you to convert [PlantUML diagrams](https://plantuml.com/) into [Astah](https://astah.net/products/astah-professional/), and vice versa:
+
+- Import PlantUML diagrams into Astah Professional
+- Export Astah diagrams as PlantUML text
 
 ## 💻 Requirements
 
 - [Astah Professional](https://astah.net/products/astah-professional/), [Astah UML](https://astah.net/products/astah-uml/) v10.0 or later
 - [PlantUML](https://plantuml.com/) runtime environment
-  - On **Windows**, no separate installation of PlantUML or Graphviz is needed because Graphviz is bundled with PlantUML. If the plugin doesn't work, try [installing PlantUML manually](https://plantuml.com/starting).
+  - On **Windows**, no separate installation of PlantUML or Graphviz is needed because Graphviz is bundled with PlantUML.
   - On **non-Windows OS**, to generate class diagrams or statemachine diagrams, [Graphviz](https://plantuml.com/graphviz-dot) must be installed manually.
+
+If the plugin doesn't work, try [installing PlantUML manually](https://plantuml.com/starting).
 
 ## 📦 How to install
 
 1. Download the latest `.jar` file from [Releases](https://github.com/ChangeVision/astah-plantuml-plugin/releases)
 2. Launch Astah and drag & drop the `.jar` file into Astah's window
-3. Restart Astah and create a new project. If you see a "PlantUML View" tab in the extension view (bottom-right pane), installation is complete.
+3. Restart Astah and create a new project. If you see a "PlantUML View" tab in the bottom-right pane, installation is complete.
+
+<img src="https://github.com/ChangeVision/astah-plantuml-plugin/blob/images/img/PlantUML-plugin-for-Astah.png?raw=true" width="600">
 
 ## ▶️ How to use
 
-A "PlantUML View" tab will be added to the extension view.
-![PlantUML View screenshot](https://github.com/ChangeVision/astah-plantuml-plugin/blob/images/img/snapshot.png?raw=true)
-The left side is the PlantUML editor, and the right side is the preview. The `▲toAstah` button converts PlantUML to Astah, and the `▼toPlant` button converts Astah to PlantUML.
-The editor content is continuously validated, and the preview on the right is automatically updated. Syntax check results are displayed at the bottom. Both the editor and preview support zoom in/out with Ctrl + mouse wheel.
+After installing the plugin, the "PlantUML View" tab will appear with a PlantUML editor on the left and a preview pane on the right.
+
+<img src="https://github.com/ChangeVision/astah-plantuml-plugin/blob/images/img/PlantUML-View-Pane-Closeup.png?raw=true" width="600">
+
+- `▲toAstah` generates diagrams and models in Astah from PlantUML text
+- `▼toPlant` exports the current Astah diagram to PlantUML format with preview
+- Syntax checking runs continuously and displays errors at the bottom
+- Ctrl + scroll zooms both the editor and the preview
 
 ---
 
 ### 🔄 Conversion Specifications
 
-#### From PlantUML to Astah (`▲toAstah`)
+#### 📥 From PlantUML to Astah (`▲toAstah`)
 
 When importing PlantUML diagrams into Astah, a new diagram is always created.
 
@@ -45,7 +56,7 @@ However, if a blank diagram is already open in the Diagram Editor and its type m
 
 If the PlantUML code includes multiple diagrams (defined between @startuml and @enduml), each will be imported as a separate diagram in Astah.
 
-#### From Astah to PlantUML (`▼toPlant`)
+#### 📤 From Astah to PlantUML (`▼toPlant`)
 
 When exporting diagrams from Astah to PlantUML, the output is **fully regenerated** every time.
 The export does not merge with or update any previously generated PlantUML code.
