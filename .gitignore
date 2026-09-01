@@ -1,3 +1,8 @@
 /target/
 /.idea/
 *.iml
+/.vscode/
+*.code-workspace
+/META-INF/
+/com/
+.DS_Store

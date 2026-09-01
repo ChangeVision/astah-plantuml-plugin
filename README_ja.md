@@ -7,7 +7,7 @@
 [![GitHub issues](https://img.shields.io/github/issues/ChangeVision/astah-plantuml-plugin)](https://github.com/ChangeVision/astah-plantuml-plugin/issues)
 [![GitHub stars](https://img.shields.io/github/stars/ChangeVision/astah-plantuml-plugin)](https://github.com/ChangeVision/astah-plantuml-plugin/stargazers)
 [![GitHub forks](https://img.shields.io/github/forks/ChangeVision/astah-plantuml-plugin)](https://github.com/ChangeVision/astah-plantuml-plugin/network)
-[![License: GPL v3](https://img.shields.io/badge/license-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
+[![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](https://opensource.org/licenses/MIT)
 
 ## 📝 概要
 
@@ -63,40 +63,59 @@ astahからPlantUMLへの変換はすべて再生成され、マージは行い�
   - 逐次プレビュー表示
   - 拡大、縮小
 - 共通
-  - ノート(一部の図のみ)
+  - ノート(対応する記法・接続先の要素は図によって異なります)
+  - ハイパーリンク(`[[url]]`、ツールチップ・ラベル付きを含む)
   - スタイル(一部の図の図要素の色のみ)
+  - 複数の図(@startuml〜@enduml)の一括変換(ToAstah)
 - クラス図（オブジェクト図）
-  - クラス、インタフェース
+  - クラス、インタフェース、抽象クラス、列挙型
   - ステレオタイプ
-  - 属性、操作
-  - 関連、継承、依存、関連ラベル
+  - 属性、操作(可視性、static、abstract、初期値)
+  - テンプレートパラメータ(総称クラス)
+  - 関連、継承、実現、依存、関連ラベル
+  - 集約、コンポジション、誘導可能性
   - 多重度とラベルの同時記述
+  - 関連クラス
   - パッケージ
   - オブジェクト、リンク
 - シーケンス図
   - 分類子：participant, actor, boundary, control, entity
     (database, collections, queueはparticipantとして表示)
   - メッセージ：同期、非同期、リターン、Create、Destroy
-  - メッセージラベル
+  - メッセージラベル(引数、返り値、ガード条件)
   - 分類子のクラス読み込み
   - 複合フラグメント(一部対応)
+  - 活性区間
 - ステートマシン図
   - 初期状態、終了状態、状態
   - トリガー、ガード
   - 状態のネスト
-  - アクション: entry, do, exit
+  - アクション : entry, do, exit
+  - 内部遷移
+  - ステレオタイプ
   - 疑似状態(一部対応)
   - 遷移
 - アクティビティ図
   - 開始、終了、アクション
   - コントロールフロー
   - ジョインノード、フォークノード
-  - デシジョンノード
+  - デシジョンノード、マージノード
   - オブジェクトノード
   - パーティション（シンプルなケースのみ）
+  - ループ(repeat)
+  - レガシー構文の読み込み(ToAstah)
 - ユースケース図
   - ユースケース、アクター
-  - 関連、拡張、包含
+  - 関連、拡張、包含、汎化
+  - システム境界
+  - パッケージ
+- 合成構造図
+  - コンポーネント、クラス
+  - ポート、パート
+  - ネストした構造
+  - コネクタ、依存、実現、継承
+- コンポーネント図
+  - コンポーネント、インタフェース(ToAstahのみ。astahのクラス図として生成されます)
 
 ---
 
@@ -105,32 +124,38 @@ astahからPlantUMLへの変換はすべて再生成され、マージは行い�
 以下は主な未対応要素(一部)です
 - 共通
   - スタイル(色以外)
+  - 複数の図の一括出力(ToPlant)
 - クラス図
   - ネームスペース(ToPlant)
   - エンティティ
   - ネストクラス
 - シーケンス図
   - メッセージ番号
-  - 活性区間
-  - 出現・消失メッセージ
+  - 出現・消失メッセージ(ToPlant)
   - 時間制約・持続時間制約
-  - 相互作用の利用
+  - 相互作用の利用(ToAstah)
 - ステートマシン図
   - 領域
+  - 入場点、退場点(ToAstah)
+  - 終了(terminate)
 - アクティビティ図
-  - レガシー構文
+  - レガシー構文の出力(ToPlant)
+  - 3分岐以上の条件分岐の出力(ToPlant)
+  - while構文、switch構文の出力(ToPlant)
   - 複雑なパーティション
   - ピン
-- ユースケース図
-  - システム境界
-  - パッケージ
 - 合成構造図
+  - インタフェース(ToPlant)
+- コンポーネント図
+  - コンポーネント記法での出力(ToPlant。クラス図の`class X <<component>>`として出力されます)
 
 ## 📄 ライセンス
 
-本プラグインは、以下のオープンソースライブラリを使用しており、**GPLv3 ライセンス**のもとで配布されています。
+本プラグインは **[MIT ライセンス](./LICENSE)** のもとで配布されています。
 
-- [PlantUML](https://plantuml.com/)（[GPLv3 ライセンス](https://www.gnu.org/licenses/gpl-3.0.html)）
+使用しているオープンソースライブラリは以下のとおりです。
+
+- [PlantUML](https://plantuml.com/)（MIT ライセンス版の `plantuml-mit` を同梱しています）
 - [RSyntaxTextArea](https://github.com/bobbylight/RSyntaxTextArea)（[BSD ライセンス](https://github.com/bobbylight/RSyntaxTextArea/blob/master/LICENSE.txt)）
 
 ---
@@ -140,11 +165,11 @@ astahからPlantUMLへの変換はすべて再生成され、マージは行い�
 本プラグインでは、PlantUMLで記述された図をastah上で表示・変換する際に、一時ファイルを内部的に使用します。  
 ただし、図の画像やテキストファイルをユーザーが直接保存・エクスポートする機能は提供していません。
 
-また、PlantUMLを用いて生成される図の内容（テキストや視覚的表現）は [PlantUML FAQ](https://plantuml.com/faq) に基づき、 **ユーザー自身の成果物** と見なされ、 **GPLやその他のライセンス制約の対象とはならず、自由に利用できます** 。
+また、PlantUMLを用いて生成される図の内容（テキストや視覚的表現）は [PlantUML FAQ](https://plantuml.com/faq) に基づき、 **ユーザー自身の成果物** と見なされ、 **ライセンス制約の対象とはならず、自由に利用できます** 。
 
 ---
 
-### PlantUMLのライセンス選択について
+### PlantUMLのライセンスについて
 
-GPLライセンス以外（MIT、LGPLなど）でPlantUMLをご利用されたい場合は、[PlantUML のライセンス案内](https://plantuml.com/license)をご参照ください。
+PlantUMLはGPL、LGPL、MIT、Apacheなど複数のライセンスで配布されています。本プラグインはMITライセンス版を同梱しています。詳細は [PlantUML のライセンス案内](https://plantuml.com/license) をご参照ください。
 
