@@ -11,7 +11,10 @@
 
 ## 📝 概要
 
-[astah](https://astah.change-vision.com)と[PlantUML](https://plantuml.com)のモデルの相互変換を行うプラグインです。
+このプラグインは、[PlantUMLの図](https://plantuml.com/)と[astah](https://astah.change-vision.com)の間で相互変換を行います。
+
+- PlantUMLの図をastah professionalにインポート
+- astahの図をPlantUMLのテキストとしてエクスポート
 
 ## 💻 対象環境
 
@@ -26,12 +29,18 @@
 2. astahを起動し、ダウンロードしたjarファイルをドラッグ＆ドロップする。
 3. astahを再起動し、新規プロジェクトを作成する。拡張ビュー(astahウィンドウ右下のペイン)に「PlantUML View」が表示されているか確認する。
 
+<img src="https://github.com/ChangeVision/astah-plantuml-plugin/blob/images/img/PlantUML-plugin-for-Astah.png?raw=true" width="600">
+
 ## ▶️ 利用方法
 
-拡張ビューにPlantUML Viewというタブが追加されます。
+プラグインをインストールすると、拡張ビューに「PlantUML View」タブが追加され、左側にPlantUMLエディタ、右側にプレビューが表示されます。
+
 ![snapshot](https://github.com/ChangeVision/astah-plantuml-plugin/blob/images/img/snapshot.png?raw=true)
-左側がPlantUMLのエディタ、右側がプレビュー、「▲toAstah」ボタンでPlantUMLからastahに変換、「▼toPlant」ボタンでastahからPlantUMLに変換できます。
-エディタの内容は随時評価され、右側のプレビューに自動反映されます。下部には構文チェックの結果が表示されます。 エディタもプレビューもCtrl+マウスホイールで拡大・縮小できます。
+
+- 「▲toAstah」ボタンでPlantUMLのテキストからastahに図・モデルを生成します
+- 「▼toPlant」ボタンで現在のastahの図をPlantUML形式に変換し、プレビューします
+- 構文チェックは随時実行され、下部にエラーが表示されます
+- Ctrl + マウスホイールでエディタ・プレビューともに拡大・縮小できます
 
 ---
 
