@@ -81,9 +81,10 @@ The export does not merge with or update any previously generated PlantUML code.
   - Styles(limited to some diagram element colors are supported)
   - Batch conversion of multiple diagrams (@startuml-@enduml) (ToAstah)
 - **Class Diagram (Object Diagram)**
-  - Class, Interface, Abstract class, Enumeration
+  - Class, Interface, Abstract class, Enumeration(including literal values)
   - Stereotype
   - Attribute, Operation (visibility, static, abstract, initial value)
+  - Tagged value (TaggedValue, for class/attribute/operation)
   - Template parameter (generic class)
   - Association, Inheritance, Realization, Dependency, Association label
   - Aggregation, Composition, Navigability
