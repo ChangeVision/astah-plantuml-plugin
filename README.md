@@ -7,7 +7,7 @@
 [![GitHub issues](https://img.shields.io/github/issues/ChangeVision/astah-plantuml-plugin)](https://github.com/ChangeVision/astah-plantuml-plugin/issues)
 [![GitHub stars](https://img.shields.io/github/stars/ChangeVision/astah-plantuml-plugin)](https://github.com/ChangeVision/astah-plantuml-plugin/stargazers)
 [![GitHub forks](https://img.shields.io/github/forks/ChangeVision/astah-plantuml-plugin)](https://github.com/ChangeVision/astah-plantuml-plugin/network)
-[![License: GPL v3](https://img.shields.io/badge/license-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
+[![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](https://opensource.org/licenses/MIT)
 
 ## 📝 Overview
 
@@ -76,40 +76,60 @@ The export does not merge with or update any previously generated PlantUML code.
   - Continuous preview display
   - Zoom in/out
 - **Common**
-  - Notes (only some diagrams are supported)
-  - Styles (limited to element colors in some diagrams)
+  - Notes (supported notations and anchor targets vary by diagram)
+  - Hyperlinks (`[[url]]`, including tooltips and labels)
+  - Styles(limited to some diagram element colors are supported)
+  - Batch conversion of multiple diagrams (@startuml-@enduml) (ToAstah)
 - **Class Diagram (Object Diagram)**
-  - Class, Interface
+  - Class, Interface, Abstract class, Enumeration(including literal values)
   - Stereotype
-  - Attribute, Operation
-  - Association, Inheritance, Dependency, Association label
+  - Attribute, Operation (visibility, static, abstract, initial value)
+  - Tagged value (TaggedValue, for class/attribute/operation)
+  - Template parameter (generic class)
+  - Association, Inheritance, Realization, Dependency, Association label
+  - Aggregation, Composition, Navigability
   - Multiplicity with labels
+  - Association class
   - Package
   - Object, Link
 - **Sequence Diagram**
   - Classifiers: participant, actor, boundary, control, entity  
     *(database, collections, and queue are displayed as participants)*
   - Messages: synchronous, asynchronous, return, Create, Destroy
-  - Message labels
+  - Message labels (arguments, return values, guard conditions)
   - Load class from classifier
-  - Combined Fragment (partially supported)
+  - CombinedFragment (partially supported)
+  - Activation bars
 - **Statemachine Diagram**
   - Initial state, Final state, State
   - Trigger, Guard
   - Nested states
   - Actions: entry, do, exit
+  - Internal transition
+  - Stereotype
   - Pseudostates (partially supported)
   - Transition
 - **Activity Diagram**
   - Initial node, Final node, Action
   - Control flow
   - Join Node, Fork Node
-  - Decision Node
-  - Object Node
+  - Decision Node, Merge Node
+  - Object node
   - Partition (simple cases only)
+  - Loop (repeat)
+  - Reading legacy syntax (ToAstah)
 - **Usecase Diagram**
   - Usecase, Actor
-  - Association, Extend, Include
+  - Association, Extend, Include, Generalization
+  - System Boundary
+  - Package
+- **Composite Structure Diagram**
+  - Component, Class
+  - Port, Part
+  - Nested structure
+  - Connector, Dependency, Realization, Inheritance
+- **Component Diagram**
+  - Component, Interface (ToAstah only; generated as an Astah class diagram)
 
 ---
 
@@ -117,35 +137,41 @@ The export does not merge with or update any previously generated PlantUML code.
 
 The following are the main unsupported elements (partial list):
 - **Common**
-  - Styles (except for colors)
+  - Styles(without color)
+  - Batch export of multiple diagrams (ToPlant)
 - **Class Diagram**
   - Namespace (ToPlant)
   - Entity
   - Nested Class
 - **Sequence Diagram**
   - Message number
-  - Activation bars
-  - Found and Lost Messages
+  - Found and Lost Messages (ToPlant)
   - Time Constraint, Duration Constraint
-  - InteractionUse
+  - InteractionUse (ToAstah)
 - **Statemachine Diagram**
   - Region
+  - Entry point, Exit point (ToAstah)
+  - Terminate
 - **Activity Diagram**
-  - Legacy syntax
+  - Exporting legacy syntax (ToPlant)
+  - Exporting conditionals with three or more branches (ToPlant)
+  - Exporting while and switch syntax (ToPlant)
   - Complex partitions
   - Pin
-- **Usecase Diagram**
-  - System Boundary
-  - Package
 - **Composite Structure Diagram**
+  - Interface (ToPlant)
+- **Component Diagram**
+  - Exporting with component notation (ToPlant; exported as `class X <<component>>` in a class diagram)
 
 ---
 
 ## 📄 License
 
-This plugin uses the following open-source libraries and is distributed under the **GPLv3 license**:
+This plugin is distributed under the **[MIT license](./LICENSE)**.
 
-- [PlantUML](https://plantuml.com/) ([GPLv3 License](https://www.gnu.org/licenses/gpl-3.0.html))
+It uses the following open-source libraries:
+
+- [PlantUML](https://plantuml.com/) (bundles `plantuml-mit`, the MIT-licensed build)
 - [RSyntaxTextArea](https://github.com/bobbylight/RSyntaxTextArea) ([BSD License](https://github.com/bobbylight/RSyntaxTextArea/blob/master/LICENSE.txt))
 
 ---
@@ -155,11 +181,11 @@ This plugin uses the following open-source libraries and is distributed under th
 This plugin internally uses temporary files to display and convert diagrams written in PlantUML within Astah.  
 However, it does not provide any functionality for users to directly save or export diagrams as image or text files.
 
-According to the [PlantUML FAQ](https://plantuml.com/faq), the content of diagrams generated using PlantUML (whether textual or visual) is considered **the user’s own work** and is **not subject to the GPL or other license restrictions** . Therefore, it may be used freely.
+According to the [PlantUML FAQ](https://plantuml.com/faq), the content of diagrams generated using PlantUML (whether textual or visual) is considered **the user’s own work** and is **not subject to any license restrictions** . Therefore, it may be used freely.
 
 ---
 
-### About PlantUML Licensing Options
+### About PlantUML Licensing
 
-If you wish to use PlantUML under a license other than GPL (e.g., MIT or LGPL), please refer to the [PlantUML License Information](https://plantuml.com/license).
+PlantUML is distributed under several licenses, including GPL, LGPL, MIT and Apache. This plugin bundles the MIT-licensed build. For details, see the [PlantUML License Information](https://plantuml.com/license).
 

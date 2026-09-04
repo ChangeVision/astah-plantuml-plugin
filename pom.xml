@@ -5,19 +5,26 @@
         <bundle.symbolicName>com.change_vision.astah.plugins.plantuml-plugin</bundle.symbolicName>
         <bundle.namespace>com.change_vision.astah.plugins</bundle.namespace>
         <plugin.install>true</plugin.install>
-        <astah.version>10.0.0</astah.version>
-        <astah.depend.version>10.0.0</astah.depend.version>
+        <astah.version>12.0.0</astah.version>
+        <astah.depend.version>12.0.0</astah.depend.version>
         <astah.edition>pro,uml</astah.edition>
-        <kotlin.version>1.9.25</kotlin.version>
+        <kotlin.version>2.2.0</kotlin.version>
         <serialization.version>1.1.0</serialization.version>
+        <plantUmlPath>{plantUmlPath}\target</plantUmlPath>
     </properties>
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.change_vision.astah.plugins</groupId>
     <artifactId>plantuml-plugin</artifactId>
-    <version>1.1.0-SNAPSHOT</version>
+    <version>1.3.0</version>
     <packaging>bundle</packaging>
     <name>%bundle.name</name>
     <description>%bundle.description</description>
+    <licenses>
+        <license>
+            <name>MIT License</name>
+            <url>https://opensource.org/license/mit/</url>
+        </license>
+    </licenses>
     <pluginRepositories>
         <pluginRepository>
             <id>local_astah_repository</id>
@@ -235,6 +242,31 @@
                 </executions>
             </plugin>
             <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-antrun-plugin</artifactId>
+                <version>3.1.0</version>
+                <executions>
+                    <execution>
+                        <id>unpack-manifest-for-dev</id>
+                        <phase>process-classes</phase>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                        <configuration>
+                            <target>
+                                <unzip src="${project.build.directory}/${project.artifactId}-${project.version}.jar"
+                                       dest="${project.build.outputDirectory}"
+                                       overwrite="false">
+                                    <patternset>
+                                        <include name="META-INF/**"/>
+                                    </patternset>
+                                </unzip>
+                            </target>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
                 <groupId>org.apache.felix</groupId>
                 <artifactId>maven-bundle-plugin</artifactId>
                 <version>5.1.4</version>
@@ -362,7 +394,7 @@
         </dependency>
         <dependency>
             <groupId>net.sourceforge.plantuml</groupId>
-            <artifactId>plantuml</artifactId>
+            <artifactId>plantuml-mit</artifactId>
             <version>1.2025.3</version>
         </dependency>
         <dependency>
@@ -375,5 +407,20 @@
             <artifactId>kotlinx-serialization-cbor</artifactId>
             <version>${serialization.version}</version>
         </dependency>
+        <!-- 開発時: ローカルの astah-plantuml-converter を参照してビルドする -->
+        <dependency>
+            <groupId>com.change_vision.astah.plugins.converter</groupId>
+            <artifactId>astah-plantuml-converter</artifactId>
+            <version>1.0.4-SNAPSHOT</version>
+            <scope>system</scope>
+            <systemPath>${plantUmlPath}/astah-plantuml-converter-1.0.4-SNAPSHOT.jar</systemPath>
+        </dependency>
+        <!-- リリース時: 上記のローカル参照をコメントアウトし、こちらを有効化
+        <dependency>
+            <groupId>com.change_vision.astah.plugins.converter</groupId>
+            <artifactId>astah-plantuml-converter</artifactId>
+            <version>1.0.4-SNAPSHOT</version>
+        </dependency>
+        -->
     </dependencies>
 </project>
