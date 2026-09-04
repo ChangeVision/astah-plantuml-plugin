@@ -410,9 +410,9 @@
         <dependency>
             <groupId>com.change_vision.astah.plugins.converter</groupId>
             <artifactId>astah-plantuml-converter</artifactId>
-            <version>1.0.2</version>
+            <version>1.0.3</version>
             <scope>system</scope>
-            <systemPath>${plantUmlPath}/astah-plantuml-converter-1.0.2-SNAPSHOT.jar</systemPath>
+            <systemPath>${plantUmlPath}/astah-plantuml-converter-1.0.3-SNAPSHOT.jar</systemPath>
         </dependency>
     </dependencies>
 </project>
