@@ -10,6 +10,7 @@
         <astah.edition>pro,uml</astah.edition>
         <kotlin.version>2.2.0</kotlin.version>
         <serialization.version>1.1.0</serialization.version>
+        <plantUmlPath>{plantUmlPath}\target</plantUmlPath>
     </properties>
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.change_vision.astah.plugins</groupId>
@@ -406,10 +407,20 @@
             <artifactId>kotlinx-serialization-cbor</artifactId>
             <version>${serialization.version}</version>
         </dependency>
+        <!-- 開発時: ローカルの astah-plantuml-converter を参照してビルドする -->
         <dependency>
             <groupId>com.change_vision.astah.plugins.converter</groupId>
             <artifactId>astah-plantuml-converter</artifactId>
-            <version>1.0.3</version>
+            <version>1.0.4-SNAPSHOT</version>
+            <scope>system</scope>
+            <systemPath>${plantUmlPath}/astah-plantuml-converter-1.0.4-SNAPSHOT.jar</systemPath>
         </dependency>
+        <!-- リリース時: 上記のローカル参照をコメントアウトし、こちらを有効化
+        <dependency>
+            <groupId>com.change_vision.astah.plugins.converter</groupId>
+            <artifactId>astah-plantuml-converter</artifactId>
+            <version>1.0.4-SNAPSHOT</version>
+        </dependency>
+        -->
     </dependencies>
 </project>
